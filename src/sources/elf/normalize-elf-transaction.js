@@ -1,14 +1,17 @@
 import { ELF_SOURCE } from "./elf-config.js";
 
 export function normalizeElfTransaction(rawTx, item, context = {}) {
+  assertElfTransactionShape(rawTx, item);
+
   const quantity = Number(rawTx.itemNum);
   const totalValue = Number(rawTx.totalAmount) / 1e9;
   const unitValue = quantity > 0 ? totalValue / quantity : 0;
+  const transactionTime = normalizeElfTimestamp(rawTx.txnTime);
   const participants = mapElfParticipants(rawTx);
 
   return {
     id: String(rawTx.txnId),
-    time: Number(rawTx.txnTime),
+    time: transactionTime,
     source: {
       name: ELF_SOURCE.name,
       itemId: item.itemId,
@@ -52,6 +55,37 @@ export function normalizeElfTransaction(rawTx, item, context = {}) {
   };
 }
 
+function assertElfTransactionShape(rawTx, item) {
+  if (!rawTx || typeof rawTx !== "object") {
+    throw new TypeError("Unexpected API response format: transaction must be an object.");
+  }
+
+  if (!item?.itemId || !item?.name) {
+    throw new TypeError("Unexpected API response format: item metadata is missing.");
+  }
+
+  const quantity = Number(rawTx.itemNum);
+  const totalAmount = Number(rawTx.totalAmount);
+  const transactionTime = Number(rawTx.txnTime);
+  const orderType = Number(rawTx.orderType);
+
+  if (!rawTx.txnId || !Number.isFinite(transactionTime)) {
+    throw new TypeError("Unexpected API response format: transaction id or time is missing.");
+  }
+
+  if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(totalAmount)) {
+    throw new TypeError("Unexpected API response format: quantity or total amount is invalid.");
+  }
+
+  if (orderType !== 1 && orderType !== 2) {
+    throw new TypeError("Unexpected API response format: order type is unsupported.");
+  }
+
+  if (!rawTx.orderUserId || !rawTx.traderId) {
+    throw new TypeError("Unexpected API response format: participant fields are missing.");
+  }
+}
+
 function mapElfParticipants(rawTx) {
   const orderUser = {
     id: String(rawTx.orderUserId),
@@ -73,4 +107,9 @@ function mapElfParticipants(rawTx) {
     seller: orderUser,
     buyer: trader
   };
+}
+
+function normalizeElfTimestamp(value) {
+  const timestamp = Number(value);
+  return timestamp < 100000000000 ? timestamp * 1000 : timestamp;
 }

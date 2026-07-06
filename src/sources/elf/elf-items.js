@@ -25,6 +25,15 @@ export const ELF_BETA_ITEMS = [
   }
 ];
 
+export const ELF_LIVE_CANARY_ITEMS = [
+  {
+    itemId: 21101,
+    name: "Carrot",
+    group: "Resource",
+    category: "Crop"
+  }
+];
+
 export function getElfBetaItem(itemId) {
   return ELF_BETA_ITEMS.find((item) => item.itemId === itemId);
 }

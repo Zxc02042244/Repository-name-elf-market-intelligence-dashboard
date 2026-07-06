@@ -1,5 +1,5 @@
-import { ELF_SOURCE } from "./elf-config.js";
-import { getElfBetaItem } from "./elf-items.js";
+import { ELF_PROXY_ENDPOINTS, ELF_SOURCE } from "./elf-config.js";
+import { ELF_LIVE_CANARY_ITEMS, getElfBetaItem } from "./elf-items.js";
 import { normalizeElfTransaction } from "./normalize-elf-transaction.js";
 
 const MOCK_ELF_RAW_TRANSACTIONS = [
@@ -90,8 +90,100 @@ export async function loadElfMockMarketTransactions() {
   });
 
   return {
-    source: ELF_SOURCE.label,
+    source: ELF_SOURCE.mockLabel,
     fetchedAt,
     transactions
   };
+}
+
+export async function getElfAccessToken() {
+  let payload;
+
+  try {
+    const response = await fetch(ELF_PROXY_ENDPOINTS.refresh, { method: "POST" });
+    payload = await response.json();
+  } catch (error) {
+    throw createElfAdapterError("token_refresh_failed", "Token refresh failed.", error);
+  }
+
+  if (payload?.code !== 0 || !payload?.data?.accessToken) {
+    throw createElfAdapterError("token_refresh_failed", "Token refresh failed.");
+  }
+
+  return `Bearer ${payload.data.accessToken}`;
+}
+
+export async function fetchElfItemTransactions(item, accessToken) {
+  if (!item?.itemId) {
+    throw createElfAdapterError("unexpected_api_response_format", "Unexpected API response format.");
+  }
+
+  const url = new URL(ELF_PROXY_ENDPOINTS.price);
+  url.searchParams.set("itemId", String(item.itemId));
+  url.searchParams.set("accessToken", accessToken);
+
+  let payload;
+
+  try {
+    const response = await fetch(url);
+    payload = await response.json();
+  } catch (error) {
+    throw createElfAdapterError("item_request_failed", "Item request failed.", error, item);
+  }
+
+  if (payload?.code !== 0) {
+    throw createElfAdapterError("item_request_failed", "Item request failed.", null, item);
+  }
+
+  if (!Array.isArray(payload.data)) {
+    throw createElfAdapterError("unexpected_api_response_format", "Unexpected API response format.", null, item);
+  }
+
+  return payload.data;
+}
+
+export async function loadElfLiveTransactions(items = ELF_LIVE_CANARY_ITEMS) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw createElfAdapterError("unexpected_api_response_format", "Unexpected API response format.");
+  }
+
+  const fetchedAt = Date.now();
+  const accessToken = await getElfAccessToken();
+  const transactions = [];
+  const failures = [];
+
+  for (const item of items) {
+    try {
+      const rawTransactions = await fetchElfItemTransactions(item, accessToken);
+      transactions.push(
+        ...rawTransactions.map((rawTx) => normalizeElfTransaction(rawTx, item, { fetchedAt }))
+      );
+    } catch (error) {
+      failures.push({
+        itemId: item.itemId,
+        itemName: item.name,
+        message: error.message
+      });
+    }
+  }
+
+  if (failures.length === items.length && transactions.length === 0) {
+    throw createElfAdapterError("item_request_failed", "Item request failed.");
+  }
+
+  return {
+    source: failures.length > 0 ? `${ELF_SOURCE.liveLabel} (partial)` : ELF_SOURCE.liveLabel,
+    fetchedAt,
+    transactions,
+    failures,
+    partial: failures.length > 0
+  };
+}
+
+function createElfAdapterError(kind, message, cause, item) {
+  const error = new Error(message);
+  error.kind = kind;
+  error.cause = cause;
+  error.item = item;
+  return error;
 }

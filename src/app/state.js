@@ -1,9 +1,9 @@
 export function createAppState() {
   return {
-    sourceName: "Elf Continent mock",
+    sourceName: "Elf Continent live canary",
     status: {
       kind: "loading",
-      message: "Loading mock market transactions...",
+      message: "Loading live market transactions...",
       updatedAt: null
     },
     model: null,

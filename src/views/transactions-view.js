@@ -8,7 +8,7 @@ export function renderTransactionsView(model) {
     <section class="table-panel" aria-labelledby="recent-transactions-title">
       <div class="section-heading">
         <h2 id="recent-transactions-title">Recent Transactions</h2>
-        <span>${formatNumber(transactions.length)} mock records</span>
+        <span>${formatNumber(transactions.length)} records</span>
       </div>
       <div class="transaction-list">
         ${transactions.length > 0 ? transactions.map(renderTransaction).join("") : renderEmptyState()}
