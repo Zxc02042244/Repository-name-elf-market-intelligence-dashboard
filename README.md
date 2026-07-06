@@ -2,6 +2,7 @@
 
 Reusable market intelligence dashboard foundation built with plain HTML, CSS, and JavaScript ES modules.
 
+This repository is a reusable market intelligence dashboard for Elf Continent marketplace data.
 The first source adapter is for Elf Continent marketplace-shaped data, but the core uses neutral market terms:
 
 - asset
