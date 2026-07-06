@@ -81,6 +81,11 @@ h2 {
   cursor: pointer;
 }
 
+.refresh-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .refresh-button:hover,
 .refresh-button:focus-visible {
   border-color: #7fb0d8;
@@ -106,6 +111,19 @@ h2 {
   margin-bottom: 16px;
   padding: 12px 14px;
   color: #dbe8f6;
+}
+
+.status-strip > span {
+  display: grid;
+  gap: 2px;
+}
+
+.status-strip strong {
+  font-size: 0.95rem;
+}
+
+.status-strip small {
+  color: #95a8bd;
 }
 
 .status-loading {
@@ -174,12 +192,46 @@ h2 {
   padding: 18px;
 }
 
+.filter-panel {
+  margin-bottom: 16px;
+}
+
 .section-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
+}
+
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid #2b4058;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #0f1720;
+  color: #dce8f6;
+  cursor: pointer;
+}
+
+.category-tab:hover,
+.category-tab:focus-visible,
+.category-tab-active {
+  border-color: #77c7a2;
+  background: #17283a;
+}
+
+.category-tab strong {
+  color: #f2dfae;
 }
 
 .compact-grid {
@@ -284,6 +336,15 @@ h2 {
 
   .refresh-button {
     width: 100%;
+  }
+
+  .category-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .category-tab {
+    justify-content: space-between;
   }
 
   h1 {

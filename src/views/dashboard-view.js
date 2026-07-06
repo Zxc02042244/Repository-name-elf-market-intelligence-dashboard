@@ -7,7 +7,10 @@ export function renderDashboardView(model, status) {
 
   return `
     <section class="status-strip status-${status.kind}" role="status" aria-live="polite">
-      <span>${escapeHtml(status.message)}</span>
+      <span>
+        <strong>${escapeHtml(status.message)}</strong>
+        ${status.detail ? `<small>${escapeHtml(status.detail)}</small>` : ""}
+      </span>
       <span>${status.updatedAt ? `Updated ${formatTime(status.updatedAt)}` : "Waiting for data"}</span>
     </section>
 

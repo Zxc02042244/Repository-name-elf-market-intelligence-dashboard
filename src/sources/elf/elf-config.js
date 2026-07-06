@@ -3,6 +3,7 @@ export const ELF_SOURCE = {
   label: "Elf Continent",
   mockLabel: "Elf Continent mock",
   liveLabel: "Elf Continent live canary",
+  coverageLabel: "Elf Continent market coverage",
   currency: "SIGIL"
 };
 

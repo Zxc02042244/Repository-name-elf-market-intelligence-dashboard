@@ -1,5 +1,5 @@
 import { ELF_PROXY_ENDPOINTS, ELF_SOURCE } from "./elf-config.js";
-import { ELF_LIVE_CANARY_ITEMS, getElfBetaItem } from "./elf-items.js";
+import { ELF_MARKET_COVERAGE_ITEMS, getElfBetaItem } from "./elf-items.js";
 import { normalizeElfTransaction } from "./normalize-elf-transaction.js";
 
 const MOCK_ELF_RAW_TRANSACTIONS = [
@@ -144,31 +144,18 @@ export async function fetchElfItemTransactions(item, accessToken) {
   return payload.data;
 }
 
-export async function loadElfLiveTransactions(items = ELF_LIVE_CANARY_ITEMS) {
+export async function loadElfLiveTransactions(items = ELF_MARKET_COVERAGE_ITEMS) {
   if (!Array.isArray(items) || items.length === 0) {
     throw createElfAdapterError("unexpected_api_response_format", "Unexpected API response format.");
   }
 
   const fetchedAt = Date.now();
   const accessToken = await getElfAccessToken();
-  const transactions = [];
-  const failures = [];
-
-  for (const item of items) {
-    try {
-      const rawTransactions = await fetchElfItemTransactions(item, accessToken);
-      transactions.push(
-        ...rawTransactions.map((rawTx) => normalizeElfTransaction(rawTx, item, { fetchedAt }))
-      );
-    } catch (error) {
-      failures.push({
-        itemId: item.itemId,
-        itemName: item.name,
-        kind: error.kind ?? "item_request_failed",
-        message: getSafeErrorMessage(error)
-      });
-    }
-  }
+  const itemResults = await Promise.all(
+    items.map((item) => loadElfItemTransactions(item, accessToken, fetchedAt))
+  );
+  const transactions = itemResults.flatMap((result) => result.transactions);
+  const failures = itemResults.flatMap((result) => result.failure ?? []);
 
   if (failures.length === items.length && transactions.length === 0) {
     if (failures.some((failure) => failure.kind === "unexpected_api_response_format")) {
@@ -179,12 +166,37 @@ export async function loadElfLiveTransactions(items = ELF_LIVE_CANARY_ITEMS) {
   }
 
   return {
-    source: failures.length > 0 ? `${ELF_SOURCE.liveLabel} (partial)` : ELF_SOURCE.liveLabel,
+    source: failures.length > 0 ? `${ELF_SOURCE.coverageLabel} (partial)` : ELF_SOURCE.coverageLabel,
     fetchedAt,
     transactions,
     failures,
-    partial: failures.length > 0
+    partial: failures.length > 0,
+    coverage: {
+      requestedItems: items.length,
+      loadedItems: items.length - failures.length,
+      failedItems: failures.length
+    }
   };
+}
+
+async function loadElfItemTransactions(item, accessToken, fetchedAt) {
+  try {
+    const rawTransactions = await fetchElfItemTransactions(item, accessToken);
+
+    return {
+      transactions: rawTransactions.map((rawTx) => normalizeElfTransaction(rawTx, item, { fetchedAt }))
+    };
+  } catch (error) {
+    return {
+      transactions: [],
+      failure: {
+        itemId: item.itemId,
+        itemName: item.name,
+        kind: error.kind ?? "item_request_failed",
+        message: getSafeErrorMessage(error)
+      }
+    };
+  }
 }
 
 function createElfAdapterError(kind, message, cause, item) {

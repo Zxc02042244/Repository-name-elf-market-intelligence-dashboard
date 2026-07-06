@@ -3,18 +3,31 @@ import { formatTime } from "../core/utils/time.js";
 
 export function renderTransactionsView(model) {
   const transactions = model?.transactions ?? [];
+  const visibleTransactions = transactions.slice(0, 120);
 
   return `
     <section class="table-panel" aria-labelledby="recent-transactions-title">
       <div class="section-heading">
         <h2 id="recent-transactions-title">Recent Transactions</h2>
-        <span>${formatNumber(transactions.length)} records</span>
+        <span>${formatRecordCount(visibleTransactions.length, transactions.length)}</span>
       </div>
       <div class="transaction-list">
-        ${transactions.length > 0 ? transactions.map(renderTransaction).join("") : renderEmptyState()}
+        ${
+          visibleTransactions.length > 0
+            ? visibleTransactions.map(renderTransaction).join("")
+            : renderEmptyState()
+        }
       </div>
     </section>
   `;
+}
+
+function formatRecordCount(visibleCount, totalCount) {
+  if (visibleCount === totalCount) {
+    return `${formatNumber(totalCount)} records`;
+  }
+
+  return `${formatNumber(visibleCount)} of ${formatNumber(totalCount)} records`;
 }
 
 function renderTransaction(transaction) {
