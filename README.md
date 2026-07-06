@@ -45,3 +45,7 @@ Not included yet:
 ## Local Use
 
 Open `index.html` directly in a browser or serve this folder with any static server. No build step is required.
+
+## Audit Checklist
+
+Use `CHECKLIST.md` for BETA 1.0.1 architecture audits and GitHub Pages smoke checks.
