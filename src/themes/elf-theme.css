@@ -1,0 +1,41 @@
+:root {
+  --elf-accent: #77c7a2;
+  --elf-gold: #d6b66d;
+}
+
+body {
+  background:
+    linear-gradient(180deg, rgb(12 17 23 / 88%), #0c1117 320px),
+    #0c1117;
+}
+
+.app-header {
+  border-bottom: 1px solid rgb(119 199 162 / 18%);
+}
+
+.eyebrow,
+.metric-card strong,
+.compact-card strong {
+  color: var(--elf-accent);
+}
+
+.refresh-button {
+  box-shadow: inset 0 1px 0 rgb(214 182 109 / 18%);
+}
+
+.status-updated {
+  background: rgb(39 89 72 / 36%);
+}
+
+.status-loading {
+  background: rgb(53 77 111 / 36%);
+}
+
+.status-error {
+  background: rgb(110 51 51 / 36%);
+}
+
+.summary-panel strong,
+.transaction-row strong {
+  color: #f2dfae;
+}
