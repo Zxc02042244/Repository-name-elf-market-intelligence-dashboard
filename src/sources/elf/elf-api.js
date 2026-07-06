@@ -97,16 +97,17 @@ export async function loadElfMockMarketTransactions() {
 }
 
 export async function getElfAccessToken() {
-  let payload;
+  let response;
 
   try {
-    const response = await fetch(ELF_PROXY_ENDPOINTS.refresh, { method: "POST" });
-    payload = await response.json();
+    response = await fetch(ELF_PROXY_ENDPOINTS.refresh, { method: "POST" });
   } catch (error) {
     throw createElfAdapterError("token_refresh_failed", "Token refresh failed.", error);
   }
 
-  if (payload?.code !== 0 || !payload?.data?.accessToken) {
+  const payload = await readProxyJson(response, "token_refresh_failed", "Token refresh failed.");
+
+  if (payload.code !== 0 || !isNonEmptyString(payload.data?.accessToken)) {
     throw createElfAdapterError("token_refresh_failed", "Token refresh failed.");
   }
 
@@ -122,14 +123,15 @@ export async function fetchElfItemTransactions(item, accessToken) {
   url.searchParams.set("itemId", String(item.itemId));
   url.searchParams.set("accessToken", accessToken);
 
-  let payload;
+  let response;
 
   try {
-    const response = await fetch(url);
-    payload = await response.json();
+    response = await fetch(url);
   } catch (error) {
     throw createElfAdapterError("item_request_failed", "Item request failed.", error, item);
   }
+
+  const payload = await readProxyJson(response, "item_request_failed", "Item request failed.", item);
 
   if (payload?.code !== 0) {
     throw createElfAdapterError("item_request_failed", "Item request failed.", null, item);
@@ -162,12 +164,17 @@ export async function loadElfLiveTransactions(items = ELF_LIVE_CANARY_ITEMS) {
       failures.push({
         itemId: item.itemId,
         itemName: item.name,
-        message: error.message
+        kind: error.kind ?? "item_request_failed",
+        message: getSafeErrorMessage(error)
       });
     }
   }
 
   if (failures.length === items.length && transactions.length === 0) {
+    if (failures.some((failure) => failure.kind === "unexpected_api_response_format")) {
+      throw createElfAdapterError("unexpected_api_response_format", "Unexpected API response format.");
+    }
+
     throw createElfAdapterError("item_request_failed", "Item request failed.");
   }
 
@@ -186,4 +193,48 @@ function createElfAdapterError(kind, message, cause, item) {
   error.cause = cause;
   error.item = item;
   return error;
+}
+
+async function readProxyJson(response, failureKind, failureMessage, item) {
+  if (!response?.ok) {
+    throw createElfAdapterError(failureKind, failureMessage, null, item);
+  }
+
+  let payload;
+
+  try {
+    payload = await response.json();
+  } catch (error) {
+    throw createElfAdapterError(
+      "unexpected_api_response_format",
+      "Unexpected API response format.",
+      error,
+      item
+    );
+  }
+
+  if (!payload || typeof payload !== "object" || !Object.hasOwn(payload, "code")) {
+    throw createElfAdapterError(
+      "unexpected_api_response_format",
+      "Unexpected API response format.",
+      null,
+      item
+    );
+  }
+
+  return payload;
+}
+
+function getSafeErrorMessage(error) {
+  const messages = {
+    token_refresh_failed: "Token refresh failed.",
+    item_request_failed: "Item request failed.",
+    unexpected_api_response_format: "Unexpected API response format."
+  };
+
+  return messages[error?.kind] ?? "Item request failed.";
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
 }

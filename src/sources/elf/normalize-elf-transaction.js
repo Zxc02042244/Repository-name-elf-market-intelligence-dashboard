@@ -57,11 +57,11 @@ export function normalizeElfTransaction(rawTx, item, context = {}) {
 
 function assertElfTransactionShape(rawTx, item) {
   if (!rawTx || typeof rawTx !== "object") {
-    throw new TypeError("Unexpected API response format: transaction must be an object.");
+    throw createElfNormalizationError();
   }
 
   if (!item?.itemId || !item?.name) {
-    throw new TypeError("Unexpected API response format: item metadata is missing.");
+    throw createElfNormalizationError();
   }
 
   const quantity = Number(rawTx.itemNum);
@@ -69,20 +69,24 @@ function assertElfTransactionShape(rawTx, item) {
   const transactionTime = Number(rawTx.txnTime);
   const orderType = Number(rawTx.orderType);
 
-  if (!rawTx.txnId || !Number.isFinite(transactionTime)) {
-    throw new TypeError("Unexpected API response format: transaction id or time is missing.");
+  if (!hasValue(rawTx.txnId) || !Number.isFinite(transactionTime) || transactionTime <= 0) {
+    throw createElfNormalizationError();
   }
 
-  if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(totalAmount)) {
-    throw new TypeError("Unexpected API response format: quantity or total amount is invalid.");
+  if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(totalAmount) || totalAmount < 0) {
+    throw createElfNormalizationError();
   }
 
   if (orderType !== 1 && orderType !== 2) {
-    throw new TypeError("Unexpected API response format: order type is unsupported.");
+    throw createElfNormalizationError();
   }
 
-  if (!rawTx.orderUserId || !rawTx.traderId) {
-    throw new TypeError("Unexpected API response format: participant fields are missing.");
+  if (!hasValue(rawTx.orderUserId) || !hasValue(rawTx.orderUserName)) {
+    throw createElfNormalizationError();
+  }
+
+  if (!hasValue(rawTx.traderId) || !hasValue(rawTx.traderName)) {
+    throw createElfNormalizationError();
   }
 }
 
@@ -112,4 +116,14 @@ function mapElfParticipants(rawTx) {
 function normalizeElfTimestamp(value) {
   const timestamp = Number(value);
   return timestamp < 100000000000 ? timestamp * 1000 : timestamp;
+}
+
+function createElfNormalizationError() {
+  const error = new TypeError("Unexpected API response format.");
+  error.kind = "unexpected_api_response_format";
+  return error;
+}
+
+function hasValue(value) {
+  return value !== null && value !== undefined && String(value).trim().length > 0;
 }

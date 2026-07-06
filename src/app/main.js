@@ -61,7 +61,7 @@ async function loadDashboard() {
     if (model.transactions.length === 0) {
       setError(appState, new Error("No transactions returned."), "No transactions returned.");
     } else if (sourceSnapshot.partial) {
-      setUpdated(appState, "Partial data loaded.");
+      setUpdated(appState, "Partial data loaded. Some items failed.");
     } else {
       setUpdated(appState, "Updated from Elf live adapter.");
     }
@@ -74,8 +74,8 @@ async function loadDashboard() {
 
 function getStatusMessage(error) {
   const messages = {
-    token_refresh_failed: "Token refresh failed.",
-    item_request_failed: "Item request failed.",
+    token_refresh_failed: "Token refresh failed. Live data is unavailable.",
+    item_request_failed: "Item request failed. Live data is unavailable.",
     unexpected_api_response_format: "Unexpected API response format."
   };
 
