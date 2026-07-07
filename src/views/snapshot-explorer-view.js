@@ -9,7 +9,7 @@ export function renderSnapshotExplorerView(model, route, explorer) {
         <h2 id="snapshot-explorer-title">Snapshot Search</h2>
         <span>${formatNumber(model?.assetStats?.length ?? 0)} assets / ${formatNumber(model?.actorStats?.length ?? 0)} actors</span>
       </div>
-      <p class="section-note">Search and detail views use the currently loaded MarketModel snapshot only. Not historical trend data.</p>
+      <p class="section-note">Search and detail views use the currently loaded MarketModel snapshot only. Not historical global search.</p>
       ${renderExplorerControls(route, explorer)}
       ${renderExplorerScopeNote()}
       ${renderExplorerResults(model, route, explorer)}
@@ -24,12 +24,12 @@ function renderExplorerControls(route, explorer) {
   return `
     <form class="explorer-controls" data-explorer-search>
       <label class="search-field">
-        <span>Search assets or actors</span>
+        <span>Search current loaded snapshot</span>
         <input
           type="search"
           name="q"
           value="${escapeHtml(controls.search)}"
-          placeholder="Name, category, or asset class"
+          placeholder="Search assets or actors in loaded snapshot"
         />
       </label>
       <label class="sort-field">
@@ -101,7 +101,8 @@ function renderModeLink(mode, label, route, currentMode) {
 function renderExplorerScopeNote() {
   return `
     <p class="explorer-scope-note">
-      Results reflect the current category filter and currently loaded snapshot.
+      Search results use the currently loaded marketplace snapshot. Category filters may limit visible results.
+      Historical global search requires future historical database read support.
     </p>
   `;
 }
