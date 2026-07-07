@@ -13,11 +13,30 @@ The first source adapter is for Elf Continent marketplace-shaped data, but the c
 - market model
 - market signal
 
+## Current Status
+
+The BETA 1.0.0 foundation has evolved into a GitHub Pages-compatible loaded snapshot dashboard with:
+
+- generic `src/core/` market model and analytics boundaries
+- Elf-specific source adapter code under `src/sources/elf/`
+- snapshot explorer, asset/actor snapshot details, and recent transaction views
+- static local i18n dictionaries for `en`, `zh-Hant`, `ja`, `ko`, and `vi`
+- Elf-inspired CSS theme tokens and generic CSS-only asset badges
+- local static preview support through `scripts/serve-static.mjs`
+
+Current phase map and handoff notes live in:
+
+```txt
+docs/index.md
+```
+
+Live API/proxy work and historical DB writes remain paused until explicitly resumed.
+
 ## Current Scope
 
-BETA 1.0.0 is architecture and mock data only.
+BETA 1.0.0 was the original architecture foundation.
 
-Included:
+Foundation included:
 
 - thin `index.html`
 - GitHub Pages-compatible relative paths
@@ -27,24 +46,35 @@ Included:
 - dashboard and recent transaction views rendered from `MarketModel`
 - loading, updated, and error status states
 
-Not included yet:
+Still intentionally out of active scope unless explicitly approved:
 
-- live API calls
-- tokens
-- full item list
+- frontend tokens or secrets
+- direct official Elf/Cidi frontend API calls
 - MPS
 - TTS/TTP
 - alerts
 - watchlist
 - market health
-- detail pages
-- charts or network maps
+- historical 7D/30D charts
+- network maps
 - cloud database
 - scheduled collector
 
 ## Local Use
 
-Open `index.html` directly in a browser or serve this folder with any static server. No build step is required.
+Serve this folder with the local static preview workflow:
+
+```txt
+node scripts/serve-static.mjs .
+```
+
+Default preview URL:
+
+```txt
+http://127.0.0.1:4173/
+```
+
+No build step is required.
 
 ## Audit Checklist
 

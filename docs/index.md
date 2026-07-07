@@ -5,13 +5,13 @@
 Latest closeout:
 
 ```txt
-V2-QA-A Live Manual Browser/Mobile Smoke Checklist
+V2-DOCS-C Targeted Documentation Cleanup
 ```
 
-Latest known baseline before this index:
+Latest reviewed baseline before this cleanup:
 
 ```txt
-fba9a1712f321279c2351638e7340cbbaa3dd32a
+14bd1f17e38d48c28269a64f37245345bd31edb6
 ```
 
 Current product mode:
@@ -21,7 +21,7 @@ Current product mode:
 - loaded MarketModel snapshot UI
 - local static i18n dictionaries
 - Elf-inspired CSS theme
-- text-first asset UI
+- text-first asset UI with generic CSS-only asset badges
 
 Paused lines:
 
@@ -41,6 +41,10 @@ Paused lines:
 
 - `docs/v2-closeout-a-near-term-safe-work-closeout.md`
 - `docs/v2-qa-a-live-manual-browser-mobile-smoke-checklist.md`
+- `docs/v2-qa-b-live-pages-deployment-smoke-closeout.md`
+- `docs/v2-qa-c-manual-browser-mobile-interactive-smoke-result-backfill.md`
+- `docs/v2-docs-b-encoding-legacy-doc-cleanup-audit.md`
+- `docs/v2-docs-c-targeted-documentation-cleanup.md`
 - `docs/local-static-preview-workflow.md`
 
 Use these first when deciding the next no-secret UI or documentation task.
@@ -64,7 +68,7 @@ Current i18n state:
 Known note:
 
 - V2-I18N-G completed as translation polish, but no standalone V2-I18N-G document is present.
-- V2-I18N-F contains corrupted locale display text in the doc only; runtime dictionaries are separate.
+- V2-I18N-F locale display text was verified as valid UTF-8; earlier corrupted output was a terminal display issue.
 
 ## Theme / Mobile Track
 
@@ -78,7 +82,8 @@ Current theme state:
 
 - generic layout styles: `src/styles.css`
 - Elf-inspired theme tokens: `src/themes/elf-theme.css`
-- real browser/mobile 390px QA still needs manual or stable browser verification
+- V2-QA-C browser/mobile interactive smoke passed for page load, locale switching, persistence, search, Clear Search, refresh failure state, and narrow viewport overflow checks
+- asset/actor detail selection with live data remains limited by the current paused live API/proxy state
 
 ## Search / Snapshot Explorer Track
 
@@ -102,8 +107,8 @@ Current search state:
 
 Current asset image decision:
 
-- keep asset UI text-only for now
-- first safe visual step can be a generic CSS-only badge
+- keep asset UI text-first
+- generic CSS-only asset badges are allowed and currently implemented
 - item-specific image mapping requires source/provenance approval
 - Elf-specific image mapping belongs in `src/sources/elf/`
 
@@ -165,12 +170,13 @@ Current legacy state:
 
 ## Recommended Next Safe Options
 
-1. Run live manual browser/mobile QA from `docs/v2-qa-a-live-manual-browser-mobile-smoke-checklist.md`.
+1. Repeat V2-QA-C style browser/mobile smoke after future CSS or i18n changes.
 2. Use `scripts/serve-static.mjs` for local static preview smoke:
    - `node scripts/serve-static.mjs .`
    - `http://127.0.0.1:4173/`
 3. Keep CSS-only asset badges generic and source-data based.
-4. Resume V2-6B.5 one-item DB write test only when safe Supabase secret env is configured.
+4. Plan personal proxy feasibility only if live API work is explicitly resumed.
+5. Resume V2-6B.5 one-item DB write test only when safe Supabase secret env is configured.
 
 ## Explicit Non-goals
 
