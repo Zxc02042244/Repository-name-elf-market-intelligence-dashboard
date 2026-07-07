@@ -366,18 +366,58 @@ h2 {
   background: #0d141d;
 }
 
-.snapshot-detail-grid {
+.snapshot-detail-layout {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.snapshot-detail-section {
+  border: 1px solid #213144;
+  border-radius: 8px;
+  padding: 14px;
+  background: #101923;
+}
+
+.snapshot-identity-section {
+  background: #0f1720;
+}
+
+.detail-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.detail-section-heading h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.snapshot-identity-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
+}
+
+.snapshot-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.snapshot-detail-note {
+  margin-top: 12px;
+  margin-bottom: 0;
 }
 
 .detail-metric {
   border: 1px solid #213144;
   border-radius: 8px;
   padding: 12px;
-  background: #101923;
+  background: #0d141d;
 }
 
 .detail-metric span,
@@ -573,6 +613,7 @@ h2 {
   .dashboard-grid,
   .compact-grid,
   .snapshot-result-grid,
+  .snapshot-identity-grid,
   .snapshot-detail-grid,
   .activity-metric-grid,
   .analytics-summary-grid,
@@ -599,6 +640,7 @@ h2 {
   .dashboard-grid,
   .compact-grid,
   .snapshot-result-grid,
+  .snapshot-identity-grid,
   .snapshot-detail-grid,
   .activity-metric-grid,
   .analytics-summary-grid,

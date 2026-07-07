@@ -145,21 +145,35 @@ function renderAssetDetail(detail) {
         <h2 id="asset-detail-title">${escapeHtml(stat.asset.name)}</h2>
         <span>Snapshot Asset Stats</span>
       </div>
-      <p class="section-note">
-        This section uses the currently loaded marketplace data only. True 7D/30D history requires the paused historical database phase.
-      </p>
-      <div class="snapshot-detail-grid">
-        ${renderDetailMetric("Asset Class", stat.asset.assetClass ?? "Unclassified / Other")}
-        ${renderDetailMetric("Category", stat.asset.category)}
-        ${renderDetailMetric("Group", stat.asset.group)}
-        ${renderDetailMetric("Loaded Trades", formatNumber(stat.tradeCount))}
-        ${renderDetailMetric("Loaded Volume", formatValue(stat.totalVolume, stat.currency))}
-        ${renderDetailMetric("Loaded Quantity", formatNumber(stat.totalQuantity))}
-        ${renderDetailMetric("Snapshot Avg Unit", formatValue(stat.averageUnitValue, stat.currency))}
-        ${renderDetailMetric("Latest Loaded Unit", formatValue(stat.lastUnitValue, stat.currency))}
-        ${renderDetailMetric("Latest Loaded Trade", formatTime(stat.latestTransactionTime))}
-        ${renderDetailMetric("Loaded Sellers", formatNumber(stat.activeSellers))}
-        ${renderDetailMetric("Loaded Buyers", formatNumber(stat.activeBuyers))}
+      <div class="snapshot-detail-layout">
+        <section class="snapshot-detail-section snapshot-identity-section" aria-label="Asset identity and taxonomy">
+          <div class="detail-section-heading">
+            <h3>Asset Identity / Taxonomy</h3>
+          </div>
+          <div class="snapshot-identity-grid">
+            ${renderDetailMetric("Asset Class", stat.asset.assetClass ?? "Unclassified / Other")}
+            ${renderDetailMetric("Category", stat.asset.category)}
+            ${renderDetailMetric("Group", stat.asset.group)}
+          </div>
+          <p class="section-note snapshot-detail-note">
+            This section uses the currently loaded marketplace data only. True 7D/30D history requires the paused historical database phase.
+          </p>
+        </section>
+        <section class="snapshot-detail-section" aria-label="Snapshot asset statistics">
+          <div class="detail-section-heading">
+            <h3>Snapshot Asset Stats</h3>
+          </div>
+          <div class="snapshot-detail-grid">
+            ${renderDetailMetric("Loaded Trades", formatNumber(stat.tradeCount))}
+            ${renderDetailMetric("Loaded Volume", formatValue(stat.totalVolume, stat.currency))}
+            ${renderDetailMetric("Loaded Quantity", formatNumber(stat.totalQuantity))}
+            ${renderDetailMetric("Snapshot Avg Unit", formatValue(stat.averageUnitValue, stat.currency))}
+            ${renderDetailMetric("Latest Loaded Unit", formatValue(stat.lastUnitValue, stat.currency))}
+            ${renderDetailMetric("Latest Loaded Trade", formatTime(stat.latestTransactionTime))}
+            ${renderDetailMetric("Loaded Sellers", formatNumber(stat.activeSellers))}
+            ${renderDetailMetric("Loaded Buyers", formatNumber(stat.activeBuyers))}
+          </div>
+        </section>
       </div>
       ${renderDetailTransactions("Recent Loaded Transactions", detail.transactions)}
     </article>
