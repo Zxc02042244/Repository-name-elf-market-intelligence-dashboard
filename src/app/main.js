@@ -138,6 +138,10 @@ function getCoverageDetail(sourceSnapshot) {
     return "";
   }
 
+  if (coverage.failedItems > 0) {
+    return `${coverage.loadedItems}/${coverage.requestedItems} items loaded, ${coverage.failedItems} failed.`;
+  }
+
   return `${coverage.loadedItems}/${coverage.requestedItems} items loaded.`;
 }
 

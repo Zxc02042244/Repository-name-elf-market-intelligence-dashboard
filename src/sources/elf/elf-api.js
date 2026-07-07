@@ -2,6 +2,8 @@ import { ELF_PROXY_ENDPOINTS, ELF_SOURCE } from "./elf-config.js";
 import { ELF_MARKET_COVERAGE_ITEMS, getElfBetaItem } from "./elf-items.js";
 import { normalizeElfTransaction } from "./normalize-elf-transaction.js";
 
+const ELF_ITEM_REQUEST_CONCURRENCY = 4;
+
 const MOCK_ELF_RAW_TRANSACTIONS = [
   {
     itemId: "elf-sigil-ore",
@@ -151,8 +153,11 @@ export async function loadElfLiveTransactions(items = ELF_MARKET_COVERAGE_ITEMS)
 
   const fetchedAt = Date.now();
   const accessToken = await getElfAccessToken();
-  const itemResults = await Promise.all(
-    items.map((item) => loadElfItemTransactions(item, accessToken, fetchedAt))
+  const itemResults = await loadElfItemsWithConcurrency(
+    items,
+    accessToken,
+    fetchedAt,
+    ELF_ITEM_REQUEST_CONCURRENCY
   );
   const transactions = itemResults.flatMap((result) => result.transactions);
   const failures = itemResults.flatMap((result) => result.failure ?? []);
@@ -177,6 +182,24 @@ export async function loadElfLiveTransactions(items = ELF_MARKET_COVERAGE_ITEMS)
       failedItems: failures.length
     }
   };
+}
+
+async function loadElfItemsWithConcurrency(items, accessToken, fetchedAt, concurrency) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+
+  async function runWorker() {
+    while (nextIndex < items.length) {
+      const itemIndex = nextIndex;
+      nextIndex += 1;
+      results[itemIndex] = await loadElfItemTransactions(items[itemIndex], accessToken, fetchedAt);
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, runWorker));
+
+  return results;
 }
 
 async function loadElfItemTransactions(item, accessToken, fetchedAt) {
