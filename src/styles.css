@@ -288,6 +288,138 @@ h2 {
   gap: 14px;
 }
 
+.explorer-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.search-field,
+.sort-field {
+  display: grid;
+  gap: 6px;
+}
+
+.search-field span,
+.sort-field span {
+  color: #92a5bb;
+  font-size: 0.82rem;
+}
+
+.search-field input,
+.sort-field select {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #2b4058;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #0d141d;
+  color: #e7edf4;
+}
+
+.compact-action {
+  width: 100%;
+}
+
+.segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.segment-link,
+.detail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid #2b4058;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #dce8f6;
+  text-decoration: none;
+}
+
+.segment-link:hover,
+.segment-link:focus-visible,
+.segment-link-active,
+.detail-link:hover,
+.detail-link:focus-visible {
+  border-color: #77c7a2;
+  background: #17283a;
+}
+
+.snapshot-result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.snapshot-detail {
+  border: 1px solid #2b4058;
+  border-radius: 8px;
+  padding: 16px;
+  background: #0d141d;
+}
+
+.snapshot-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-metric {
+  border: 1px solid #213144;
+  border-radius: 8px;
+  padding: 12px;
+  background: #101923;
+}
+
+.detail-metric span,
+.detail-metric strong {
+  display: block;
+}
+
+.detail-metric span {
+  color: #92a5bb;
+  font-size: 0.8rem;
+}
+
+.detail-metric strong {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+.detail-transactions h3 {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+}
+
+.detail-transaction-list {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-transaction-row {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid #213144;
+  padding-top: 8px;
+}
+
+.detail-transaction-row span,
+.detail-transaction-row time {
+  color: #b7c5d8;
+  overflow-wrap: anywhere;
+}
+
 .activity-metric-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -440,6 +572,8 @@ h2 {
 
   .dashboard-grid,
   .compact-grid,
+  .snapshot-result-grid,
+  .snapshot-detail-grid,
   .activity-metric-grid,
   .analytics-summary-grid,
   .asset-class-grid {
@@ -448,6 +582,11 @@ h2 {
 
   .transaction-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .explorer-controls,
+  .detail-transaction-row {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -459,6 +598,8 @@ h2 {
 
   .dashboard-grid,
   .compact-grid,
+  .snapshot-result-grid,
+  .snapshot-detail-grid,
   .activity-metric-grid,
   .analytics-summary-grid,
   .asset-class-grid,

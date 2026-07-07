@@ -1,12 +1,14 @@
 import { createAppState, setError, setLoading, setUpdated } from "./state.js";
-import { getCurrentRoute } from "./router.js";
+import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
+import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
 import { loadElfLiveTransactions } from "../sources/elf/elf-api.js";
 import { ELF_MARKET_COVERAGE_ITEMS } from "../sources/elf/elf-items.js";
 import { renderCategoryFilterView } from "../views/category-filter-view.js";
 import { renderDashboardView } from "../views/dashboard-view.js";
 import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
+import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
 
 const appState = createAppState();
@@ -19,6 +21,7 @@ function renderApp() {
 
   const route = getCurrentRoute();
   const isLoading = appState.status.kind === "loading";
+  const snapshotExplorer = buildSnapshotExplorer(appState.model, route);
   appRoot.innerHTML = `
     <main class="app-shell">
       <section class="app-header" aria-labelledby="page-title">
@@ -37,6 +40,7 @@ function renderApp() {
       ${renderDashboardView(appState.model, appState.status, route)}
       ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory)}
       ${renderAnalyticsView(appState.model)}
+      ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer)}
       ${renderSignalsView(appState.model)}
       ${renderTransactionsView(appState.model)}
     </main>
@@ -54,6 +58,20 @@ function renderApp() {
       renderApp();
     });
   }
+
+  const explorerForm = appRoot.querySelector("[data-explorer-search]");
+  explorerForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const formData = new FormData(explorerForm);
+    const search = String(formData.get("q") ?? "").trim();
+    const sort = String(formData.get("sort") ?? "value");
+    window.location.hash = buildRouteHash(route, {
+      search,
+      sort,
+      assetId: "",
+      actorId: ""
+    });
+  });
 }
 
 async function loadDashboard() {
@@ -155,3 +173,7 @@ function getStatusMessage(error) {
 
 renderApp();
 void loadDashboard();
+
+window.addEventListener("hashchange", () => {
+  renderApp();
+});
