@@ -102,9 +102,6 @@ function renderUnavailableWorkspace(locale) {
       <p class="empty-state">
         ${t("status.waitingForData", locale)}
       </p>
-      <p class="section-note">
-        ${t("search.notHistoricalGlobal", locale)}
-      </p>
     </section>
   `;
 }

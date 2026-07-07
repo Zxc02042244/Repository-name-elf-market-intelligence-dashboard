@@ -18,8 +18,6 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
       <span>${status.updatedAt && status.kind !== "error" ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) }) : t("status.waitingForData", locale)}</span>
     </section>
 
-    ${isUnavailable ? renderUnavailableNotice(status, locale) : ""}
-
     <section class="dashboard-grid" aria-label="${t("dashboard.marketTotals", locale)}">
       ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0, metricOptions)}
       ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency), metricOptions)}
@@ -44,17 +42,8 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
   `;
 }
 
-function renderUnavailableNotice(status, locale) {
-  return `
-    <section class="empty-state empty-state-prominent" aria-label="${t("status.liveDataUnavailable", locale)}">
-      <strong>${escapeHtml(localizeStatusMessage(status.message, locale))}</strong>
-      <span>${t("status.waitingForData", locale)}</span>
-    </section>
-  `;
-}
-
 function renderMetricCard(label, value, options = {}) {
-  const displayValue = options.unavailable ? "—" : value;
+  const displayValue = options.unavailable ? "--" : value;
 
   return `
     <article class="metric-card ${options.unavailable ? "metric-card-unavailable" : ""}">

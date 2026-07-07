@@ -806,21 +806,6 @@ h2 {
   color: #9badc0;
 }
 
-.empty-state-prominent {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.empty-state-prominent strong {
-  color: inherit;
-}
-
-.empty-state-prominent span {
-  color: inherit;
-  opacity: 0.82;
-}
-
 .metric-card-unavailable strong {
   color: #aebed1;
 }
