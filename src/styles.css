@@ -210,6 +210,40 @@ h2 {
   gap: 10px;
 }
 
+.asset-class-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.asset-class-card {
+  min-height: 76px;
+  border: 1px solid #26384d;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0d141d;
+}
+
+.asset-class-card span,
+.asset-class-card strong {
+  display: block;
+}
+
+.asset-class-card span {
+  color: #92a5bb;
+  font-size: 0.84rem;
+}
+
+.asset-class-card strong {
+  margin-top: 8px;
+  font-size: 1.35rem;
+}
+
+.section-heading-compact {
+  margin-top: 10px;
+}
+
 .category-tab {
   display: inline-flex;
   align-items: center;
@@ -313,7 +347,8 @@ h2 {
   }
 
   .dashboard-grid,
-  .compact-grid {
+  .compact-grid,
+  .asset-class-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -330,6 +365,7 @@ h2 {
 
   .dashboard-grid,
   .compact-grid,
+  .asset-class-grid,
   .transaction-row {
     grid-template-columns: 1fr;
   }

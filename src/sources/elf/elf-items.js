@@ -1,3 +1,90 @@
+export const ELF_ASSET_CLASSES = Object.freeze({
+  resources: "Resources / Materials",
+  progression: "Blueprints / Progression",
+  collectibles: "Cosmetics / Collectibles",
+  other: "Unclassified / Other"
+});
+
+const ELF_FALLBACK_TAXONOMY = Object.freeze({
+  assetClass: ELF_ASSET_CLASSES.other,
+  group: "Unclassified",
+  category: "Other"
+});
+
+const ELF_CATEGORY_TAXONOMY = Object.freeze({
+  "Animal Product": {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Raw Materials",
+    category: "Animal Products"
+  },
+  Blueprint: {
+    assetClass: ELF_ASSET_CLASSES.progression,
+    group: "Blueprint",
+    category: "Blueprints"
+  },
+  Component: {
+    assetClass: ELF_ASSET_CLASSES.progression,
+    group: "Crafting",
+    category: "Components"
+  },
+  Crop: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Vegetables"
+  },
+  Fruit: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Fruits"
+  },
+  General: ELF_FALLBACK_TAXONOMY,
+  Grain: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Grains"
+  },
+  Grass: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Grass"
+  },
+  Herb: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Raw Materials"
+  },
+  Mineral: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Raw Materials",
+    category: "Ore"
+  },
+  "Pi Elf Outfit": {
+    assetClass: ELF_ASSET_CLASSES.collectibles,
+    group: "Outfit",
+    category: "Pi Elf Outfit"
+  },
+  Resource: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Raw Materials",
+    category: "Raw Materials"
+  },
+  Spice: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Spices"
+  },
+  Vegetable: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Crops",
+    category: "Vegetables"
+  },
+  Wood: {
+    assetClass: ELF_ASSET_CLASSES.resources,
+    group: "Raw Materials",
+    category: "Wood"
+  }
+});
+
 export const ELF_BETA_ITEMS = [
   {
     itemId: "elf-sigil-ore",
@@ -23,7 +110,7 @@ export const ELF_BETA_ITEMS = [
     group: "Crafting",
     category: "Component"
   }
-];
+].map(applyElfAssetTaxonomy);
 
 export const ELF_LIVE_CANARY_ITEMS = [
   {
@@ -32,7 +119,7 @@ export const ELF_LIVE_CANARY_ITEMS = [
     group: "Resource",
     category: "Crop"
   }
-];
+].map(applyElfAssetTaxonomy);
 
 export const ELF_MARKET_COVERAGE_ITEMS = [
   {
@@ -695,8 +782,19 @@ export const ELF_MARKET_COVERAGE_ITEMS = [
     group: "Blueprint",
     category: "Blueprint"
   }
-];
+].map(applyElfAssetTaxonomy);
 
 export function getElfBetaItem(itemId) {
   return ELF_BETA_ITEMS.find((item) => item.itemId === itemId);
+}
+
+function applyElfAssetTaxonomy(item) {
+  const taxonomy = ELF_CATEGORY_TAXONOMY[item.category] ?? ELF_FALLBACK_TAXONOMY;
+
+  return {
+    ...item,
+    assetClass: taxonomy.assetClass,
+    group: taxonomy.group,
+    category: taxonomy.category
+  };
 }

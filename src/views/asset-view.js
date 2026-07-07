@@ -23,6 +23,7 @@ function renderAssetStat(stat) {
   return `
     <article class="compact-card">
       <strong>${escapeHtml(stat.asset.name)}</strong>
+      <span>${escapeHtml(stat.asset.assetClass ?? "Unclassified / Other")}</span>
       <span>${escapeHtml(stat.asset.group)} / ${escapeHtml(stat.asset.category)}</span>
       <dl>
         <div><dt>Trades</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>

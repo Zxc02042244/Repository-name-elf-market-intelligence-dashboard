@@ -20,6 +20,7 @@ export function normalizeElfTransaction(rawTx, item, context = {}) {
     asset: {
       id: item.itemId,
       name: item.name,
+      assetClass: item.assetClass ?? "Unclassified / Other",
       group: item.group,
       category: item.category
     },
@@ -35,6 +36,7 @@ export function normalizeElfTransaction(rawTx, item, context = {}) {
     legacy: {
       itemId: item.itemId,
       itemName: item.name,
+      assetClass: item.assetClass ?? "Unclassified / Other",
       itemGroup: item.group,
       category: item.category,
       itemNum: quantity,
