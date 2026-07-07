@@ -12,6 +12,7 @@ export function renderAnalyticsView(model) {
         <h2 id="activity-summary-title">Market Activity Summary</h2>
         <span>${formatNumber(analytics?.activitySummary?.totals?.totalTransactions ?? 0)} transactions</span>
       </div>
+      ${renderSectionNote("Based on currently loaded live transactions. Not historical trend data.")}
       <div class="activity-metric-grid">
         ${renderActivityMetric("Transactions", formatNumber(totals?.totalTransactions ?? 0))}
         ${renderActivityMetric("Total Volume", formatValue(totals?.totalVolume ?? 0, currency))}
@@ -20,16 +21,17 @@ export function renderAnalyticsView(model) {
         ${renderActivityMetric("Latest Transaction", formatTime(totals?.latestTransactionTime))}
       </div>
       <div class="analytics-summary-grid">
-        ${renderBreakdownPanel("Asset Classes", analytics?.activitySummary?.assetClassBreakdown ?? [], currency)}
-        ${renderBreakdownPanel("Categories", analytics?.activitySummary?.categoryBreakdown ?? [], currency)}
+        ${renderBreakdownPanel("Asset Class Breakdown", analytics?.activitySummary?.assetClassBreakdown ?? [], currency)}
+        ${renderBreakdownPanel("Category Breakdown", analytics?.activitySummary?.categoryBreakdown ?? [], currency)}
       </div>
     </section>
 
     <section class="content-panel" aria-labelledby="top-assets-title">
       <div class="section-heading">
-        <h2 id="top-assets-title">Top Traded Assets</h2>
+        <h2 id="top-assets-title">Top Traded Assets Snapshot</h2>
         <span>${formatNumber(analytics?.topAssets?.length ?? 0)} shown</span>
       </div>
+      ${renderSectionNote("Current loaded dataset ranking by total volume, capped at 5 assets.")}
       <div class="compact-grid">
         ${analytics?.topAssets?.map(renderTopAsset).join("") || renderEmptyState("No asset activity yet.")}
       </div>
@@ -37,9 +39,10 @@ export function renderAnalyticsView(model) {
 
     <section class="content-panel" aria-labelledby="top-sellers-title">
       <div class="section-heading">
-        <h2 id="top-sellers-title">Top Sellers</h2>
+        <h2 id="top-sellers-title">Top Sellers Snapshot</h2>
         <span>${formatNumber(analytics?.topSellers?.length ?? 0)} shown</span>
       </div>
+      ${renderSectionNote("Current loaded dataset ranking by total sold value, capped at 5 actors.")}
       <div class="compact-grid">
         ${analytics?.topSellers?.map((stat) => renderActorCard(stat, "seller")).join("") || renderEmptyState("No seller activity yet.")}
       </div>
@@ -47,14 +50,19 @@ export function renderAnalyticsView(model) {
 
     <section class="content-panel" aria-labelledby="top-buyers-title">
       <div class="section-heading">
-        <h2 id="top-buyers-title">Top Buyers</h2>
+        <h2 id="top-buyers-title">Top Buyers Snapshot</h2>
         <span>${formatNumber(analytics?.topBuyers?.length ?? 0)} shown</span>
       </div>
+      ${renderSectionNote("Current loaded dataset ranking by total bought value, capped at 5 actors.")}
       <div class="compact-grid">
         ${analytics?.topBuyers?.map((stat) => renderActorCard(stat, "buyer")).join("") || renderEmptyState("No buyer activity yet.")}
       </div>
     </section>
   `;
+}
+
+function renderSectionNote(message) {
+  return `<p class="section-note">${escapeHtml(message)}</p>`;
 }
 
 function renderActivityMetric(label, value) {
@@ -70,6 +78,7 @@ function renderBreakdownPanel(title, entries, currency) {
   return `
     <article class="analytics-panel">
       <h3>${escapeHtml(title)}</h3>
+      <p class="panel-note">Sorted by current loaded volume.</p>
       <div class="breakdown-list">
         ${entries.slice(0, 6).map((entry) => renderBreakdownRow(entry, currency)).join("") || renderEmptyState("No activity yet.")}
       </div>
@@ -118,7 +127,7 @@ function renderActorCard(stat, role) {
       <dl>
         <div><dt>${isSeller ? "Sold" : "Bought"}</dt><dd>${formatNumber(count)}</dd></div>
         <div><dt>Total Value</dt><dd>${formatValue(value, stat.currency)}</dd></div>
-        <div><dt>Main Assets</dt><dd>${formatNumber(stat.mainTradedAssets.length)}</dd></div>
+        <div><dt>Main Assets</dt><dd>${escapeHtml(tradedAssets || "No assets")}</dd></div>
         <div><dt>Last Seen</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
       </dl>
     </article>

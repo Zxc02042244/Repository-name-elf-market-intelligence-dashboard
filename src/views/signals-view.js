@@ -8,7 +8,7 @@ export function renderSignalsView(model) {
         <span>${signalCount} enabled</span>
       </div>
       <p class="muted-copy">
-        No market signals are enabled in BETA 1.0.0.
+        No market signal modules are enabled in this phase.
       </p>
     </section>
   `;
