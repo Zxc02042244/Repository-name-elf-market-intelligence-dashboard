@@ -1,15 +1,18 @@
 import { buildRouteHash } from "../app/router.js";
 import { formatNumber, formatValue } from "../core/utils/numbers.js";
 import { formatTime } from "../core/utils/time.js";
+import { defaultLocale, t } from "../i18n/i18n.js";
+
+const snapshotLocale = defaultLocale;
 
 export function renderSnapshotExplorerView(model, route, explorer) {
   return `
     <section class="content-panel" aria-labelledby="snapshot-explorer-title">
       <div class="section-heading">
-        <h2 id="snapshot-explorer-title">Snapshot Search</h2>
-        <span>${formatNumber(model?.assetStats?.length ?? 0)} assets / ${formatNumber(model?.actorStats?.length ?? 0)} actors</span>
+        <h2 id="snapshot-explorer-title">${translate("snapshot.searchTitle")}</h2>
+        <span>${formatNumber(model?.assetStats?.length ?? 0)} ${translate("coverage.assets")} / ${formatNumber(model?.actorStats?.length ?? 0)} ${translate("snapshot.actorsMode").toLowerCase()}</span>
       </div>
-      <p class="section-note">Search and detail views use the currently loaded MarketModel snapshot only. Not historical global search.</p>
+      <p class="section-note">${translate("snapshot.scopeNote")}</p>
       ${renderExplorerControls(route, explorer)}
       ${renderExplorerScopeNote()}
       ${renderExplorerResults(model, route, explorer)}
@@ -24,12 +27,12 @@ function renderExplorerControls(route, explorer) {
   return `
     <form class="explorer-controls" data-explorer-search>
       <label class="search-field">
-        <span>Search current loaded snapshot</span>
+        <span>${translate("search.currentLoadedSnapshot")}</span>
         <input
           type="search"
           name="q"
           value="${escapeHtml(controls.search)}"
-          placeholder="Search assets or actors in loaded snapshot"
+          placeholder="${translate("search.assetsOrActorsInLoadedSnapshot")}"
         />
       </label>
       <label class="sort-field">
@@ -41,12 +44,12 @@ function renderExplorerControls(route, explorer) {
           ${renderSortOption("name", "Name", controls.sort)}
         </select>
       </label>
-      <button class="refresh-button compact-action" type="submit">Search</button>
+      <button class="refresh-button compact-action" type="submit">${translate("action.search")}</button>
     </form>
     ${renderExplorerActions(route, controls)}
-    <div class="segmented-control" aria-label="Snapshot result type">
-      ${renderModeLink("assets", "Assets", route, controls.mode)}
-      ${renderModeLink("actors", "Actors", route, controls.mode)}
+    <div class="segmented-control" aria-label="${translate("snapshot.resultType")}">
+      ${renderModeLink("assets", translate("snapshot.assetsMode"), route, controls.mode)}
+      ${renderModeLink("actors", translate("snapshot.actorsMode"), route, controls.mode)}
     </div>
   `;
 }
@@ -55,7 +58,7 @@ function renderExplorerActions(route, controls) {
   const actions = [];
 
   if (controls.search) {
-    actions.push(renderUtilityLink("Clear Search", buildRouteHash(route, {
+    actions.push(renderUtilityLink(translate("action.clearSearch"), buildRouteHash(route, {
       search: "",
       assetId: "",
       actorId: ""
@@ -63,7 +66,7 @@ function renderExplorerActions(route, controls) {
   }
 
   if (route.assetId || route.actorId) {
-    actions.push(renderUtilityLink("Clear Selection", buildRouteHash(route, {
+    actions.push(renderUtilityLink(translate("action.clearSelection"), buildRouteHash(route, {
       assetId: "",
       actorId: ""
     })));
@@ -101,8 +104,8 @@ function renderModeLink(mode, label, route, currentMode) {
 function renderExplorerScopeNote() {
   return `
     <p class="explorer-scope-note">
-      Search results use the currently loaded marketplace snapshot. Category filters may limit visible results.
-      Historical global search requires future historical database read support.
+      ${translate("snapshot.resultScopeNote")}
+      ${translate("snapshot.historicalGlobalRequiresDatabase")}
     </p>
   `;
 }
@@ -122,7 +125,7 @@ function renderAssetResults(model, route, explorer) {
 
   return `
     ${renderResultSummary("asset", assetResults.length, totalMatched)}
-    <div class="snapshot-result-grid" aria-label="Asset search results">
+    <div class="snapshot-result-grid" aria-label="${translate("snapshot.assetSearchResults")}">
       ${assetResults.map((stat) => renderAssetResult(route, stat)).join("") || renderSearchEmptyState("asset", controls.search)}
     </div>
   `;
@@ -134,15 +137,15 @@ function renderAssetResult(route, stat) {
   return `
     <article class="compact-card snapshot-result-card ${isSelected ? "snapshot-result-card-selected" : ""}" ${isSelected ? 'aria-current="true"' : ""}>
       <strong>${escapeHtml(stat.asset.name)}</strong>
-      ${isSelected ? '<span class="selected-marker">Selected</span>' : ""}
-      <span>${escapeHtml(stat.asset.assetClass ?? "Unclassified / Other")}</span>
+      ${isSelected ? `<span class="selected-marker">${translate("snapshot.selected")}</span>` : ""}
+      <span>${escapeHtml(stat.asset.assetClass ?? translate("coverage.assetClass.unclassifiedOther"))}</span>
       <span>${escapeHtml(stat.asset.category)}</span>
       <dl>
-        <div><dt>Loaded Trades</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
-        <div><dt>Loaded Volume</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
-        <div><dt>Latest Loaded Trade</dt><dd>${formatTime(stat.latestTransactionTime)}</dd></div>
+        <div><dt>${translate("asset.loadedTrades")}</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
+        <div><dt>${translate("asset.loadedVolume")}</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
+        <div><dt>${translate("asset.latestLoadedTrade")}</dt><dd>${formatTime(stat.latestTransactionTime)}</dd></div>
       </dl>
-      <a class="detail-link" href="${buildRouteHash(route, { mode: "assets", assetId: String(stat.asset.id), actorId: "" })}">View Asset Snapshot</a>
+      <a class="detail-link" href="${buildRouteHash(route, { mode: "assets", assetId: String(stat.asset.id), actorId: "" })}">${translate("action.viewAssetSnapshot")}</a>
     </article>
   `;
 }
@@ -154,7 +157,7 @@ function renderActorResults(model, route, explorer) {
 
   return `
     ${renderResultSummary("actor", actorResults.length, totalMatched)}
-    <div class="snapshot-result-grid" aria-label="Actor search results">
+    <div class="snapshot-result-grid" aria-label="${translate("snapshot.actorSearchResults")}">
       ${actorResults.map((stat) => renderActorResult(route, stat)).join("") || renderSearchEmptyState("actor", controls.search)}
     </div>
   `;
@@ -167,25 +170,31 @@ function renderActorResult(route, stat) {
   return `
     <article class="compact-card snapshot-result-card ${isSelected ? "snapshot-result-card-selected" : ""}" ${isSelected ? 'aria-current="true"' : ""}>
       <strong>${escapeHtml(stat.actor.name)}</strong>
-      ${isSelected ? '<span class="selected-marker">Selected</span>' : ""}
-      <span>${escapeHtml(getAssetNames(stat.mainTradedAssets) || "No assets")}</span>
+      ${isSelected ? `<span class="selected-marker">${translate("snapshot.selected")}</span>` : ""}
+      <span>${escapeHtml(getAssetNames(stat.mainTradedAssets) || translate("empty.noAssets"))}</span>
       <dl>
-        <div><dt>Loaded Sold Count</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
-        <div><dt>Loaded Bought Count</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
-        <div><dt>Loaded Participation Value</dt><dd>${formatValue(totalValue, stat.currency)}</dd></div>
+        <div><dt>${translate("actor.loadedSoldCount")}</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
+        <div><dt>${translate("actor.loadedBoughtCount")}</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
+        <div><dt>${translate("actor.loadedParticipationValue")}</dt><dd>${formatValue(totalValue, stat.currency)}</dd></div>
       </dl>
-      <a class="detail-link" href="${buildRouteHash(route, { mode: "actors", actorId: String(stat.actor.id), assetId: "" })}">View Actor Snapshot</a>
+      <a class="detail-link" href="${buildRouteHash(route, { mode: "actors", actorId: String(stat.actor.id), assetId: "" })}">${translate("action.viewActorSnapshot")}</a>
     </article>
   `;
 }
 
 function renderResultSummary(kind, shownCount, totalMatched) {
   const plural = totalMatched === 1 ? kind : `${kind}s`;
-  const capNote = totalMatched > shownCount ? ` Result list is capped at ${formatNumber(shownCount)}.` : "";
+  const capNote = totalMatched > shownCount ? ` ${translate("snapshot.resultsCapped", {
+    count: formatNumber(shownCount)
+  })}` : "";
 
   return `
     <p class="result-summary">
-      Showing ${formatNumber(shownCount)} of ${formatNumber(totalMatched)} matching ${plural}.${capNote}
+      ${translate("snapshot.showingResults", {
+        shown: formatNumber(shownCount),
+        total: formatNumber(totalMatched),
+        kind: plural
+      })}${capNote}
     </p>
   `;
 }
@@ -195,10 +204,13 @@ function renderSearchEmptyState(kind, search) {
   const query = String(search ?? "").trim();
 
   if (query) {
-    return renderEmptyState(`No ${plural} match "${query}" in the current loaded snapshot.`);
+    return renderEmptyState(translate("empty.noQuerySnapshotResults", {
+      plural,
+      query
+    }));
   }
 
-  return renderEmptyState(`No matching ${plural} in the current loaded snapshot.`);
+  return renderEmptyState(translate("empty.noMatchingSnapshotResults", { plural }));
 }
 
 function renderSelectedDetails(route, explorer) {
@@ -224,11 +236,11 @@ function renderSelectedDetails(route, explorer) {
 function renderUnavailableSelection(kind, route) {
   return `
     <article class="snapshot-detail snapshot-detail-empty">
-      <h3>Selected ${escapeHtml(kind)} is not available</h3>
+      <h3>${translate("snapshot.selectedUnavailableTitle", { kind })}</h3>
       <p class="empty-state">
-        The selected ${escapeHtml(kind)} is not available in the current category filter or loaded snapshot.
+        ${translate("snapshot.selectedUnavailableBody", { kind })}
       </p>
-      ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
+      ${renderUtilityLink(translate("action.clearSelection"), buildRouteHash(route, { assetId: "", actorId: "" }))}
     </article>
   `;
 }
@@ -240,42 +252,42 @@ function renderAssetDetail(route, detail) {
     <article class="snapshot-detail" aria-labelledby="asset-detail-title">
       <div class="section-heading">
         <h2 id="asset-detail-title">${escapeHtml(stat.asset.name)}</h2>
-        <span>Snapshot Asset Stats</span>
+        <span>${translate("asset.snapshotStats")}</span>
       </div>
       <div class="detail-action-row">
-        ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
+        ${renderUtilityLink(translate("action.clearSelection"), buildRouteHash(route, { assetId: "", actorId: "" }))}
       </div>
       <div class="snapshot-detail-layout">
-        <section class="snapshot-detail-section snapshot-identity-section" aria-label="Asset identity and taxonomy">
+        <section class="snapshot-detail-section snapshot-identity-section" aria-label="${translate("asset.identityAndTaxonomy")}">
           <div class="detail-section-heading">
-            <h3>Asset Identity / Taxonomy</h3>
+            <h3>${translate("asset.identityTaxonomy")}</h3>
           </div>
           <div class="snapshot-identity-grid">
-            ${renderDetailMetric("Asset Class", stat.asset.assetClass ?? "Unclassified / Other")}
-            ${renderDetailMetric("Category", stat.asset.category)}
-            ${renderDetailMetric("Group", stat.asset.group)}
+            ${renderDetailMetric(translate("asset.assetClass"), stat.asset.assetClass ?? translate("coverage.assetClass.unclassifiedOther"))}
+            ${renderDetailMetric(translate("asset.category"), stat.asset.category)}
+            ${renderDetailMetric(translate("asset.group"), stat.asset.group)}
           </div>
           <p class="section-note snapshot-detail-note">
-            This section uses the currently loaded marketplace data only. True 7D/30D history requires the paused historical database phase.
+            ${translate("asset.snapshotNote")}
           </p>
         </section>
-        <section class="snapshot-detail-section" aria-label="Snapshot asset statistics">
+        <section class="snapshot-detail-section" aria-label="${translate("asset.snapshotStats")}">
           <div class="detail-section-heading">
-            <h3>Snapshot Asset Stats</h3>
+            <h3>${translate("asset.snapshotStats")}</h3>
           </div>
           <div class="snapshot-detail-grid">
-            ${renderDetailMetric("Loaded Trades", formatNumber(stat.tradeCount))}
-            ${renderDetailMetric("Loaded Volume", formatValue(stat.totalVolume, stat.currency))}
-            ${renderDetailMetric("Loaded Quantity", formatNumber(stat.totalQuantity))}
-            ${renderDetailMetric("Snapshot Avg Unit", formatValue(stat.averageUnitValue, stat.currency))}
-            ${renderDetailMetric("Latest Loaded Unit", formatValue(stat.lastUnitValue, stat.currency))}
-            ${renderDetailMetric("Latest Loaded Trade", formatTime(stat.latestTransactionTime))}
-            ${renderDetailMetric("Loaded Sellers", formatNumber(stat.activeSellers))}
-            ${renderDetailMetric("Loaded Buyers", formatNumber(stat.activeBuyers))}
+            ${renderDetailMetric(translate("asset.loadedTrades"), formatNumber(stat.tradeCount))}
+            ${renderDetailMetric(translate("asset.loadedVolume"), formatValue(stat.totalVolume, stat.currency))}
+            ${renderDetailMetric(translate("asset.loadedQuantity"), formatNumber(stat.totalQuantity))}
+            ${renderDetailMetric(translate("asset.snapshotAvgUnit"), formatValue(stat.averageUnitValue, stat.currency))}
+            ${renderDetailMetric(translate("asset.latestLoadedUnit"), formatValue(stat.lastUnitValue, stat.currency))}
+            ${renderDetailMetric(translate("asset.latestLoadedTrade"), formatTime(stat.latestTransactionTime))}
+            ${renderDetailMetric(translate("asset.loadedSellers"), formatNumber(stat.activeSellers))}
+            ${renderDetailMetric(translate("asset.loadedBuyers"), formatNumber(stat.activeBuyers))}
           </div>
         </section>
       </div>
-      ${renderDetailTransactions("Recent Loaded Transactions", detail.transactions)}
+      ${renderDetailTransactions(translate("asset.recentLoadedTransactions"), detail.transactions)}
     </article>
   `;
 }
@@ -288,57 +300,57 @@ function renderActorDetail(route, detail) {
     <article class="snapshot-detail" aria-labelledby="actor-detail-title">
       <div class="section-heading">
         <h2 id="actor-detail-title">${escapeHtml(stat.actor.name)}</h2>
-        <span>Snapshot Actor Stats</span>
+        <span>${translate("actor.snapshotStats")}</span>
       </div>
       <div class="detail-action-row">
-        ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
+        ${renderUtilityLink(translate("action.clearSelection"), buildRouteHash(route, { assetId: "", actorId: "" }))}
       </div>
       <div class="snapshot-detail-layout">
-        <section class="snapshot-detail-section snapshot-identity-section" aria-label="Actor identity">
+        <section class="snapshot-detail-section snapshot-identity-section" aria-label="${translate("actor.identity")}">
           <div class="detail-section-heading">
-            <h3>Actor Identity</h3>
+            <h3>${translate("actor.identity")}</h3>
           </div>
           <div class="snapshot-identity-grid actor-identity-grid">
-            ${renderDetailMetric("Actor", stat.actor.name)}
-            ${renderDetailMetric("Latest Loaded Activity", formatTime(stat.lastSeen))}
+            ${renderDetailMetric(translate("actor.actor"), stat.actor.name)}
+            ${renderDetailMetric(translate("actor.latestLoadedActivity"), formatTime(stat.lastSeen))}
           </div>
           <p class="section-note snapshot-detail-note">
-            This section uses the currently loaded marketplace data only. True 7D/30D actor history requires the paused historical database phase.
+            ${translate("actor.snapshotNote")}
           </p>
         </section>
-        <section class="snapshot-detail-section" aria-label="Loaded actor participation statistics">
+        <section class="snapshot-detail-section" aria-label="${translate("actor.participationStats")}">
           <div class="detail-section-heading">
-            <h3>Snapshot Actor Stats</h3>
+            <h3>${translate("actor.snapshotStats")}</h3>
           </div>
           <div class="snapshot-detail-grid actor-stat-grid">
-            ${renderDetailMetric("Loaded Sold Count", formatNumber(stat.soldCount))}
-            ${renderDetailMetric("Loaded Bought Count", formatNumber(stat.boughtCount))}
-            ${renderDetailMetric("Loaded Sold Volume", formatValue(stat.totalSoldValue, stat.currency))}
-            ${renderDetailMetric("Loaded Bought Volume", formatValue(stat.totalBoughtValue, stat.currency))}
-            ${renderDetailMetric("Loaded Participation Value", formatValue(totalValue, stat.currency))}
-            ${renderDetailMetric("Latest Loaded Activity", formatTime(stat.lastSeen))}
+            ${renderDetailMetric(translate("actor.loadedSoldCount"), formatNumber(stat.soldCount))}
+            ${renderDetailMetric(translate("actor.loadedBoughtCount"), formatNumber(stat.boughtCount))}
+            ${renderDetailMetric(translate("actor.loadedSoldVolume"), formatValue(stat.totalSoldValue, stat.currency))}
+            ${renderDetailMetric(translate("actor.loadedBoughtVolume"), formatValue(stat.totalBoughtValue, stat.currency))}
+            ${renderDetailMetric(translate("actor.loadedParticipationValue"), formatValue(totalValue, stat.currency))}
+            ${renderDetailMetric(translate("actor.latestLoadedActivity"), formatTime(stat.lastSeen))}
           </div>
         </section>
         <div class="actor-relationship-grid">
-          <section class="snapshot-detail-section" aria-label="Loaded main assets">
+          <section class="snapshot-detail-section" aria-label="${translate("actor.loadedMainAssets")}">
             <div class="detail-section-heading">
-              <h3>Loaded Main Assets</h3>
+              <h3>${translate("actor.loadedMainAssets")}</h3>
             </div>
             <div class="snapshot-detail-grid actor-single-metric-grid">
-              ${renderDetailMetric("Loaded Main Assets", getAssetNames(stat.mainTradedAssets) || "No assets")}
+              ${renderDetailMetric(translate("actor.loadedMainAssets"), getAssetNames(stat.mainTradedAssets) || translate("empty.noAssets"))}
             </div>
           </section>
-          <section class="snapshot-detail-section" aria-label="Loaded counterparties">
+          <section class="snapshot-detail-section" aria-label="${translate("actor.loadedCounterparties")}">
             <div class="detail-section-heading">
-              <h3>Loaded Counterparties</h3>
+              <h3>${translate("actor.loadedCounterparties")}</h3>
             </div>
             <div class="snapshot-detail-grid actor-single-metric-grid">
-              ${renderDetailMetric("Loaded Counterparties", formatNumber(stat.counterpartyCount))}
+              ${renderDetailMetric(translate("actor.loadedCounterparties"), formatNumber(stat.counterpartyCount))}
             </div>
           </section>
         </div>
       </div>
-      ${renderDetailTransactions("Recent Loaded Actor Transactions", detail.transactions)}
+      ${renderDetailTransactions(translate("actor.recentLoadedActorTransactions"), detail.transactions)}
     </article>
   `;
 }
@@ -357,7 +369,7 @@ function renderDetailTransactions(title, transactions) {
     <div class="detail-transactions">
       <h3>${escapeHtml(title)}</h3>
       <div class="detail-transaction-list">
-        ${transactions.map(renderDetailTransaction).join("") || renderEmptyState("No recent transactions.")}
+        ${transactions.map(renderDetailTransaction).join("") || renderEmptyState(translate("empty.noRecentTransactions"))}
       </div>
     </div>
   `;
@@ -367,7 +379,7 @@ function renderDetailTransaction(transaction) {
   return `
     <div class="detail-transaction-row">
       <strong>${escapeHtml(transaction.asset.name)}</strong>
-      <span>${formatNumber(transaction.quantity)} units</span>
+      <span>${formatNumber(transaction.quantity)} ${translate("transactions.units")}</span>
       <span>${formatValue(transaction.value.total, transaction.value.currency)}</span>
       <span>${escapeHtml(transaction.actors.seller.name)} -> ${escapeHtml(transaction.actors.buyer.name)}</span>
       <time datetime="${new Date(transaction.time).toISOString()}">${formatTime(transaction.time)}</time>
@@ -412,6 +424,10 @@ function normalizeSearch(value) {
 
 function renderEmptyState(message) {
   return `<p class="empty-state">${escapeHtml(message)}</p>`;
+}
+
+function translate(key, params) {
+  return t(key, snapshotLocale, params);
 }
 
 function escapeHtml(value) {
