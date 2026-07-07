@@ -6,8 +6,7 @@ import { ELF_MARKET_COVERAGE_ITEMS } from "../sources/elf/elf-items.js";
 import { renderCategoryFilterView } from "../views/category-filter-view.js";
 import { renderDashboardView } from "../views/dashboard-view.js";
 import { renderTransactionsView } from "../views/transactions-view.js";
-import { renderAssetView } from "../views/asset-view.js";
-import { renderActorView } from "../views/actor-view.js";
+import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
 
 const appState = createAppState();
@@ -37,8 +36,7 @@ function renderApp() {
 
       ${renderDashboardView(appState.model, appState.status, route)}
       ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory)}
-      ${renderAssetView(appState.model)}
-      ${renderActorView(appState.model)}
+      ${renderAnalyticsView(appState.model)}
       ${renderSignalsView(appState.model)}
       ${renderTransactionsView(appState.model)}
     </main>

@@ -1,6 +1,7 @@
 import { calculateTotals } from "../analytics/totals.js";
 import { calculateAssetStats } from "../analytics/asset-stats.js";
 import { calculateActorStats } from "../analytics/actor-stats.js";
+import { calculateBasicAnalytics } from "../analytics/basic-analytics.js";
 import { calculateSignals } from "../analytics/signals.js";
 import { normalizeTransactionList } from "./normalize-contract.js";
 
@@ -9,6 +10,8 @@ export function buildMarketModel(transactions, context = {}) {
     (left, right) => right.time - left.time
   );
   const totals = calculateTotals(normalizedTransactions);
+  const assetStats = calculateAssetStats(normalizedTransactions);
+  const actorStats = calculateActorStats(normalizedTransactions);
 
   return {
     meta: {
@@ -18,8 +21,14 @@ export function buildMarketModel(transactions, context = {}) {
     },
     transactions: normalizedTransactions,
     totals,
-    assetStats: calculateAssetStats(normalizedTransactions),
-    actorStats: calculateActorStats(normalizedTransactions),
+    assetStats,
+    actorStats,
+    analytics: calculateBasicAnalytics({
+      transactions: normalizedTransactions,
+      totals,
+      assetStats,
+      actorStats
+    }),
     signals: calculateSignals(normalizedTransactions),
     marketHealth: null
   };
