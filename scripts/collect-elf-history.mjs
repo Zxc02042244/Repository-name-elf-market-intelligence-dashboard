@@ -1,6 +1,7 @@
 import { createTransactionDedupeHash } from "./lib/collector-hash.mjs";
 import { loadCollectorConfig, MOCK_RAW_TRANSACTIONS } from "./lib/collector-config.mjs";
 import { createCollectorLogger } from "./lib/collector-logger.mjs";
+import { createSupabaseClientFromEnv } from "./lib/supabase-client.mjs";
 import {
   buildPriceSnapshotCandidate,
   normalizeElfHistoryTransaction
@@ -24,6 +25,11 @@ async function main() {
   }
 
   reportEnvironmentPreflight(config);
+  const supabasePreflight = await createSupabaseClientFromEnv({
+    dryRun: config.dryRun,
+    env: process.env
+  });
+  reportSupabasePreflight(supabasePreflight);
 
   const run = {
     source: config.source,
@@ -91,9 +97,25 @@ async function main() {
     items: config.items.length,
     marketTransactions: allTransactionCandidates.length,
     priceSnapshots: snapshotCandidates.length,
+    supabaseStatus: supabasePreflight.status,
     databaseWrites: 0
   });
   logger.summary("Manual collector skeleton completed.", run);
+}
+
+function reportSupabasePreflight(preflight) {
+  const details = {
+    status: preflight.status,
+    canWrite: preflight.canWrite,
+    missingEnv: preflight.missingEnv
+  };
+
+  if (preflight.enabled) {
+    logger.info("Supabase preflight ready for future writes.", details);
+    return;
+  }
+
+  logger.warn(preflight.reason, details);
 }
 
 function reportEnvironmentPreflight(config) {

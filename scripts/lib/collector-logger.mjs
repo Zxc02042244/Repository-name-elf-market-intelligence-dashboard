@@ -44,8 +44,8 @@ export function createCollectorLogger({ quiet = false } = {}) {
 }
 
 export function sanitizeLogText(value) {
-  return SECRET_PATTERNS.reduce(
-    (text, pattern) => text.replace(pattern, "$1$2[redacted]"),
-    String(value ?? "")
-  );
+  let text = String(value ?? "");
+  text = text.replace(SECRET_PATTERNS[0], "Bearer [redacted]");
+  text = text.replace(SECRET_PATTERNS[1], "$1$2[redacted]");
+  return text;
 }
