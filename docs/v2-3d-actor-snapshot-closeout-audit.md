@@ -133,15 +133,24 @@ judgment features in the current actor snapshot scope.
 
 ## 9. Recommended Next Phase Options
 
-1. V2-2 category / market coverage polish
-   - Review taxonomy clarity, category labels, category filter behavior, and coverage gaps.
-   - Keep runtime data flow and source boundaries unchanged.
+1. V2-THEME-A Elf Inspired Theme Audit
+   - Define the Elf-inspired visual direction as documentation only.
+   - Do not change runtime theme tokens or UI behavior in the audit phase.
 
-2. V2-5 signals design only
-   - Create a design document for future market structure signals.
-   - Do not implement scoring, alerts, watchlists, or UI signal panels yet.
+2. V2-4G Snapshot Search Scope Label Refinement
+   - Clarify that search is current loaded snapshot search, not historical global search.
+   - Keep search scoped to the loaded `MarketModel` unless a later phase explicitly changes the behavior.
 
-3. V2-6B.5 one-item DB write test only when secrets are ready
+3. V2-2D.1 Asset Image Source Audit
+   - Audit safe image source options before adding thumbnails.
+   - Do not call official endpoints from the frontend and do not migrate legacy image helpers.
+
+4. V2-I18N-A Translation Coverage Audit
+   - Audit hardcoded UI text, helper notes, empty states, and status messages before translation
+     implementation.
+   - Do not add a translation API or runtime translation service.
+
+5. V2-6B.5 one-item DB write test only when secrets are ready
    - Resume only after `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are available as server-side local/Codex
      secrets.
    - Do not paste secrets into prompts.
@@ -186,6 +195,6 @@ judgment features in the current actor snapshot scope.
 
 V2-3 actor/player snapshot scope can be considered stable enough to pause. The mounted actor detail UI now uses
 snapshot-safe labels, clearer grouping, clear selection behavior, mobile-safe layout, and generic `MarketModel`
-data. Remaining actor work should either polish categories/coverage, document future signals, or resume the
-historical database path only when server-side secrets are ready.
-
+data. The next safest work should follow the near-term priority note: document the theme direction, clarify
+snapshot search wording, audit image sources, audit translation coverage, and resume the historical database
+path only when server-side secrets are ready.
