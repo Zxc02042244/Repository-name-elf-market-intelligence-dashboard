@@ -297,7 +297,7 @@ function renderActorDetail(route, detail) {
           <div class="detail-section-heading">
             <h3>Actor Identity</h3>
           </div>
-          <div class="snapshot-identity-grid">
+          <div class="snapshot-identity-grid actor-identity-grid">
             ${renderDetailMetric("Actor", stat.actor.name)}
             ${renderDetailMetric("Latest Loaded Activity", formatTime(stat.lastSeen))}
           </div>
@@ -307,9 +307,9 @@ function renderActorDetail(route, detail) {
         </section>
         <section class="snapshot-detail-section" aria-label="Loaded actor participation statistics">
           <div class="detail-section-heading">
-            <h3>Loaded Participation Stats</h3>
+            <h3>Snapshot Actor Stats</h3>
           </div>
-          <div class="snapshot-detail-grid">
+          <div class="snapshot-detail-grid actor-stat-grid">
             ${renderDetailMetric("Loaded Sold Count", formatNumber(stat.soldCount))}
             ${renderDetailMetric("Loaded Bought Count", formatNumber(stat.boughtCount))}
             ${renderDetailMetric("Loaded Sold Volume", formatValue(stat.totalSoldValue, stat.currency))}
@@ -318,15 +318,24 @@ function renderActorDetail(route, detail) {
             ${renderDetailMetric("Latest Loaded Activity", formatTime(stat.lastSeen))}
           </div>
         </section>
-        <section class="snapshot-detail-section" aria-label="Loaded actor market relationships">
-          <div class="detail-section-heading">
-            <h3>Loaded Market Relationships</h3>
-          </div>
-          <div class="snapshot-detail-grid">
-            ${renderDetailMetric("Loaded Main Assets", getAssetNames(stat.mainTradedAssets) || "No assets")}
-            ${renderDetailMetric("Loaded Counterparties", formatNumber(stat.counterpartyCount))}
-          </div>
-        </section>
+        <div class="actor-relationship-grid">
+          <section class="snapshot-detail-section" aria-label="Loaded main assets">
+            <div class="detail-section-heading">
+              <h3>Loaded Main Assets</h3>
+            </div>
+            <div class="snapshot-detail-grid actor-single-metric-grid">
+              ${renderDetailMetric("Loaded Main Assets", getAssetNames(stat.mainTradedAssets) || "No assets")}
+            </div>
+          </section>
+          <section class="snapshot-detail-section" aria-label="Loaded counterparties">
+            <div class="detail-section-heading">
+              <h3>Loaded Counterparties</h3>
+            </div>
+            <div class="snapshot-detail-grid actor-single-metric-grid">
+              ${renderDetailMetric("Loaded Counterparties", formatNumber(stat.counterpartyCount))}
+            </div>
+          </section>
+        </div>
       </div>
       ${renderDetailTransactions("Recent Loaded Actor Transactions", detail.transactions)}
     </article>

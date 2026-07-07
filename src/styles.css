@@ -473,10 +473,28 @@ h2 {
   gap: 12px;
 }
 
+.actor-identity-grid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
 .snapshot-detail-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+.actor-stat-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.actor-relationship-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 14px;
+}
+
+.snapshot-detail-grid.actor-single-metric-grid {
+  grid-template-columns: 1fr;
 }
 
 .snapshot-detail-note {
@@ -697,6 +715,7 @@ h2 {
   }
 
   .explorer-controls,
+  .actor-relationship-grid,
   .detail-transaction-row {
     grid-template-columns: 1fr;
   }
