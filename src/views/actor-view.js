@@ -1,48 +1,49 @@
+import { defaultLocale, t } from "../i18n/i18n.js";
 import { formatNumber, formatValue } from "../core/utils/numbers.js";
 import { formatTime } from "../core/utils/time.js";
 
-export function renderActorView(model) {
+export function renderActorView(model, locale = defaultLocale) {
   const actorStats = model?.actorStats ?? [];
 
   return `
     <section class="content-panel" aria-labelledby="actor-stats-title">
       <div class="section-heading">
-        <h2 id="actor-stats-title">Snapshot Actor Stats</h2>
-        <span>${formatNumber(actorStats.length)} actors</span>
+        <h2 id="actor-stats-title">${t("actor.snapshotStats", locale)}</h2>
+        <span>${formatNumber(actorStats.length)} ${t("snapshot.actorsMode", locale).toLowerCase()}</span>
       </div>
       <p class="section-note">
-        This section uses the currently loaded marketplace data only. True 7D/30D actor history requires the paused historical database phase.
+        ${t("actor.snapshotNote", locale)}
       </p>
       <div class="compact-grid">
-        ${actorStats.slice(0, 4).map(renderActorStat).join("") || renderEmptyState()}
+        ${actorStats.slice(0, 4).map((stat) => renderActorStat(stat, locale)).join("") || renderEmptyState(locale)}
       </div>
     </section>
   `;
 }
 
-function renderActorStat(stat) {
+function renderActorStat(stat, locale) {
   const tradedAssets = stat.mainTradedAssets.map((asset) => asset.name).join(", ");
   const currency = stat.currency;
 
   return `
     <article class="compact-card">
       <strong>${escapeHtml(stat.actor.name)}</strong>
-      <span>${escapeHtml(tradedAssets || "No assets")}</span>
+      <span>${escapeHtml(tradedAssets || t("empty.noAssets", locale))}</span>
       <dl>
-        <div><dt>Loaded Sold Count</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
-        <div><dt>Loaded Bought Count</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
-        <div><dt>Loaded Sold Volume</dt><dd>${formatValue(stat.totalSoldValue, currency)}</dd></div>
-        <div><dt>Loaded Bought Volume</dt><dd>${formatValue(stat.totalBoughtValue, currency)}</dd></div>
-        <div><dt>Loaded Main Assets</dt><dd>${escapeHtml(tradedAssets || "No assets")}</dd></div>
-        <div><dt>Loaded Counterparties</dt><dd>${formatNumber(stat.counterpartyCount)}</dd></div>
-        <div><dt>Latest Loaded Activity</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
+        <div><dt>${t("actor.loadedSoldCount", locale)}</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
+        <div><dt>${t("actor.loadedBoughtCount", locale)}</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
+        <div><dt>${t("actor.loadedSoldVolume", locale)}</dt><dd>${formatValue(stat.totalSoldValue, currency)}</dd></div>
+        <div><dt>${t("actor.loadedBoughtVolume", locale)}</dt><dd>${formatValue(stat.totalBoughtValue, currency)}</dd></div>
+        <div><dt>${t("actor.loadedMainAssets", locale)}</dt><dd>${escapeHtml(tradedAssets || t("empty.noAssets", locale))}</dd></div>
+        <div><dt>${t("actor.loadedCounterparties", locale)}</dt><dd>${formatNumber(stat.counterpartyCount)}</dd></div>
+        <div><dt>${t("actor.latestLoadedActivity", locale)}</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
       </dl>
     </article>
   `;
 }
 
-function renderEmptyState() {
-  return `<p class="empty-state">Actor stats will appear after the model is built.</p>`;
+function renderEmptyState(locale) {
+  return `<p class="empty-state">${t("empty.actorStatsPending", locale)}</p>`;
 }
 
 function escapeHtml(value) {

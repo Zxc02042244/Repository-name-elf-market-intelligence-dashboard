@@ -1,61 +1,62 @@
+import { defaultLocale, t } from "../i18n/i18n.js";
 import { formatNumber, formatValue } from "../core/utils/numbers.js";
 import { formatTime } from "../core/utils/time.js";
 
-export function renderAnalyticsView(model) {
+export function renderAnalyticsView(model, locale = defaultLocale) {
   const analytics = model?.analytics;
-  const currency = model?.transactions[0]?.value.currency ?? "units";
+  const currency = model?.transactions[0]?.value.currency ?? t("transactions.units", locale);
   const totals = analytics?.activitySummary?.totals;
 
   return `
     <section class="content-panel" aria-labelledby="activity-summary-title">
       <div class="section-heading">
-        <h2 id="activity-summary-title">Market Activity Summary</h2>
-        <span>${formatNumber(analytics?.activitySummary?.totals?.totalTransactions ?? 0)} transactions</span>
+        <h2 id="activity-summary-title">${t("analytics.marketActivitySummary", locale)}</h2>
+        <span>${formatNumber(analytics?.activitySummary?.totals?.totalTransactions ?? 0)} ${t("dashboard.transactions", locale).toLowerCase()}</span>
       </div>
-      ${renderSectionNote("Based on currently loaded live transactions. Not historical trend data.")}
+      ${renderSectionNote(t("analytics.loadedTransactionsNote", locale))}
       <div class="activity-metric-grid">
-        ${renderActivityMetric("Transactions", formatNumber(totals?.totalTransactions ?? 0))}
-        ${renderActivityMetric("Total Volume", formatValue(totals?.totalVolume ?? 0, currency))}
-        ${renderActivityMetric("Active Sellers", formatNumber(totals?.activeSellers ?? 0))}
-        ${renderActivityMetric("Active Buyers", formatNumber(totals?.activeBuyers ?? 0))}
-        ${renderActivityMetric("Latest Transaction", formatTime(totals?.latestTransactionTime))}
+        ${renderActivityMetric(t("dashboard.transactions", locale), formatNumber(totals?.totalTransactions ?? 0))}
+        ${renderActivityMetric(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency))}
+        ${renderActivityMetric(t("dashboard.activeSellers", locale), formatNumber(totals?.activeSellers ?? 0))}
+        ${renderActivityMetric(t("dashboard.activeBuyers", locale), formatNumber(totals?.activeBuyers ?? 0))}
+        ${renderActivityMetric(t("dashboard.latestTransaction", locale), formatTime(totals?.latestTransactionTime))}
       </div>
       <div class="analytics-summary-grid">
-        ${renderBreakdownPanel("Asset Class Breakdown", analytics?.activitySummary?.assetClassBreakdown ?? [], currency)}
-        ${renderBreakdownPanel("Category Breakdown", analytics?.activitySummary?.categoryBreakdown ?? [], currency)}
+        ${renderBreakdownPanel(t("analytics.assetClassBreakdown", locale), analytics?.activitySummary?.assetClassBreakdown ?? [], currency, locale)}
+        ${renderBreakdownPanel(t("analytics.categoryBreakdown", locale), analytics?.activitySummary?.categoryBreakdown ?? [], currency, locale)}
       </div>
     </section>
 
     <section class="content-panel" aria-labelledby="top-assets-title">
       <div class="section-heading">
-        <h2 id="top-assets-title">Top Traded Assets Snapshot</h2>
-        <span>${formatNumber(analytics?.topAssets?.length ?? 0)} shown</span>
+        <h2 id="top-assets-title">${t("analytics.topTradedAssetsSnapshot", locale)}</h2>
+        <span>${formatNumber(analytics?.topAssets?.length ?? 0)} ${t("analytics.shown", locale)}</span>
       </div>
-      ${renderSectionNote("Current loaded dataset ranking by total volume, capped at 5 assets.")}
+      ${renderSectionNote(t("analytics.currentLoadedDatasetVolumeNote", locale))}
       <div class="compact-grid">
-        ${analytics?.topAssets?.map(renderTopAsset).join("") || renderEmptyState("No asset activity yet.")}
+        ${analytics?.topAssets?.map((stat) => renderTopAsset(stat, locale)).join("") || renderEmptyState(t("empty.noAssetActivity", locale))}
       </div>
     </section>
 
     <section class="content-panel" aria-labelledby="top-sellers-title">
       <div class="section-heading">
-        <h2 id="top-sellers-title">Top Sellers Snapshot</h2>
-        <span>${formatNumber(analytics?.topSellers?.length ?? 0)} shown</span>
+        <h2 id="top-sellers-title">${t("analytics.topLoadedSellers", locale)}</h2>
+        <span>${formatNumber(analytics?.topSellers?.length ?? 0)} ${t("analytics.shown", locale)}</span>
       </div>
-      ${renderSectionNote("Current loaded dataset ranking by total sold value, capped at 5 actors.")}
+      ${renderSectionNote(t("analytics.currentLoadedDatasetSoldNote", locale))}
       <div class="compact-grid">
-        ${analytics?.topSellers?.map((stat) => renderActorCard(stat, "seller")).join("") || renderEmptyState("No seller activity yet.")}
+        ${analytics?.topSellers?.map((stat) => renderActorCard(stat, "seller", locale)).join("") || renderEmptyState(t("empty.noSellerActivity", locale))}
       </div>
     </section>
 
     <section class="content-panel" aria-labelledby="top-buyers-title">
       <div class="section-heading">
-        <h2 id="top-buyers-title">Top Buyers Snapshot</h2>
-        <span>${formatNumber(analytics?.topBuyers?.length ?? 0)} shown</span>
+        <h2 id="top-buyers-title">${t("analytics.topLoadedBuyers", locale)}</h2>
+        <span>${formatNumber(analytics?.topBuyers?.length ?? 0)} ${t("analytics.shown", locale)}</span>
       </div>
-      ${renderSectionNote("Current loaded dataset ranking by total bought value, capped at 5 actors.")}
+      ${renderSectionNote(t("analytics.currentLoadedDatasetBoughtNote", locale))}
       <div class="compact-grid">
-        ${analytics?.topBuyers?.map((stat) => renderActorCard(stat, "buyer")).join("") || renderEmptyState("No buyer activity yet.")}
+        ${analytics?.topBuyers?.map((stat) => renderActorCard(stat, "buyer", locale)).join("") || renderEmptyState(t("empty.noBuyerActivity", locale))}
       </div>
     </section>
   `;
@@ -74,47 +75,47 @@ function renderActivityMetric(label, value) {
   `;
 }
 
-function renderBreakdownPanel(title, entries, currency) {
+function renderBreakdownPanel(title, entries, currency, locale) {
   return `
     <article class="analytics-panel">
       <h3>${escapeHtml(title)}</h3>
-      <p class="panel-note">Sorted by current loaded volume.</p>
+      <p class="panel-note">${t("analytics.sortedByCurrentLoadedVolume", locale)}</p>
       <div class="breakdown-list">
-        ${entries.slice(0, 6).map((entry) => renderBreakdownRow(entry, currency)).join("") || renderEmptyState("No activity yet.")}
+        ${entries.slice(0, 6).map((entry) => renderBreakdownRow(entry, currency, locale)).join("") || renderEmptyState(t("empty.noActivity", locale))}
       </div>
     </article>
   `;
 }
 
-function renderBreakdownRow(entry, currency) {
+function renderBreakdownRow(entry, currency, locale) {
   return `
     <div class="breakdown-row">
       <span>${escapeHtml(entry.name)}</span>
       <strong>${formatValue(entry.totalVolume, currency)}</strong>
-      <small>${formatNumber(entry.tradeCount)} trades / ${formatNumber(entry.assetCount)} assets</small>
+      <small>${formatNumber(entry.tradeCount)} ${t("analytics.trades", locale).toLowerCase()} / ${formatNumber(entry.assetCount)} ${t("coverage.assets", locale)}</small>
     </div>
   `;
 }
 
-function renderTopAsset(stat) {
+function renderTopAsset(stat, locale) {
   return `
     <article class="compact-card">
       <strong>${escapeHtml(stat.asset.name)}</strong>
-      <span>${escapeHtml(stat.asset.assetClass ?? "Unclassified / Other")}</span>
+      <span>${escapeHtml(stat.asset.assetClass ?? t("coverage.assetClass.unclassifiedOther", locale))}</span>
       <span>${escapeHtml(stat.asset.category)}</span>
       <dl>
-        <div><dt>Trades</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
-        <div><dt>Volume</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
-        <div><dt>Quantity</dt><dd>${formatNumber(stat.totalQuantity)}</dd></div>
-        <div><dt>Avg Unit</dt><dd>${formatValue(stat.averageUnitValue, stat.currency)}</dd></div>
-        <div><dt>Last Unit</dt><dd>${formatValue(stat.lastUnitValue, stat.currency)}</dd></div>
-        <div><dt>Latest</dt><dd>${formatTime(stat.latestTransactionTime)}</dd></div>
+        <div><dt>${t("analytics.trades", locale)}</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
+        <div><dt>${t("analytics.volume", locale)}</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
+        <div><dt>${t("analytics.quantity", locale)}</dt><dd>${formatNumber(stat.totalQuantity)}</dd></div>
+        <div><dt>${t("analytics.avgUnit", locale)}</dt><dd>${formatValue(stat.averageUnitValue, stat.currency)}</dd></div>
+        <div><dt>${t("analytics.lastUnit", locale)}</dt><dd>${formatValue(stat.lastUnitValue, stat.currency)}</dd></div>
+        <div><dt>${t("analytics.latest", locale)}</dt><dd>${formatTime(stat.latestTransactionTime)}</dd></div>
       </dl>
     </article>
   `;
 }
 
-function renderActorCard(stat, role) {
+function renderActorCard(stat, role, locale) {
   const isSeller = role === "seller";
   const count = isSeller ? stat.soldCount : stat.boughtCount;
   const value = isSeller ? stat.totalSoldValue : stat.totalBoughtValue;
@@ -123,12 +124,12 @@ function renderActorCard(stat, role) {
   return `
     <article class="compact-card">
       <strong>${escapeHtml(stat.actor.name)}</strong>
-      <span>${escapeHtml(tradedAssets || "No assets")}</span>
+      <span>${escapeHtml(tradedAssets || t("empty.noAssets", locale))}</span>
       <dl>
-        <div><dt>${isSeller ? "Sold" : "Bought"}</dt><dd>${formatNumber(count)}</dd></div>
-        <div><dt>Total Value</dt><dd>${formatValue(value, stat.currency)}</dd></div>
-        <div><dt>Main Assets</dt><dd>${escapeHtml(tradedAssets || "No assets")}</dd></div>
-        <div><dt>Last Seen</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
+        <div><dt>${isSeller ? t("analytics.sold", locale) : t("analytics.bought", locale)}</dt><dd>${formatNumber(count)}</dd></div>
+        <div><dt>${t("analytics.totalValue", locale)}</dt><dd>${formatValue(value, stat.currency)}</dd></div>
+        <div><dt>${t("analytics.mainAssets", locale)}</dt><dd>${escapeHtml(tradedAssets || t("empty.noAssets", locale))}</dd></div>
+        <div><dt>${t("analytics.lastSeen", locale)}</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
       </dl>
     </article>
   `;

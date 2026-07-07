@@ -10,18 +10,11 @@ import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
-import { defaultLocale, normalizeLocale, supportedLocales } from "../i18n/i18n.js";
+import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();
 const appRoot = document.querySelector("#app");
 const localeStorageKey = "marketDashboard.locale";
-const localeLabels = Object.freeze({
-  en: "English",
-  "zh-Hant": "繁體中文",
-  ja: "日本語",
-  ko: "한국어",
-  vi: "Tiếng Việt"
-});
 
 appState.locale = readStoredLocale();
 
@@ -37,26 +30,26 @@ function renderApp() {
     <main class="app-shell">
       <section class="app-header" aria-labelledby="page-title">
         <div>
-          <p class="eyebrow">V2-2 Market Coverage</p>
-          <h1 id="page-title">Market Intelligence Dashboard</h1>
+          <p class="eyebrow">${translate("app.versionEyebrow")}</p>
+          <h1 id="page-title">${translate("app.title")}</h1>
           <p class="page-summary">
-            Reusable market model foundation with Elf Continent as the first source adapter.
+            ${translate("app.subtitle")}
           </p>
         </div>
         <div class="header-actions">
           ${renderLanguageSwitch(appState.locale)}
           <button class="refresh-button" type="button" data-action="refresh" ${isLoading ? "disabled" : ""}>
-            ${isLoading ? "Refreshing..." : "Refresh Live Data"}
+            ${isLoading ? translate("action.refreshing") : translate("action.refreshLiveData")}
           </button>
         </div>
       </section>
 
-      ${renderDashboardView(appState.model, appState.status, route)}
-      ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory)}
-      ${renderAnalyticsView(appState.model)}
+      ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
+      ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
+      ${renderAnalyticsView(appState.model, appState.locale)}
       ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
-      ${renderSignalsView(appState.model)}
-      ${renderTransactionsView(appState.model)}
+      ${renderSignalsView(appState.model, appState.locale)}
+      ${renderTransactionsView(appState.model, appState.locale)}
     </main>
   `;
 
@@ -100,11 +93,11 @@ function renderLanguageSwitch(locale) {
 
   return `
     <label class="language-switch">
-      <span>Language</span>
-      <select data-locale-switch aria-label="Language">
+      <span>${translate("language.label")}</span>
+      <select data-locale-switch aria-label="${translate("language.label")}">
         ${supportedLocales.map((supportedLocale) => `
           <option value="${supportedLocale}" ${supportedLocale === normalizedLocale ? "selected" : ""}>
-            ${localeLabels[supportedLocale] ?? supportedLocale}
+            ${t("language.nativeName", supportedLocale)}
           </option>
         `).join("")}
       </select>
@@ -116,8 +109,8 @@ async function loadDashboard() {
   try {
     setLoading(
       appState,
-      "Loading live market transactions...",
-      `Requesting ${ELF_MARKET_COVERAGE_ITEMS.length} coverage items.`
+      translate("status.loadingLiveMarketTransactions"),
+      translate("status.requestingCoverageItems", { count: ELF_MARKET_COVERAGE_ITEMS.length })
     );
     renderApp();
 
@@ -127,15 +120,15 @@ async function loadDashboard() {
     rebuildVisibleModel();
 
     if (appState.model.transactions.length === 0) {
-      setError(appState, new Error("No transactions returned."), "No transactions returned.");
+      setError(appState, new Error("No transactions returned."), translate("status.noTransactionsReturned"));
     } else if (sourceSnapshot.partial) {
       setUpdated(
         appState,
-        "Partial data loaded. Some items failed.",
+        translate("status.partialDataLoaded"),
         getCoverageDetail(sourceSnapshot)
       );
     } else {
-      setUpdated(appState, "Updated from Elf live adapter.", getCoverageDetail(sourceSnapshot));
+      setUpdated(appState, translate("status.updatedFromLiveAdapter"), getCoverageDetail(sourceSnapshot));
     }
   } catch (error) {
     setError(appState, error, getStatusMessage(error));
@@ -193,20 +186,27 @@ function getCoverageDetail(sourceSnapshot) {
   }
 
   if (coverage.failedItems > 0) {
-    return `${coverage.loadedItems}/${coverage.requestedItems} items loaded, ${coverage.failedItems} failed.`;
+    return translate("status.itemsLoadedWithFailures", {
+      loaded: coverage.loadedItems,
+      requested: coverage.requestedItems,
+      failed: coverage.failedItems
+    });
   }
 
-  return `${coverage.loadedItems}/${coverage.requestedItems} items loaded.`;
+  return translate("status.itemsLoaded", {
+    loaded: coverage.loadedItems,
+    requested: coverage.requestedItems
+  });
 }
 
 function getStatusMessage(error) {
   const messages = {
-    token_refresh_failed: "Token refresh failed. Live data is unavailable.",
-    item_request_failed: "Item request failed. Live data is unavailable.",
-    unexpected_api_response_format: "Unexpected API response format."
+    token_refresh_failed: translate("status.tokenRefreshFailedLiveUnavailable"),
+    item_request_failed: translate("status.itemRequestFailedLiveUnavailable"),
+    unexpected_api_response_format: translate("status.unexpectedApiResponseFormat")
   };
 
-  return messages[error?.kind] ?? "Unexpected API response format.";
+  return messages[error?.kind] ?? translate("status.unexpectedApiResponseFormat");
 }
 
 function readStoredLocale() {
@@ -223,6 +223,10 @@ function writeStoredLocale(locale) {
   } catch {
     // Locale persistence is optional; rendering should continue with in-memory state.
   }
+}
+
+function translate(key, params) {
+  return t(key, appState.locale, params);
 }
 
 renderApp();

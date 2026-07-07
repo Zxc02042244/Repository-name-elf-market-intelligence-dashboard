@@ -38,12 +38,12 @@ function renderExplorerControls(route, explorer) {
         />
       </label>
       <label class="sort-field">
-        <span>Sort</span>
+        <span>${translate("sort.label")}</span>
         <select name="sort">
-          ${renderSortOption("value", "Value", controls.sort)}
-          ${renderSortOption("activity", "Activity", controls.sort)}
-          ${renderSortOption("latest", "Latest", controls.sort)}
-          ${renderSortOption("name", "Name", controls.sort)}
+          ${renderSortOption("value", translate("sort.value"), controls.sort)}
+          ${renderSortOption("activity", translate("sort.activity"), controls.sort)}
+          ${renderSortOption("latest", translate("sort.latest"), controls.sort)}
+          ${renderSortOption("name", translate("sort.name"), controls.sort)}
         </select>
       </label>
       <button class="refresh-button compact-action" type="submit">${translate("action.search")}</button>

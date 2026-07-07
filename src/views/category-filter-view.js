@@ -1,30 +1,31 @@
+import { defaultLocale, t } from "../i18n/i18n.js";
 import { formatNumber } from "../core/utils/numbers.js";
 
-export function renderCategoryFilterView(model, selectedCategory) {
-  const assetClasses = getAssetClassOptions(model);
-  const categories = getCategoryOptions(model);
+export function renderCategoryFilterView(model, selectedCategory, locale = defaultLocale) {
+  const assetClasses = getAssetClassOptions(model, locale);
+  const categories = getCategoryOptions(model, locale);
 
   return `
-    <section class="filter-panel" aria-label="Asset category filter">
+    <section class="filter-panel" aria-label="${t("coverage.assetCategoryFilter", locale)}">
       <div class="section-heading">
-        <h2>Asset Coverage</h2>
-        <span>${formatNumber(categories.length - 1)} categories</span>
+        <h2>${t("coverage.assetCoverage", locale)}</h2>
+        <span>${formatNumber(categories.length - 1)} ${t("coverage.categories", locale)}</span>
       </div>
-      <div class="asset-class-grid" aria-label="Top-level asset classes">
+      <div class="asset-class-grid" aria-label="${t("coverage.topLevelAssetClasses", locale)}">
         ${assetClasses.map(renderAssetClassCard).join("")}
       </div>
       <div class="section-heading section-heading-compact">
-        <h2>Category Filters</h2>
-        <span>${formatNumber(model?.assetStats.length ?? 0)} assets</span>
+        <h2>${t("coverage.categoryFilters", locale)}</h2>
+        <span>${formatNumber(model?.assetStats.length ?? 0)} ${t("coverage.assets", locale)}</span>
       </div>
-      <div class="category-tabs" role="tablist" aria-label="Asset categories">
+      <div class="category-tabs" role="tablist" aria-label="${t("coverage.assetCategories", locale)}">
         ${categories.map((category) => renderCategoryButton(category, selectedCategory)).join("")}
       </div>
     </section>
   `;
 }
 
-function getAssetClassOptions(model) {
+function getAssetClassOptions(model, locale) {
   const counts = new Map();
 
   for (const stat of model?.assetStats ?? []) {
@@ -33,14 +34,17 @@ function getAssetClassOptions(model) {
   }
 
   return [
-    "Resources / Materials",
-    "Blueprints / Progression",
-    "Cosmetics / Collectibles",
-    "Unclassified / Other"
-  ].map((name) => ({ name, count: counts.get(name) ?? 0 }));
+    ["Resources / Materials", t("coverage.assetClass.resourcesMaterials", locale)],
+    ["Blueprints / Progression", t("coverage.assetClass.blueprintsProgression", locale)],
+    ["Cosmetics / Collectibles", t("coverage.assetClass.cosmeticsCollectibles", locale)],
+    ["Unclassified / Other", t("coverage.assetClass.unclassifiedOther", locale)]
+  ].map(([sourceName, displayName]) => ({
+    name: displayName,
+    count: counts.get(sourceName) ?? 0
+  }));
 }
 
-function getCategoryOptions(model) {
+function getCategoryOptions(model, locale) {
   const counts = new Map();
 
   for (const stat of model?.assetStats ?? []) {
@@ -49,10 +53,10 @@ function getCategoryOptions(model) {
   }
 
   const options = [...counts.entries()]
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, count]) => ({ name, value: name, count }))
     .sort((left, right) => left.name.localeCompare(right.name));
 
-  return [{ name: "All", count: model?.assetStats.length ?? 0 }, ...options];
+  return [{ name: t("coverage.all", locale), value: "all", count: model?.assetStats.length ?? 0 }, ...options];
 }
 
 function renderAssetClassCard(assetClass) {
@@ -65,8 +69,7 @@ function renderAssetClassCard(assetClass) {
 }
 
 function renderCategoryButton(category, selectedCategory) {
-  const value = category.name === "All" ? "all" : category.name;
-  const isSelected = value === selectedCategory;
+  const isSelected = category.value === selectedCategory;
 
   return `
     <button
@@ -74,7 +77,7 @@ function renderCategoryButton(category, selectedCategory) {
       type="button"
       role="tab"
       aria-selected="${isSelected ? "true" : "false"}"
-      data-category="${escapeHtml(value)}"
+      data-category="${escapeHtml(category.value)}"
     >
       <span>${escapeHtml(category.name)}</span>
       <strong>${formatNumber(category.count)}</strong>

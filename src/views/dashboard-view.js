@@ -1,37 +1,38 @@
+import { defaultLocale, t } from "../i18n/i18n.js";
 import { formatNumber, formatValue } from "../core/utils/numbers.js";
 import { formatTime } from "../core/utils/time.js";
 
-export function renderDashboardView(model, status) {
+export function renderDashboardView(model, status, route, locale = defaultLocale) {
   const totals = model?.totals;
-  const currency = model?.transactions[0]?.value.currency ?? "units";
+  const currency = model?.transactions[0]?.value.currency ?? t("transactions.units", locale);
 
   return `
     <section class="status-strip status-${status.kind}" role="status" aria-live="polite">
       <span>
-        <strong>${escapeHtml(status.message)}</strong>
+        <strong>${escapeHtml(localizeStatusMessage(status.message, locale))}</strong>
         ${status.detail ? `<small>${escapeHtml(status.detail)}</small>` : ""}
       </span>
-      <span>${status.updatedAt ? `Updated ${formatTime(status.updatedAt)}` : "Waiting for data"}</span>
+      <span>${status.updatedAt ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) }) : t("status.waitingForData", locale)}</span>
     </section>
 
-    <section class="dashboard-grid" aria-label="Market totals">
-      ${renderMetricCard("Transactions", totals?.totalTransactions ?? 0)}
-      ${renderMetricCard("Total Volume", formatValue(totals?.totalVolume ?? 0, currency))}
-      ${renderMetricCard("Active Sellers", totals?.activeSellers ?? 0)}
-      ${renderMetricCard("Active Buyers", totals?.activeBuyers ?? 0)}
+    <section class="dashboard-grid" aria-label="${t("dashboard.marketTotals", locale)}">
+      ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0)}
+      ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency))}
+      ${renderMetricCard(t("dashboard.activeSellers", locale), totals?.activeSellers ?? 0)}
+      ${renderMetricCard(t("dashboard.activeBuyers", locale), totals?.activeBuyers ?? 0)}
     </section>
 
     <section class="summary-panel">
       <div>
-        <h2>Model Snapshot</h2>
-        <p>Source: ${escapeHtml(model?.meta.source ?? "Pending")}</p>
+        <h2>${t("dashboard.modelSnapshot", locale)}</h2>
+        <p>${t("dashboard.source", locale)}: ${escapeHtml(model?.meta.source ?? t("dashboard.pending", locale))}</p>
       </div>
       <div class="snapshot-list">
-        <span>Latest Transaction</span>
-        <strong>${formatTime(totals?.latestTransactionTime)}</strong>
+        <span>${t("dashboard.latestTransaction", locale)}</span>
+        <strong>${totals?.latestTransactionTime ? formatTime(totals.latestTransactionTime) : t("dashboard.noTransactions", locale)}</strong>
       </div>
       <div class="snapshot-list">
-        <span>Signal Modules</span>
+        <span>${t("dashboard.signalModules", locale)}</span>
         <strong>${formatNumber(model?.signals.length ?? 0)}</strong>
       </div>
     </section>
@@ -45,6 +46,20 @@ function renderMetricCard(label, value) {
       <strong>${escapeHtml(String(value))}</strong>
     </article>
   `;
+}
+
+function localizeStatusMessage(message, locale) {
+  const statusKeys = {
+    "Loading live market transactions...": "status.loadingLiveMarketTransactions",
+    "Partial data loaded. Some items failed.": "status.partialDataLoaded",
+    "Updated from Elf live adapter.": "status.updatedFromLiveAdapter",
+    "No transactions returned.": "status.noTransactionsReturned",
+    "Token refresh failed. Live data is unavailable.": "status.tokenRefreshFailedLiveUnavailable",
+    "Item request failed. Live data is unavailable.": "status.itemRequestFailedLiveUnavailable",
+    "Unexpected API response format.": "status.unexpectedApiResponseFormat"
+  };
+
+  return statusKeys[message] ? t(statusKeys[message], locale) : message;
 }
 
 function escapeHtml(value) {
