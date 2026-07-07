@@ -90,9 +90,9 @@ function renderAssetResult(route, stat) {
       <span>${escapeHtml(stat.asset.assetClass ?? "Unclassified / Other")}</span>
       <span>${escapeHtml(stat.asset.category)}</span>
       <dl>
-        <div><dt>Trades</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
-        <div><dt>Volume</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
-        <div><dt>Latest</dt><dd>${formatTime(stat.latestTransactionTime)}</dd></div>
+        <div><dt>Loaded Trades</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
+        <div><dt>Loaded Volume</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
+        <div><dt>Latest Loaded Trade</dt><dd>${formatTime(stat.latestTransactionTime)}</dd></div>
       </dl>
       <a class="detail-link" href="${buildRouteHash(route, { mode: "assets", assetId: String(stat.asset.id), actorId: "" })}">View Asset Snapshot</a>
     </article>
@@ -143,20 +143,25 @@ function renderAssetDetail(detail) {
     <article class="snapshot-detail" aria-labelledby="asset-detail-title">
       <div class="section-heading">
         <h2 id="asset-detail-title">${escapeHtml(stat.asset.name)}</h2>
-        <span>Asset snapshot</span>
+        <span>Snapshot Asset Stats</span>
       </div>
+      <p class="section-note">
+        This section uses the currently loaded marketplace data only. True 7D/30D history requires the paused historical database phase.
+      </p>
       <div class="snapshot-detail-grid">
         ${renderDetailMetric("Asset Class", stat.asset.assetClass ?? "Unclassified / Other")}
         ${renderDetailMetric("Category", stat.asset.category)}
         ${renderDetailMetric("Group", stat.asset.group)}
-        ${renderDetailMetric("Trade Count", formatNumber(stat.tradeCount))}
-        ${renderDetailMetric("Total Volume", formatValue(stat.totalVolume, stat.currency))}
-        ${renderDetailMetric("Total Quantity", formatNumber(stat.totalQuantity))}
-        ${renderDetailMetric("Avg Unit", formatValue(stat.averageUnitValue, stat.currency))}
-        ${renderDetailMetric("Last Unit", formatValue(stat.lastUnitValue, stat.currency))}
-        ${renderDetailMetric("Latest", formatTime(stat.latestTransactionTime))}
+        ${renderDetailMetric("Loaded Trades", formatNumber(stat.tradeCount))}
+        ${renderDetailMetric("Loaded Volume", formatValue(stat.totalVolume, stat.currency))}
+        ${renderDetailMetric("Loaded Quantity", formatNumber(stat.totalQuantity))}
+        ${renderDetailMetric("Snapshot Avg Unit", formatValue(stat.averageUnitValue, stat.currency))}
+        ${renderDetailMetric("Latest Loaded Unit", formatValue(stat.lastUnitValue, stat.currency))}
+        ${renderDetailMetric("Latest Loaded Trade", formatTime(stat.latestTransactionTime))}
+        ${renderDetailMetric("Loaded Sellers", formatNumber(stat.activeSellers))}
+        ${renderDetailMetric("Loaded Buyers", formatNumber(stat.activeBuyers))}
       </div>
-      ${renderDetailTransactions("Recent Asset Transactions", detail.transactions)}
+      ${renderDetailTransactions("Recent Loaded Transactions", detail.transactions)}
     </article>
   `;
 }
