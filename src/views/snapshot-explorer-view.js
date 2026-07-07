@@ -1,11 +1,13 @@
 import { buildRouteHash } from "../app/router.js";
 import { formatNumber, formatValue } from "../core/utils/numbers.js";
 import { formatTime } from "../core/utils/time.js";
-import { defaultLocale, t } from "../i18n/i18n.js";
+import { defaultLocale, normalizeLocale, t } from "../i18n/i18n.js";
 
-const snapshotLocale = defaultLocale;
+let snapshotLocale = defaultLocale;
 
-export function renderSnapshotExplorerView(model, route, explorer) {
+export function renderSnapshotExplorerView(model, route, explorer, locale = defaultLocale) {
+  snapshotLocale = normalizeLocale(locale);
+
   return `
     <section class="content-panel" aria-labelledby="snapshot-explorer-title">
       <div class="section-heading">
@@ -183,7 +185,7 @@ function renderActorResult(route, stat) {
 }
 
 function renderResultSummary(kind, shownCount, totalMatched) {
-  const plural = totalMatched === 1 ? kind : `${kind}s`;
+  const plural = getResultKindLabel(kind, totalMatched);
   const capNote = totalMatched > shownCount ? ` ${translate("snapshot.resultsCapped", {
     count: formatNumber(shownCount)
   })}` : "";
@@ -200,7 +202,7 @@ function renderResultSummary(kind, shownCount, totalMatched) {
 }
 
 function renderSearchEmptyState(kind, search) {
-  const plural = kind === "asset" ? "assets" : "actors";
+  const plural = getResultKindLabel(kind, 2);
   const query = String(search ?? "").trim();
 
   if (query) {
@@ -211,6 +213,14 @@ function renderSearchEmptyState(kind, search) {
   }
 
   return renderEmptyState(translate("empty.noMatchingSnapshotResults", { plural }));
+}
+
+function getResultKindLabel(kind, count) {
+  if (kind === "asset") {
+    return count === 1 ? "asset" : translate("snapshot.assetsMode").toLowerCase();
+  }
+
+  return count === 1 ? "actor" : translate("snapshot.actorsMode").toLowerCase();
 }
 
 function renderSelectedDetails(route, explorer) {

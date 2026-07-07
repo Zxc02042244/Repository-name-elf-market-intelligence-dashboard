@@ -1,6 +1,9 @@
+import { defaultLocale } from "../i18n/i18n.js";
+
 export function createAppState() {
   return {
     sourceName: "Elf Continent market coverage",
+    locale: defaultLocale,
     status: {
       kind: "loading",
       message: "Loading live market transactions...",

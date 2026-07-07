@@ -38,6 +38,32 @@ textarea {
   padding: 24px 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.language-switch {
+  display: grid;
+  gap: 6px;
+  min-width: 132px;
+}
+
+.language-switch span {
+  color: #92a5bb;
+  font-size: 0.78rem;
+}
+
+.language-switch select {
+  min-height: 44px;
+  border: 1px solid #2b4058;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #0d141d;
+  color: #e7edf4;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: #9bb0c9;
@@ -694,9 +720,14 @@ h2 {
 
 @media (max-width: 920px) {
   .app-header,
+  .header-actions,
   .status-strip,
   .summary-panel {
     display: grid;
+  }
+
+  .header-actions {
+    justify-items: stretch;
   }
 
   .dashboard-grid,
@@ -745,6 +776,10 @@ h2 {
 
   .refresh-button {
     width: 100%;
+  }
+
+  .language-switch {
+    min-width: 0;
   }
 
   .explorer-actions,

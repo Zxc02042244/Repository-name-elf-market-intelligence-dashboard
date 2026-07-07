@@ -10,9 +10,20 @@ import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
+import { defaultLocale, normalizeLocale, supportedLocales } from "../i18n/i18n.js";
 
 const appState = createAppState();
 const appRoot = document.querySelector("#app");
+const localeStorageKey = "marketDashboard.locale";
+const localeLabels = Object.freeze({
+  en: "English",
+  "zh-Hant": "繁體中文",
+  ja: "日本語",
+  ko: "한국어",
+  vi: "Tiếng Việt"
+});
+
+appState.locale = readStoredLocale();
 
 function renderApp() {
   if (!appRoot) {
@@ -32,19 +43,29 @@ function renderApp() {
             Reusable market model foundation with Elf Continent as the first source adapter.
           </p>
         </div>
-        <button class="refresh-button" type="button" data-action="refresh" ${isLoading ? "disabled" : ""}>
-          ${isLoading ? "Refreshing..." : "Refresh Live Data"}
-        </button>
+        <div class="header-actions">
+          ${renderLanguageSwitch(appState.locale)}
+          <button class="refresh-button" type="button" data-action="refresh" ${isLoading ? "disabled" : ""}>
+            ${isLoading ? "Refreshing..." : "Refresh Live Data"}
+          </button>
+        </div>
       </section>
 
       ${renderDashboardView(appState.model, appState.status, route)}
       ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory)}
       ${renderAnalyticsView(appState.model)}
-      ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer)}
+      ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
       ${renderSignalsView(appState.model)}
       ${renderTransactionsView(appState.model)}
     </main>
   `;
+
+  const localeSelect = appRoot.querySelector("[data-locale-switch]");
+  localeSelect?.addEventListener("change", () => {
+    appState.locale = normalizeLocale(localeSelect.value);
+    writeStoredLocale(appState.locale);
+    renderApp();
+  });
 
   const refreshButton = appRoot.querySelector("[data-action='refresh']");
   refreshButton?.addEventListener("click", () => {
@@ -72,6 +93,23 @@ function renderApp() {
       actorId: ""
     });
   });
+}
+
+function renderLanguageSwitch(locale) {
+  const normalizedLocale = normalizeLocale(locale);
+
+  return `
+    <label class="language-switch">
+      <span>Language</span>
+      <select data-locale-switch aria-label="Language">
+        ${supportedLocales.map((supportedLocale) => `
+          <option value="${supportedLocale}" ${supportedLocale === normalizedLocale ? "selected" : ""}>
+            ${localeLabels[supportedLocale] ?? supportedLocale}
+          </option>
+        `).join("")}
+      </select>
+    </label>
+  `;
 }
 
 async function loadDashboard() {
@@ -169,6 +207,22 @@ function getStatusMessage(error) {
   };
 
   return messages[error?.kind] ?? "Unexpected API response format.";
+}
+
+function readStoredLocale() {
+  try {
+    return normalizeLocale(window.localStorage?.getItem(localeStorageKey) ?? defaultLocale);
+  } catch {
+    return defaultLocale;
+  }
+}
+
+function writeStoredLocale(locale) {
+  try {
+    window.localStorage?.setItem(localeStorageKey, normalizeLocale(locale));
+  } catch {
+    // Locale persistence is optional; rendering should continue with in-memory state.
+  }
 }
 
 renderApp();
