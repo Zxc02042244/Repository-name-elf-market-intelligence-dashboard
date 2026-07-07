@@ -1,0 +1,51 @@
+const SECRET_PATTERNS = [
+  /Bearer\s+[A-Za-z0-9._~+/=-]+/gi,
+  /(token|secret|key|authorization)(\s*[:=]\s*)[^\s,;}]+/gi
+];
+
+export function createCollectorLogger({ quiet = false } = {}) {
+  function write(level, message, details) {
+    if (quiet && level === "info") {
+      return;
+    }
+
+    const prefix = `[collector:${level}]`;
+    const safeMessage = sanitizeLogText(message);
+    const safeDetails = details ? ` ${sanitizeLogText(JSON.stringify(details))}` : "";
+    const line = `${prefix} ${safeMessage}${safeDetails}`;
+
+    if (level === "error") {
+      console.error(line);
+      return;
+    }
+
+    if (level === "warn") {
+      console.warn(line);
+      return;
+    }
+
+    console.log(line);
+  }
+
+  return {
+    info(message, details) {
+      write("info", message, details);
+    },
+    warn(message, details) {
+      write("warn", message, details);
+    },
+    error(message, details) {
+      write("error", message, details);
+    },
+    summary(message, details) {
+      write("summary", message, details);
+    }
+  };
+}
+
+export function sanitizeLogText(value) {
+  return SECRET_PATTERNS.reduce(
+    (text, pattern) => text.replace(pattern, "$1$2[redacted]"),
+    String(value ?? "")
+  );
+}
