@@ -77,6 +77,27 @@ body {
   color: var(--theme-text);
 }
 
+.explorer-controls {
+  border: 1px solid var(--theme-border-muted);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgb(227 192 107 / 7%), transparent),
+    var(--theme-surface-muted);
+}
+
+.search-field input::placeholder {
+  color: rgb(200 185 154 / 70%);
+}
+
+.search-field input:focus,
+.sort-field select:focus,
+.language-switch select:focus {
+  border-color: var(--theme-active-outline);
+  outline: 2px solid rgb(140 173 91 / 24%);
+  outline-offset: 2px;
+}
+
 .snapshot-detail-section,
 .snapshot-identity-section,
 .muted-panel {
@@ -143,6 +164,15 @@ body {
   background: var(--theme-button-hover);
 }
 
+.refresh-button:focus-visible,
+.category-tab:focus-visible,
+.segment-link:focus-visible,
+.detail-link:focus-visible,
+.utility-link:focus-visible {
+  outline: 2px solid rgb(140 173 91 / 28%);
+  outline-offset: 2px;
+}
+
 .refresh-button:disabled {
   opacity: 0.68;
 }
@@ -160,12 +190,53 @@ body {
     inset 0 0 0 1px rgb(140 173 91 / 30%);
 }
 
+.snapshot-result-card {
+  background:
+    linear-gradient(180deg, rgb(216 138 75 / 5%), transparent 56%),
+    var(--theme-surface);
+}
+
+.snapshot-result-card .detail-link {
+  margin-top: 14px;
+}
+
+.detail-section-heading h3,
+.detail-transactions h3,
+.snapshot-detail-empty h3 {
+  color: var(--theme-accent-gold);
+}
+
+.detail-metric {
+  background:
+    linear-gradient(180deg, rgb(241 223 176 / 4%), transparent),
+    var(--theme-input-bg);
+}
+
+.detail-metric strong {
+  color: var(--theme-text-strong);
+}
+
 .snapshot-detail-note,
 .explorer-scope-note {
   border: 1px solid var(--theme-border-muted);
   border-radius: 8px;
   padding: 10px 12px;
   background: var(--theme-helper-bg);
+}
+
+.detail-transaction-row {
+  border-top-color: var(--theme-border-muted);
+}
+
+.detail-transaction-row strong {
+  color: var(--theme-text-strong);
+}
+
+.empty-state {
+  border: 1px dashed var(--theme-border-muted);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgb(241 223 176 / 5%);
 }
 
 .status-updated {
