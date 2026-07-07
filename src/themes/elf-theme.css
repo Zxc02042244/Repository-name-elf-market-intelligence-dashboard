@@ -196,6 +196,15 @@ body {
     var(--theme-surface);
 }
 
+.asset-badge {
+  border-color: var(--theme-border);
+  background:
+    linear-gradient(135deg, rgb(216 138 75 / 24%), rgb(140 173 91 / 18%)),
+    var(--theme-button-bg);
+  color: var(--theme-accent-gold);
+  box-shadow: inset 0 1px 0 rgb(241 223 176 / 18%);
+}
+
 .snapshot-result-card .detail-link {
   margin-top: 14px;
 }

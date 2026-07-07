@@ -26,7 +26,10 @@ function renderAssetStat(stat, locale) {
 
   return `
     <article class="compact-card">
-      <strong>${escapeHtml(stat.asset.name)}</strong>
+      <div class="asset-card-heading">
+        ${renderAssetBadge(stat.asset)}
+        <strong>${escapeHtml(stat.asset.name)}</strong>
+      </div>
       <span>${escapeHtml(stat.asset.assetClass ?? t("coverage.assetClass.unclassifiedOther", locale))}</span>
       <span>${escapeHtml(stat.asset.group)} / ${escapeHtml(stat.asset.category)}</span>
       <dl>
@@ -45,6 +48,18 @@ function renderAssetStat(stat, locale) {
 
 function renderEmptyState(locale) {
   return `<p class="empty-state">${t("empty.assetStatsPending", locale)}</p>`;
+}
+
+function renderAssetBadge(asset) {
+  const label = String(asset?.name ?? "?").trim();
+  const initial = label ? Array.from(label)[0].toUpperCase() : "?";
+  const title = [asset?.assetClass, asset?.category].filter(Boolean).join(" / ");
+
+  return `
+    <span class="asset-badge" title="${escapeHtml(title || label)}" aria-hidden="true">
+      ${escapeHtml(initial)}
+    </span>
+  `;
 }
 
 function escapeHtml(value) {

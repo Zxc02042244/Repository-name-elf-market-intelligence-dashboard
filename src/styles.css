@@ -459,6 +459,40 @@ h2 {
   min-width: 0;
 }
 
+.asset-card-heading,
+.asset-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.asset-card-heading strong,
+.asset-detail-title h2 {
+  min-width: 0;
+}
+
+.asset-badge {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #2b4058;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #26384d, #172232);
+  color: #f2dfae;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.asset-badge-large {
+  width: 42px;
+  height: 42px;
+  font-size: 1rem;
+}
+
 .snapshot-result-card-selected {
   border-color: #77c7a2;
   background: #132235;
@@ -908,6 +942,11 @@ h2 {
 
   .compact-card dd {
     text-align: left;
+  }
+
+  .asset-card-heading,
+  .asset-detail-title {
+    align-items: flex-start;
   }
 
   .metric-card strong {

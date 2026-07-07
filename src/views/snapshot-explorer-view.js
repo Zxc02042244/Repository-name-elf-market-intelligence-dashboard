@@ -138,7 +138,10 @@ function renderAssetResult(route, stat) {
 
   return `
     <article class="compact-card snapshot-result-card ${isSelected ? "snapshot-result-card-selected" : ""}" ${isSelected ? 'aria-current="true"' : ""}>
-      <strong>${escapeHtml(stat.asset.name)}</strong>
+      <div class="asset-card-heading">
+        ${renderAssetBadge(stat.asset)}
+        <strong>${escapeHtml(stat.asset.name)}</strong>
+      </div>
       ${isSelected ? `<span class="selected-marker">${translate("snapshot.selected")}</span>` : ""}
       <span>${escapeHtml(stat.asset.assetClass ?? translate("coverage.assetClass.unclassifiedOther"))}</span>
       <span>${escapeHtml(stat.asset.category)}</span>
@@ -261,7 +264,10 @@ function renderAssetDetail(route, detail) {
   return `
     <article class="snapshot-detail" aria-labelledby="asset-detail-title">
       <div class="section-heading">
-        <h2 id="asset-detail-title">${escapeHtml(stat.asset.name)}</h2>
+        <div class="asset-detail-title">
+          ${renderAssetBadge(stat.asset, "asset-badge-large")}
+          <h2 id="asset-detail-title">${escapeHtml(stat.asset.name)}</h2>
+        </div>
         <span>${translate("asset.snapshotStats")}</span>
       </div>
       <div class="detail-action-row">
@@ -371,6 +377,18 @@ function renderDetailMetric(label, value) {
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(value)}</strong>
     </div>
+  `;
+}
+
+function renderAssetBadge(asset, className = "") {
+  const label = String(asset?.name ?? "?").trim();
+  const initial = label ? Array.from(label)[0].toUpperCase() : "?";
+  const title = [asset?.assetClass, asset?.category].filter(Boolean).join(" / ");
+
+  return `
+    <span class="asset-badge ${className}" title="${escapeHtml(title || label)}" aria-hidden="true">
+      ${escapeHtml(initial)}
+    </span>
   `;
 }
 
