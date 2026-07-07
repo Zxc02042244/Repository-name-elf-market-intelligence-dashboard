@@ -11,8 +11,9 @@ export function renderSnapshotExplorerView(model, route, explorer) {
       </div>
       <p class="section-note">Search and detail views use the currently loaded MarketModel snapshot only. Not historical trend data.</p>
       ${renderExplorerControls(route, explorer)}
-      ${renderExplorerResults(route, explorer)}
-      ${renderSelectedDetails(explorer)}
+      ${renderExplorerScopeNote()}
+      ${renderExplorerResults(model, route, explorer)}
+      ${renderSelectedDetails(route, explorer)}
     </section>
   `;
 }
@@ -42,11 +43,41 @@ function renderExplorerControls(route, explorer) {
       </label>
       <button class="refresh-button compact-action" type="submit">Search</button>
     </form>
+    ${renderExplorerActions(route, controls)}
     <div class="segmented-control" aria-label="Snapshot result type">
       ${renderModeLink("assets", "Assets", route, controls.mode)}
       ${renderModeLink("actors", "Actors", route, controls.mode)}
     </div>
   `;
+}
+
+function renderExplorerActions(route, controls) {
+  const actions = [];
+
+  if (controls.search) {
+    actions.push(renderUtilityLink("Clear Search", buildRouteHash(route, {
+      search: "",
+      assetId: "",
+      actorId: ""
+    })));
+  }
+
+  if (route.assetId || route.actorId) {
+    actions.push(renderUtilityLink("Clear Selection", buildRouteHash(route, {
+      assetId: "",
+      actorId: ""
+    })));
+  }
+
+  if (actions.length === 0) {
+    return "";
+  }
+
+  return `<div class="explorer-actions">${actions.join("")}</div>`;
+}
+
+function renderUtilityLink(label, href) {
+  return `<a class="utility-link" href="${href}">${escapeHtml(label)}</a>`;
 }
 
 function renderSortOption(value, label, currentSort) {
@@ -67,26 +98,42 @@ function renderModeLink(mode, label, route, currentMode) {
   `;
 }
 
-function renderExplorerResults(route, explorer) {
-  if (explorer.controls.mode === "actors") {
-    return renderActorResults(route, explorer.actorResults);
-  }
-
-  return renderAssetResults(route, explorer.assetResults);
+function renderExplorerScopeNote() {
+  return `
+    <p class="explorer-scope-note">
+      Results reflect the current category filter and currently loaded snapshot.
+    </p>
+  `;
 }
 
-function renderAssetResults(route, assetResults) {
+function renderExplorerResults(model, route, explorer) {
+  if (explorer.controls.mode === "actors") {
+    return renderActorResults(model, route, explorer);
+  }
+
+  return renderAssetResults(model, route, explorer);
+}
+
+function renderAssetResults(model, route, explorer) {
+  const controls = explorer.controls;
+  const assetResults = explorer.assetResults;
+  const totalMatched = countMatchingAssets(model, controls.search);
+
   return `
+    ${renderResultSummary("asset", assetResults.length, totalMatched)}
     <div class="snapshot-result-grid" aria-label="Asset search results">
-      ${assetResults.map((stat) => renderAssetResult(route, stat)).join("") || renderEmptyState("No matching assets.")}
+      ${assetResults.map((stat) => renderAssetResult(route, stat)).join("") || renderSearchEmptyState("asset", controls.search)}
     </div>
   `;
 }
 
 function renderAssetResult(route, stat) {
+  const isSelected = String(route.assetId) === String(stat.asset.id);
+
   return `
-    <article class="compact-card">
+    <article class="compact-card snapshot-result-card ${isSelected ? "snapshot-result-card-selected" : ""}" ${isSelected ? 'aria-current="true"' : ""}>
       <strong>${escapeHtml(stat.asset.name)}</strong>
+      ${isSelected ? '<span class="selected-marker">Selected</span>' : ""}
       <span>${escapeHtml(stat.asset.assetClass ?? "Unclassified / Other")}</span>
       <span>${escapeHtml(stat.asset.category)}</span>
       <dl>
@@ -99,20 +146,27 @@ function renderAssetResult(route, stat) {
   `;
 }
 
-function renderActorResults(route, actorResults) {
+function renderActorResults(model, route, explorer) {
+  const controls = explorer.controls;
+  const actorResults = explorer.actorResults;
+  const totalMatched = countMatchingActors(model, controls.search);
+
   return `
+    ${renderResultSummary("actor", actorResults.length, totalMatched)}
     <div class="snapshot-result-grid" aria-label="Actor search results">
-      ${actorResults.map((stat) => renderActorResult(route, stat)).join("") || renderEmptyState("No matching actors.")}
+      ${actorResults.map((stat) => renderActorResult(route, stat)).join("") || renderSearchEmptyState("actor", controls.search)}
     </div>
   `;
 }
 
 function renderActorResult(route, stat) {
   const totalValue = stat.totalSoldValue + stat.totalBoughtValue;
+  const isSelected = String(route.actorId) === String(stat.actor.id);
 
   return `
-    <article class="compact-card">
+    <article class="compact-card snapshot-result-card ${isSelected ? "snapshot-result-card-selected" : ""}" ${isSelected ? 'aria-current="true"' : ""}>
       <strong>${escapeHtml(stat.actor.name)}</strong>
+      ${isSelected ? '<span class="selected-marker">Selected</span>' : ""}
       <span>${escapeHtml(getAssetNames(stat.mainTradedAssets) || "No assets")}</span>
       <dl>
         <div><dt>Sold</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
@@ -124,19 +178,61 @@ function renderActorResult(route, stat) {
   `;
 }
 
-function renderSelectedDetails(explorer) {
+function renderResultSummary(kind, shownCount, totalMatched) {
+  const plural = totalMatched === 1 ? kind : `${kind}s`;
+  const capNote = totalMatched > shownCount ? ` Result list is capped at ${formatNumber(shownCount)}.` : "";
+
+  return `
+    <p class="result-summary">
+      Showing ${formatNumber(shownCount)} of ${formatNumber(totalMatched)} matching ${plural}.${capNote}
+    </p>
+  `;
+}
+
+function renderSearchEmptyState(kind, search) {
+  const plural = kind === "asset" ? "assets" : "actors";
+  const query = String(search ?? "").trim();
+
+  if (query) {
+    return renderEmptyState(`No ${plural} match "${query}" in the current loaded snapshot.`);
+  }
+
+  return renderEmptyState(`No matching ${plural} in the current loaded snapshot.`);
+}
+
+function renderSelectedDetails(route, explorer) {
   if (explorer.selectedAsset) {
-    return renderAssetDetail(explorer.selectedAsset);
+    return renderAssetDetail(route, explorer.selectedAsset);
   }
 
   if (explorer.selectedActor) {
-    return renderActorDetail(explorer.selectedActor);
+    return renderActorDetail(route, explorer.selectedActor);
+  }
+
+  if (route.assetId) {
+    return renderUnavailableSelection("asset", route);
+  }
+
+  if (route.actorId) {
+    return renderUnavailableSelection("actor", route);
   }
 
   return "";
 }
 
-function renderAssetDetail(detail) {
+function renderUnavailableSelection(kind, route) {
+  return `
+    <article class="snapshot-detail snapshot-detail-empty">
+      <h3>Selected ${escapeHtml(kind)} is not available</h3>
+      <p class="empty-state">
+        The selected ${escapeHtml(kind)} is not available in the current category filter or loaded snapshot.
+      </p>
+      ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
+    </article>
+  `;
+}
+
+function renderAssetDetail(route, detail) {
   const stat = detail.stat;
 
   return `
@@ -144,6 +240,9 @@ function renderAssetDetail(detail) {
       <div class="section-heading">
         <h2 id="asset-detail-title">${escapeHtml(stat.asset.name)}</h2>
         <span>Snapshot Asset Stats</span>
+      </div>
+      <div class="detail-action-row">
+        ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
       </div>
       <div class="snapshot-detail-layout">
         <section class="snapshot-detail-section snapshot-identity-section" aria-label="Asset identity and taxonomy">
@@ -180,7 +279,7 @@ function renderAssetDetail(detail) {
   `;
 }
 
-function renderActorDetail(detail) {
+function renderActorDetail(route, detail) {
   const stat = detail.stat;
 
   return `
@@ -188,6 +287,9 @@ function renderActorDetail(detail) {
       <div class="section-heading">
         <h2 id="actor-detail-title">${escapeHtml(stat.actor.name)}</h2>
         <span>Actor snapshot</span>
+      </div>
+      <div class="detail-action-row">
+        ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
       </div>
       <div class="snapshot-detail-grid">
         ${renderDetailMetric("Sold Count", formatNumber(stat.soldCount))}
@@ -237,6 +339,37 @@ function renderDetailTransaction(transaction) {
 
 function getAssetNames(assets) {
   return assets.map((asset) => asset.name).join(", ");
+}
+
+function countMatchingAssets(model, search) {
+  const normalizedSearch = normalizeSearch(search);
+
+  return (model?.assetStats ?? []).filter((stat) => matchesSearch(normalizedSearch, [
+    stat.asset.name,
+    stat.asset.category,
+    stat.asset.assetClass,
+    stat.asset.group
+  ])).length;
+}
+
+function countMatchingActors(model, search) {
+  const normalizedSearch = normalizeSearch(search);
+
+  return (model?.actorStats ?? []).filter((stat) => matchesSearch(normalizedSearch, [
+    stat.actor.name
+  ])).length;
+}
+
+function matchesSearch(search, fields) {
+  if (!search) {
+    return true;
+  }
+
+  return fields.some((field) => String(field ?? "").toLowerCase().includes(search));
+}
+
+function normalizeSearch(value) {
+  return String(value ?? "").trim().toLowerCase();
 }
 
 function renderEmptyState(message) {
