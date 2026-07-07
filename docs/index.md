@@ -43,6 +43,7 @@ Paused lines:
 - `docs/v2-qa-a-live-manual-browser-mobile-smoke-checklist.md`
 - `docs/v2-qa-b-live-pages-deployment-smoke-closeout.md`
 - `docs/v2-qa-c-manual-browser-mobile-interactive-smoke-result-backfill.md`
+- `docs/v2-qa-d-current-baseline-regression-checklist.md`
 - `docs/v2-docs-b-encoding-legacy-doc-cleanup-audit.md`
 - `docs/v2-docs-c-targeted-documentation-cleanup.md`
 - `docs/local-static-preview-workflow.md`
@@ -170,13 +171,14 @@ Current legacy state:
 
 ## Recommended Next Safe Options
 
-1. Repeat V2-QA-C style browser/mobile smoke after future CSS or i18n changes.
-2. Use `scripts/serve-static.mjs` for local static preview smoke:
+1. Use `docs/v2-qa-d-current-baseline-regression-checklist.md` after each small docs, CSS, i18n, or UI polish change.
+2. Repeat V2-QA-C style browser/mobile smoke after future CSS or i18n changes.
+3. Use `scripts/serve-static.mjs` for local static preview smoke:
    - `node scripts/serve-static.mjs .`
    - `http://127.0.0.1:4173/`
-3. Keep CSS-only asset badges generic and source-data based.
-4. Plan personal proxy feasibility only if live API work is explicitly resumed.
-5. Resume V2-6B.5 one-item DB write test only when safe Supabase secret env is configured.
+4. Keep CSS-only asset badges generic and source-data based.
+5. Plan personal proxy feasibility only if live API work is explicitly resumed.
+6. Resume V2-6B.5 one-item DB write test only when safe Supabase secret env is configured.
 
 ## Explicit Non-goals
 
