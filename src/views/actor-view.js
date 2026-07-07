@@ -7,9 +7,12 @@ export function renderActorView(model) {
   return `
     <section class="content-panel" aria-labelledby="actor-stats-title">
       <div class="section-heading">
-        <h2 id="actor-stats-title">Actor Stats</h2>
+        <h2 id="actor-stats-title">Snapshot Actor Stats</h2>
         <span>${formatNumber(actorStats.length)} actors</span>
       </div>
+      <p class="section-note">
+        This section uses the currently loaded marketplace data only. True 7D/30D actor history requires the paused historical database phase.
+      </p>
       <div class="compact-grid">
         ${actorStats.slice(0, 4).map(renderActorStat).join("") || renderEmptyState()}
       </div>
@@ -26,12 +29,13 @@ function renderActorStat(stat) {
       <strong>${escapeHtml(stat.actor.name)}</strong>
       <span>${escapeHtml(tradedAssets || "No assets")}</span>
       <dl>
-        <div><dt>Sold</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
-        <div><dt>Bought</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
-        <div><dt>Sold Value</dt><dd>${formatValue(stat.totalSoldValue, currency)}</dd></div>
-        <div><dt>Bought Value</dt><dd>${formatValue(stat.totalBoughtValue, currency)}</dd></div>
-        <div><dt>Counterparties</dt><dd>${formatNumber(stat.counterpartyCount)}</dd></div>
-        <div><dt>Last Seen</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
+        <div><dt>Loaded Sold Count</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
+        <div><dt>Loaded Bought Count</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
+        <div><dt>Loaded Sold Volume</dt><dd>${formatValue(stat.totalSoldValue, currency)}</dd></div>
+        <div><dt>Loaded Bought Volume</dt><dd>${formatValue(stat.totalBoughtValue, currency)}</dd></div>
+        <div><dt>Loaded Main Assets</dt><dd>${escapeHtml(tradedAssets || "No assets")}</dd></div>
+        <div><dt>Loaded Counterparties</dt><dd>${formatNumber(stat.counterpartyCount)}</dd></div>
+        <div><dt>Latest Loaded Activity</dt><dd>${formatTime(stat.lastSeen)}</dd></div>
       </dl>
     </article>
   `;

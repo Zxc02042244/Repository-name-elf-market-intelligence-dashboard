@@ -169,9 +169,9 @@ function renderActorResult(route, stat) {
       ${isSelected ? '<span class="selected-marker">Selected</span>' : ""}
       <span>${escapeHtml(getAssetNames(stat.mainTradedAssets) || "No assets")}</span>
       <dl>
-        <div><dt>Sold</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
-        <div><dt>Bought</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
-        <div><dt>Total Value</dt><dd>${formatValue(totalValue, stat.currency)}</dd></div>
+        <div><dt>Loaded Sold Count</dt><dd>${formatNumber(stat.soldCount)}</dd></div>
+        <div><dt>Loaded Bought Count</dt><dd>${formatNumber(stat.boughtCount)}</dd></div>
+        <div><dt>Loaded Participation Value</dt><dd>${formatValue(totalValue, stat.currency)}</dd></div>
       </dl>
       <a class="detail-link" href="${buildRouteHash(route, { mode: "actors", actorId: String(stat.actor.id), assetId: "" })}">View Actor Snapshot</a>
     </article>
@@ -281,26 +281,54 @@ function renderAssetDetail(route, detail) {
 
 function renderActorDetail(route, detail) {
   const stat = detail.stat;
+  const totalValue = stat.totalSoldValue + stat.totalBoughtValue;
 
   return `
     <article class="snapshot-detail" aria-labelledby="actor-detail-title">
       <div class="section-heading">
         <h2 id="actor-detail-title">${escapeHtml(stat.actor.name)}</h2>
-        <span>Actor snapshot</span>
+        <span>Snapshot Actor Stats</span>
       </div>
       <div class="detail-action-row">
         ${renderUtilityLink("Clear Selection", buildRouteHash(route, { assetId: "", actorId: "" }))}
       </div>
-      <div class="snapshot-detail-grid">
-        ${renderDetailMetric("Sold Count", formatNumber(stat.soldCount))}
-        ${renderDetailMetric("Bought Count", formatNumber(stat.boughtCount))}
-        ${renderDetailMetric("Total Sold", formatValue(stat.totalSoldValue, stat.currency))}
-        ${renderDetailMetric("Total Bought", formatValue(stat.totalBoughtValue, stat.currency))}
-        ${renderDetailMetric("Main Assets", getAssetNames(stat.mainTradedAssets) || "No assets")}
-        ${renderDetailMetric("Counterparties", formatNumber(stat.counterpartyCount))}
-        ${renderDetailMetric("Last Seen", formatTime(stat.lastSeen))}
+      <div class="snapshot-detail-layout">
+        <section class="snapshot-detail-section snapshot-identity-section" aria-label="Actor identity">
+          <div class="detail-section-heading">
+            <h3>Actor Identity</h3>
+          </div>
+          <div class="snapshot-identity-grid">
+            ${renderDetailMetric("Actor", stat.actor.name)}
+            ${renderDetailMetric("Latest Loaded Activity", formatTime(stat.lastSeen))}
+          </div>
+          <p class="section-note snapshot-detail-note">
+            This section uses the currently loaded marketplace data only. True 7D/30D actor history requires the paused historical database phase.
+          </p>
+        </section>
+        <section class="snapshot-detail-section" aria-label="Loaded actor participation statistics">
+          <div class="detail-section-heading">
+            <h3>Loaded Participation Stats</h3>
+          </div>
+          <div class="snapshot-detail-grid">
+            ${renderDetailMetric("Loaded Sold Count", formatNumber(stat.soldCount))}
+            ${renderDetailMetric("Loaded Bought Count", formatNumber(stat.boughtCount))}
+            ${renderDetailMetric("Loaded Sold Volume", formatValue(stat.totalSoldValue, stat.currency))}
+            ${renderDetailMetric("Loaded Bought Volume", formatValue(stat.totalBoughtValue, stat.currency))}
+            ${renderDetailMetric("Loaded Participation Value", formatValue(totalValue, stat.currency))}
+            ${renderDetailMetric("Latest Loaded Activity", formatTime(stat.lastSeen))}
+          </div>
+        </section>
+        <section class="snapshot-detail-section" aria-label="Loaded actor market relationships">
+          <div class="detail-section-heading">
+            <h3>Loaded Market Relationships</h3>
+          </div>
+          <div class="snapshot-detail-grid">
+            ${renderDetailMetric("Loaded Main Assets", getAssetNames(stat.mainTradedAssets) || "No assets")}
+            ${renderDetailMetric("Loaded Counterparties", formatNumber(stat.counterpartyCount))}
+          </div>
+        </section>
       </div>
-      ${renderDetailTransactions("Recent Actor Transactions", detail.transactions)}
+      ${renderDetailTransactions("Recent Loaded Actor Transactions", detail.transactions)}
     </article>
   `;
 }
