@@ -248,6 +248,23 @@ body {
   background: rgb(241 223 176 / 5%);
 }
 
+.empty-state-prominent {
+  border-style: solid;
+  border-color: rgb(184 95 77 / 48%);
+  background:
+    linear-gradient(180deg, rgb(184 95 77 / 14%), transparent),
+    rgb(241 223 176 / 5%);
+  color: var(--theme-text-strong);
+}
+
+.metric-card-unavailable {
+  opacity: 0.78;
+}
+
+.unavailable-workspace {
+  border-color: rgb(184 95 77 / 42%);
+}
+
 .status-updated {
   border-color: rgb(140 173 91 / 64%);
   background: rgb(111 139 74 / 28%);

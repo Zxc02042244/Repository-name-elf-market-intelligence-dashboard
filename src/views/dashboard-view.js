@@ -5,6 +5,9 @@ import { formatTime } from "../core/utils/time.js";
 export function renderDashboardView(model, status, route, locale = defaultLocale) {
   const totals = model?.totals;
   const currency = model?.transactions[0]?.value.currency ?? t("transactions.units", locale);
+  const hasTransactions = (totals?.totalTransactions ?? 0) > 0;
+  const isUnavailable = status.kind === "error" && !hasTransactions;
+  const metricOptions = { unavailable: isUnavailable };
 
   return `
     <section class="status-strip status-${status.kind}" role="status" aria-live="polite">
@@ -12,14 +15,16 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
         <strong>${escapeHtml(localizeStatusMessage(status.message, locale))}</strong>
         ${status.detail ? `<small>${escapeHtml(status.detail)}</small>` : ""}
       </span>
-      <span>${status.updatedAt ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) }) : t("status.waitingForData", locale)}</span>
+      <span>${status.updatedAt && status.kind !== "error" ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) }) : t("status.waitingForData", locale)}</span>
     </section>
 
+    ${isUnavailable ? renderUnavailableNotice(status, locale) : ""}
+
     <section class="dashboard-grid" aria-label="${t("dashboard.marketTotals", locale)}">
-      ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0)}
-      ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency))}
-      ${renderMetricCard(t("dashboard.activeSellers", locale), totals?.activeSellers ?? 0)}
-      ${renderMetricCard(t("dashboard.activeBuyers", locale), totals?.activeBuyers ?? 0)}
+      ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0, metricOptions)}
+      ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency), metricOptions)}
+      ${renderMetricCard(t("dashboard.activeSellers", locale), totals?.activeSellers ?? 0, metricOptions)}
+      ${renderMetricCard(t("dashboard.activeBuyers", locale), totals?.activeBuyers ?? 0, metricOptions)}
     </section>
 
     <section class="summary-panel">
@@ -39,11 +44,22 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
   `;
 }
 
-function renderMetricCard(label, value) {
+function renderUnavailableNotice(status, locale) {
   return `
-    <article class="metric-card">
+    <section class="empty-state empty-state-prominent" aria-label="${t("status.liveDataUnavailable", locale)}">
+      <strong>${escapeHtml(localizeStatusMessage(status.message, locale))}</strong>
+      <span>${t("status.waitingForData", locale)}</span>
+    </section>
+  `;
+}
+
+function renderMetricCard(label, value, options = {}) {
+  const displayValue = options.unavailable ? "—" : value;
+
+  return `
+    <article class="metric-card ${options.unavailable ? "metric-card-unavailable" : ""}">
       <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(String(value))}</strong>
+      <strong>${escapeHtml(String(displayValue))}</strong>
     </article>
   `;
 }

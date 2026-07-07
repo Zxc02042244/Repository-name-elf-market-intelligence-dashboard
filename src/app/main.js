@@ -25,6 +25,8 @@ function renderApp() {
 
   const route = getCurrentRoute();
   const isLoading = appState.status.kind === "loading";
+  const isEmptyError = appState.status.kind === "error"
+    && (appState.model?.transactions.length ?? 0) === 0;
   const snapshotExplorer = buildSnapshotExplorer(appState.model, route);
   appRoot.innerHTML = `
     <main class="app-shell">
@@ -45,11 +47,13 @@ function renderApp() {
       </section>
 
       ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
-      ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
-      ${renderAnalyticsView(appState.model, appState.locale)}
-      ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
-      ${renderSignalsView(appState.model, appState.locale)}
-      ${renderTransactionsView(appState.model, appState.locale)}
+      ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
+        ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
+        ${renderAnalyticsView(appState.model, appState.locale)}
+        ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
+        ${renderSignalsView(appState.model, appState.locale)}
+        ${renderTransactionsView(appState.model, appState.locale)}
+      `}
     </main>
   `;
 
@@ -86,6 +90,23 @@ function renderApp() {
       actorId: ""
     });
   });
+}
+
+function renderUnavailableWorkspace(locale) {
+  return `
+    <section class="content-panel unavailable-workspace" aria-labelledby="unavailable-workspace-title">
+      <div class="section-heading">
+        <h2 id="unavailable-workspace-title">${t("status.liveDataUnavailable", locale)}</h2>
+        <span>${t("dashboard.pending", locale)}</span>
+      </div>
+      <p class="empty-state">
+        ${t("status.waitingForData", locale)}
+      </p>
+      <p class="section-note">
+        ${t("search.notHistoricalGlobal", locale)}
+      </p>
+    </section>
+  `;
 }
 
 function renderLanguageSwitch(locale) {

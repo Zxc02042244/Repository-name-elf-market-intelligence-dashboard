@@ -43,7 +43,7 @@ export function setError(state, error, message = "Unable to build market model."
     kind: "error",
     message,
     detail,
-    updatedAt: Date.now()
+    updatedAt: null
   };
   state.error = error;
 }
