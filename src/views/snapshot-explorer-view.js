@@ -279,6 +279,8 @@ function renderAssetDetail(route, detail) {
             <h3>${translate("asset.identityTaxonomy")}</h3>
           </div>
           <div class="snapshot-identity-grid">
+            ${renderDetailMetric(translate("asset.gameDisplayName"), stat.asset.gameDisplayName ?? stat.asset.name)}
+            ${renderDetailMetric(translate("asset.itemId"), stat.asset.sourceItemId ?? stat.asset.id)}
             ${renderDetailMetric(translate("asset.assetClass"), stat.asset.assetClass ?? translate("coverage.assetClass.unclassifiedOther"))}
             ${renderDetailMetric(translate("asset.category"), stat.asset.category)}
             ${renderDetailMetric(translate("asset.group"), stat.asset.group)}

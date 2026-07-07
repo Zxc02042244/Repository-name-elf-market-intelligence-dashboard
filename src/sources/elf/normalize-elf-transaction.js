@@ -20,6 +20,8 @@ export function normalizeElfTransaction(rawTx, item, context = {}) {
     asset: {
       id: item.itemId,
       name: item.name,
+      gameDisplayName: item.gameDisplayName ?? item.name,
+      sourceItemId: item.itemId,
       assetClass: item.assetClass ?? "Unclassified / Other",
       group: item.group,
       category: item.category

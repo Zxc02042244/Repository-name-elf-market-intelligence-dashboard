@@ -129,6 +129,8 @@ const en = {
     snapshotStats: "Snapshot Asset Stats",
     identityTaxonomy: "Asset Identity / Taxonomy",
     identityAndTaxonomy: "Asset identity and taxonomy",
+    gameDisplayName: "Game Display Name",
+    itemId: "Item ID",
     assetClass: "Asset Class",
     category: "Category",
     group: "Group",

@@ -215,6 +215,17 @@ body {
   color: var(--theme-accent-gold);
 }
 
+.field-drilldown-link {
+  color: var(--theme-text-strong);
+  text-decoration-color: rgb(227 192 107 / 62%);
+}
+
+.field-drilldown-link:hover,
+.field-drilldown-link:focus-visible {
+  color: var(--theme-accent-gold);
+  text-decoration-color: var(--theme-accent-gold);
+}
+
 .detail-metric {
   background:
     linear-gradient(180deg, rgb(241 223 176 / 4%), transparent),

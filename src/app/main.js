@@ -52,7 +52,7 @@ function renderApp() {
         ${renderAnalyticsView(appState.model, appState.locale)}
         ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
         ${renderSignalsView(appState.model, appState.locale)}
-        ${renderTransactionsView(appState.model, appState.locale)}
+        ${renderTransactionsView(appState.model, route, appState.locale)}
       `}
     </main>
   `;

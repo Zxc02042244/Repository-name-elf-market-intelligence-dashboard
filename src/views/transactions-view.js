@@ -1,8 +1,9 @@
 import { defaultLocale, t } from "../i18n/i18n.js";
+import { buildRouteHash } from "../app/router.js";
 import { formatNumber, formatValue } from "../core/utils/numbers.js";
 import { formatTime } from "../core/utils/time.js";
 
-export function renderTransactionsView(model, locale = defaultLocale) {
+export function renderTransactionsView(model, route = {}, locale = defaultLocale) {
   const transactions = model?.transactions ?? [];
   const visibleTransactions = transactions.slice(0, 120);
 
@@ -15,7 +16,7 @@ export function renderTransactionsView(model, locale = defaultLocale) {
       <div class="transaction-list">
         ${
           visibleTransactions.length > 0
-            ? visibleTransactions.map((transaction) => renderTransaction(transaction, locale)).join("")
+            ? visibleTransactions.map((transaction) => renderTransaction(transaction, route, locale)).join("")
             : renderEmptyState(locale)
         }
       </div>
@@ -34,11 +35,11 @@ function formatRecordCount(visibleCount, totalCount, locale) {
   });
 }
 
-function renderTransaction(transaction, locale) {
+function renderTransaction(transaction, route, locale) {
   return `
     <article class="transaction-row">
       <div>
-        <strong>${escapeHtml(transaction.asset.name)}</strong>
+        ${renderAssetFieldLink(transaction.asset, route)}
         <span>${escapeHtml(transaction.asset.group)} / ${escapeHtml(transaction.asset.category)}</span>
       </div>
       <div>
@@ -55,14 +56,38 @@ function renderTransaction(transaction, locale) {
       </div>
       <div>
         <span>${t("transactions.seller", locale)}</span>
-        <strong>${escapeHtml(transaction.actors.seller.name)}</strong>
+        ${renderActorFieldLink(transaction.actors.seller, route)}
       </div>
       <div>
         <span>${t("transactions.buyer", locale)}</span>
-        <strong>${escapeHtml(transaction.actors.buyer.name)}</strong>
+        ${renderActorFieldLink(transaction.actors.buyer, route)}
       </div>
       <time datetime="${new Date(transaction.time).toISOString()}">${formatTime(transaction.time)}</time>
     </article>
+  `;
+}
+
+function renderAssetFieldLink(asset, route) {
+  return `
+    <a class="field-drilldown-link" href="${buildRouteHash(route, {
+      mode: "assets",
+      assetId: String(asset.id),
+      actorId: ""
+    })}">
+      ${escapeHtml(asset.name)}
+    </a>
+  `;
+}
+
+function renderActorFieldLink(actor, route) {
+  return `
+    <a class="field-drilldown-link" href="${buildRouteHash(route, {
+      mode: "actors",
+      actorId: String(actor.id),
+      assetId: ""
+    })}">
+      ${escapeHtml(actor.name)}
+    </a>
   `;
 }
 

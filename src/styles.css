@@ -405,6 +405,21 @@ h2 {
   background: #17283a;
 }
 
+.field-drilldown-link {
+  display: inline-flex;
+  align-items: center;
+  color: #dce8f6;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.field-drilldown-link:hover,
+.field-drilldown-link:focus-visible {
+  color: #f2dfae;
+}
+
 .explorer-scope-note,
 .result-summary {
   margin: 0 0 12px;
