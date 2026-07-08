@@ -1,8 +1,8 @@
-import { createAppState, setError, setLoading, setUpdated } from "./state.js";
+import { createAppState, setError, setFallback, setLoading, setUpdated } from "./state.js";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
-import { loadElfLiveTransactions } from "../sources/elf/elf-api.js";
+import { loadElfLiveTransactions, loadElfMockMarketTransactions } from "../sources/elf/elf-api.js";
 import { ELF_MARKET_COVERAGE_ITEMS } from "../sources/elf/elf-items.js";
 import { renderCategoryFilterView } from "../views/category-filter-view.js";
 import { renderDashboardView } from "../views/dashboard-view.js";
@@ -174,10 +174,26 @@ async function loadDashboard() {
       setUpdated(appState, translate("status.updatedFromLiveAdapter"), getCoverageDetail(sourceSnapshot));
     }
   } catch (error) {
-    setError(appState, error, getStatusMessage(error));
+    await loadDemoFallback(error);
   }
 
   renderApp();
+}
+
+async function loadDemoFallback(liveError) {
+  try {
+    const sourceSnapshot = await loadElfMockMarketTransactions();
+    appState.sourceSnapshot = sourceSnapshot;
+    appState.selectedCategory = keepValidCategory(appState.selectedCategory, sourceSnapshot.transactions);
+    rebuildVisibleModel();
+    setFallback(
+      appState,
+      translate("status.liveUnavailableShowingDemoSnapshot"),
+      getStatusMessage(liveError)
+    );
+  } catch (fallbackError) {
+    setError(appState, fallbackError, getStatusMessage(liveError));
+  }
 }
 
 function rebuildVisibleModel() {

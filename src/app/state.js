@@ -38,6 +38,16 @@ export function setUpdated(state, message = "Market model updated.", detail = ""
   state.error = null;
 }
 
+export function setFallback(state, message = "Live unavailable, showing demo snapshot.", detail = "") {
+  state.status = {
+    kind: "fallback",
+    message,
+    detail,
+    updatedAt: Date.now()
+  };
+  state.error = null;
+}
+
 export function setError(state, error, message = "Unable to build market model.", detail = "") {
   state.status = {
     kind: "error",

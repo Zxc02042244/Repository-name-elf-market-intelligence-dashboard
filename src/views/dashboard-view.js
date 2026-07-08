@@ -63,6 +63,7 @@ function localizeStatusMessage(message, locale) {
     "Loading live market transactions...": "status.loadingLiveMarketTransactions",
     "Partial data loaded. Some items failed.": "status.partialDataLoaded",
     "Updated from Elf live adapter.": "status.updatedFromLiveAdapter",
+    "Live unavailable, showing demo snapshot.": "status.liveUnavailableShowingDemoSnapshot",
     "No transactions returned.": "status.noTransactionsReturned",
     "Token refresh failed. Live data is unavailable.": "status.tokenRefreshFailedLiveUnavailable",
     "Item request failed. Live data is unavailable.": "status.itemRequestFailedLiveUnavailable",

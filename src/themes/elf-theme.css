@@ -295,6 +295,11 @@ body {
   background: rgb(216 138 75 / 18%);
 }
 
+.status-fallback {
+  border-color: rgb(227 192 107 / 64%);
+  background: rgb(227 192 107 / 16%);
+}
+
 .status-error {
   border-color: rgb(184 95 77 / 64%);
   background: rgb(184 95 77 / 18%);
@@ -305,6 +310,10 @@ body {
 }
 
 .status-loading strong {
+  color: var(--theme-accent-gold);
+}
+
+.status-fallback strong {
   color: var(--theme-accent-gold);
 }
 
