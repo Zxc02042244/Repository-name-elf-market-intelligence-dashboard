@@ -11,6 +11,8 @@ export function createAppState() {
       updatedAt: null
     },
     sourceSnapshot: null,
+    skinCatalog: null,
+    skinWishlist: null,
     selectedCategory: "all",
     coverageModel: null,
     model: null,

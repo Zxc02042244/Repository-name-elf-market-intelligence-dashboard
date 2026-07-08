@@ -1,10 +1,12 @@
 export function getCurrentRoute() {
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const rawHash = window.location.hash.replace(/^#/, "");
+  const params = new URLSearchParams(rawHash);
   const mode = params.get("mode");
   const sort = params.get("sort");
+  const isHome = rawHash === "" || rawHash === "home";
 
   return {
-    name: "dashboard",
+    name: isHome ? "home" : "dashboard",
     mode: mode === "actors" ? "actors" : "assets",
     search: params.get("q") ?? "",
     sort: isSupportedSort(sort) ? sort : "value",
@@ -15,6 +17,7 @@ export function getCurrentRoute() {
 
 export function buildRouteHash(route, overrides = {}) {
   const nextRoute = {
+    name: route.name,
     mode: route.mode,
     search: route.search,
     sort: route.sort,
@@ -45,7 +48,11 @@ export function buildRouteHash(route, overrides = {}) {
   }
 
   const hash = params.toString();
-  return hash ? `#${hash}` : "#";
+  if (hash) {
+    return `#${hash}`;
+  }
+
+  return nextRoute.name === "dashboard" ? "#market" : "#home";
 }
 
 function isSupportedSort(sort) {

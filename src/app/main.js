@@ -1,22 +1,39 @@
 import { createAppState, setError, setFallback, setLoading, setUpdated } from "./state.js";
+import {
+  clearSkinWishlistSelection,
+  createSkinWishlistState,
+  toggleSkinWishlistSelection
+} from "./skin-wishlist.js";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
 import { loadElfLiveTransactions, loadElfMockMarketTransactions } from "../sources/elf/elf-api.js";
 import { ELF_MARKET_COVERAGE_ITEMS } from "../sources/elf/elf-items.js";
+import { getFallbackElfSkins, loadElfSkinCatalog } from "../sources/elf/elf-skins.js";
 import { renderCategoryFilterView } from "../views/category-filter-view.js";
 import { renderDashboardView } from "../views/dashboard-view.js";
 import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
+import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();
 const appRoot = document.querySelector("#app");
 const localeStorageKey = "marketDashboard.locale";
+let dashboardLoadStarted = false;
+let skinCatalogLoadStarted = false;
 
 appState.locale = readStoredLocale();
+appState.skinWishlist = createSkinWishlistState();
+appState.skinCatalog = {
+  kind: "fallback",
+  source: "CiDi official fallback skins",
+  serverTime: "",
+  skins: getFallbackElfSkins(),
+  error: null
+};
 
 function renderApp() {
   if (!appRoot) {
@@ -24,13 +41,15 @@ function renderApp() {
   }
 
   const route = getCurrentRoute();
+  const isHome = route.name === "home";
+  const headerCopy = getHeaderCopy(isHome);
   const isLoading = appState.status.kind === "loading";
   const isEmptyError = appState.status.kind === "error"
     && (appState.model?.transactions.length ?? 0) === 0;
   const snapshotExplorer = buildSnapshotExplorer(appState.model, route);
   appRoot.innerHTML = `
     <main class="app-shell" id="main-content" tabindex="-1">
-      <section class="app-header" aria-labelledby="page-title">
+      <section class="app-header ${isHome ? "app-header-skins" : ""}" aria-labelledby="page-title">
         <div class="header-copy">
           <div class="ledger-rail" aria-hidden="true">
             <span></span>
@@ -39,28 +58,33 @@ function renderApp() {
             <span></span>
             <span></span>
           </div>
-          <p class="eyebrow">${translate("app.versionEyebrow")}</p>
-          <h1 id="page-title">${translate("app.title")}</h1>
+          <p class="eyebrow">${headerCopy.eyebrow}</p>
+          <h1 id="page-title">${headerCopy.title}</h1>
           <p class="page-summary">
-            ${translate("app.subtitle")}
+            ${headerCopy.subtitle}
           </p>
         </div>
         <div class="header-actions">
           ${renderLanguageSwitch(appState.locale)}
-          <button class="refresh-button" type="button" data-action="refresh" ${isLoading ? "disabled" : ""}>
-            ${isLoading ? translate("action.refreshing") : translate("action.refreshLiveData")}
-          </button>
+          ${renderRouteTabs(isHome)}
+          ${!isHome ? `
+            <button class="refresh-button" type="button" data-action="refresh" ${isLoading ? "disabled" : ""}>
+              ${isLoading ? translate("action.refreshing") : translate("action.refreshLiveData")}
+            </button>
+          ` : ""}
         </div>
       </section>
 
-      ${renderDashboardNavigation()}
-      ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
-      ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
-        ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
-        ${renderAnalyticsView(appState.model, appState.locale)}
-        ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
-        ${renderSignalsView(appState.model, appState.locale)}
-        ${renderTransactionsView(appState.model, route, appState.locale)}
+      ${isHome ? renderElfSkinLandingView(appState.skinCatalog, appState.skinWishlist, appState.locale) : `
+        ${renderDashboardNavigation()}
+        ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
+        ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
+          ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
+          ${renderAnalyticsView(appState.model, appState.locale)}
+          ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
+          ${renderSignalsView(appState.model, appState.locale)}
+          ${renderTransactionsView(appState.model, route, appState.locale)}
+        `}
       `}
     </main>
   `;
@@ -81,6 +105,22 @@ function renderApp() {
       void loadDashboard();
     });
   }
+
+  for (const wishlistButton of appRoot.querySelectorAll("[data-wishlist-toggle]")) {
+    wishlistButton.addEventListener("click", () => {
+      appState.skinWishlist = toggleSkinWishlistSelection(
+        appState.skinWishlist,
+        wishlistButton.dataset.wishlistToggle
+      );
+      renderApp();
+    });
+  }
+
+  const wishlistClearButton = appRoot.querySelector("[data-wishlist-clear]");
+  wishlistClearButton?.addEventListener("click", () => {
+    appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
+    renderApp();
+  });
 
   for (const tab of appRoot.querySelectorAll("[data-category]")) {
     tab.addEventListener("click", () => {
@@ -103,6 +143,12 @@ function renderApp() {
       actorId: ""
     });
   });
+
+  if (isHome) {
+    ensureSkinCatalogLoaded();
+  } else {
+    ensureDashboardLoaded();
+  }
 }
 
 function renderDashboardNavigation() {
@@ -119,6 +165,37 @@ function renderDashboardNavigation() {
       ${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join("")}
     </nav>
   `;
+}
+
+function renderRouteTabs(isHome) {
+  const tabs = [
+    ["#home", translate("elfLanding.siteShortTitle"), isHome],
+    ["#market", translate("elfLanding.analyzeMarket"), !isHome]
+  ];
+
+  return `
+    <nav class="route-tabs" aria-label="${translate("elfLanding.primaryNavigation")}">
+      ${tabs.map(([href, label, active]) => `
+        <a href="${href}" ${active ? "aria-current=\"page\"" : ""}>${label}</a>
+      `).join("")}
+    </nav>
+  `;
+}
+
+function getHeaderCopy(isHome) {
+  if (isHome) {
+    return {
+      eyebrow: translate("elfLanding.siteEyebrow"),
+      title: translate("elfLanding.siteTitle"),
+      subtitle: translate("elfLanding.siteSubtitle")
+    };
+  }
+
+  return {
+    eyebrow: translate("app.versionEyebrow"),
+    title: translate("app.title"),
+    subtitle: translate("app.subtitle")
+  };
 }
 
 function renderUnavailableWorkspace(locale) {
@@ -313,8 +390,61 @@ function translate(key, params) {
   return t(key, appState.locale, params);
 }
 
+function ensureDashboardLoaded() {
+  if (dashboardLoadStarted || appState.sourceSnapshot) {
+    return;
+  }
+
+  dashboardLoadStarted = true;
+  void loadDashboard().finally(() => {
+    dashboardLoadStarted = false;
+  });
+}
+
+function ensureSkinCatalogLoaded() {
+  if (
+    skinCatalogLoadStarted
+    || appState.skinCatalog?.kind === "api"
+  ) {
+    return;
+  }
+
+  skinCatalogLoadStarted = true;
+  appState.skinCatalog = {
+    ...appState.skinCatalog,
+    kind: "loading",
+    error: null
+  };
+
+  void loadElfSkinCatalog()
+    .then((skinCatalog) => {
+      appState.skinCatalog = {
+        kind: "api",
+        source: skinCatalog.source,
+        serverTime: skinCatalog.serverTime,
+        fetchedAt: skinCatalog.fetchedAt,
+        skins: skinCatalog.skins,
+        error: null
+      };
+    })
+    .catch((error) => {
+      appState.skinCatalog = {
+        kind: "fallback",
+        source: "CiDi official fallback skins",
+        serverTime: "",
+        skins: getFallbackElfSkins(),
+        error
+      };
+    })
+    .finally(() => {
+      skinCatalogLoadStarted = false;
+      if (getCurrentRoute().name === "home") {
+        renderApp();
+      }
+    });
+}
+
 renderApp();
-void loadDashboard();
 
 window.addEventListener("hashchange", () => {
   renderApp();
