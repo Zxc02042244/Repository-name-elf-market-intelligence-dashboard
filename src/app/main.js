@@ -174,26 +174,27 @@ async function loadDashboard() {
       setUpdated(appState, translate("status.updatedFromLiveAdapter"), getCoverageDetail(sourceSnapshot));
     }
   } catch (error) {
-    await loadDemoFallback(error);
+    try {
+      await loadDemoFallback(error);
+    } catch (fallbackError) {
+      setError(appState, fallbackError, getStatusMessage(error));
+    }
   }
 
   renderApp();
 }
 
 async function loadDemoFallback(liveError) {
-  try {
-    const sourceSnapshot = await loadElfMockMarketTransactions();
-    appState.sourceSnapshot = sourceSnapshot;
-    appState.selectedCategory = keepValidCategory(appState.selectedCategory, sourceSnapshot.transactions);
-    rebuildVisibleModel();
-    setFallback(
-      appState,
-      translate("status.liveUnavailableShowingDemoSnapshot"),
-      getStatusMessage(liveError)
-    );
-  } catch (fallbackError) {
-    setError(appState, fallbackError, getStatusMessage(liveError));
-  }
+  const sourceSnapshot = await loadElfMockMarketTransactions();
+  appState.sourceSnapshot = sourceSnapshot;
+  appState.selectedCategory = keepValidCategory(appState.selectedCategory, sourceSnapshot.transactions);
+  rebuildVisibleModel();
+  setFallback(
+    appState,
+    liveError,
+    translate("status.liveUnavailableShowingDemoSnapshot"),
+    getStatusMessage(liveError)
+  );
 }
 
 function rebuildVisibleModel() {
