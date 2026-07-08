@@ -6,6 +6,7 @@ import { formatTime } from "../core/utils/time.js";
 export function renderTransactionsView(model, route = {}, locale = defaultLocale) {
   const transactions = model?.transactions ?? [];
   const visibleTransactions = transactions.slice(0, 120);
+  const maxTransactionValue = Math.max(...visibleTransactions.map((transaction) => transaction.value.total), 0);
 
   return `
     <section class="table-panel" aria-labelledby="recent-transactions-title">
@@ -16,7 +17,7 @@ export function renderTransactionsView(model, route = {}, locale = defaultLocale
       <div class="transaction-list">
         ${
           visibleTransactions.length > 0
-            ? visibleTransactions.map((transaction) => renderTransaction(transaction, route, locale)).join("")
+            ? visibleTransactions.map((transaction) => renderTransaction(transaction, route, locale, maxTransactionValue)).join("")
             : renderEmptyState(locale)
         }
       </div>
@@ -35,7 +36,12 @@ function formatRecordCount(visibleCount, totalCount, locale) {
   });
 }
 
-function renderTransaction(transaction, route, locale) {
+function renderTransaction(transaction, route, locale, maxTransactionValue) {
+  const percentage = maxTransactionValue > 0
+    ? Math.round((transaction.value.total / maxTransactionValue) * 100)
+    : 0;
+  const meterWidth = transaction.value.total > 0 ? Math.max(6, percentage) : 0;
+
   return `
     <article class="transaction-row">
       <div>
@@ -63,6 +69,9 @@ function renderTransaction(transaction, route, locale) {
         ${renderActorFieldLink(transaction.actors.buyer, route)}
       </div>
       <time datetime="${new Date(transaction.time).toISOString()}">${formatTime(transaction.time)}</time>
+      <span class="transaction-value-meter" aria-hidden="true">
+        <span style="width: ${meterWidth}%"></span>
+      </span>
     </article>
   `;
 }

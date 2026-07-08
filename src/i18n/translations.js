@@ -10,7 +10,6 @@ const en = {
   },
   action: {
     refreshLiveData: "Refresh Live Data",
-    refreshDemoSnapshot: "Reload Demo Snapshot",
     refreshing: "Refreshing...",
     search: "Search",
     clearSearch: "Clear Search",
@@ -22,11 +21,9 @@ const en = {
     loading: "Loading",
     updated: "Updated",
     loadingLiveMarketTransactions: "Loading live market transactions...",
-    loadingDemoMarketTransactions: "Loading demo market snapshot...",
     requestingCoverageItems: "Requesting {count} coverage items.",
     requestingMarketCoverageSeedItems: "Requesting market coverage seed items.",
     updatedFromLiveAdapter: "Updated from Elf live adapter.",
-    updatedFromDemoSnapshot: "Updated from demo snapshot.",
     liveUnavailableShowingDemoSnapshot: "Live unavailable, showing demo snapshot.",
     liveSourceFailed: "Live source failed: {reason}",
     elfDemoSnapshot: "Elf Continent demo snapshot",
@@ -57,12 +54,22 @@ const en = {
     pending: "Pending",
     latestTransaction: "Latest Transaction",
     noTransactions: "No transactions",
-    signalModules: "Signal Modules"
+    signalModules: "Signal Modules",
+    snapshotSignals: "Snapshot Signals",
+    avgTransactionValue: "Avg Transaction Value",
+    assetsObserved: "Assets Observed",
+    topAssetShare: "Top Asset Share",
+    liquidityDensity: "Liquidity Density",
+    perActiveActor: "per active actor",
+    ofLoadedVolume: "of loaded volume",
+    perAsset: "per asset",
+    ofActiveParticipants: "of active participants"
   },
   coverage: {
     assetCategoryFilter: "Asset category filter",
     assetCoverage: "Asset Coverage",
     categoryFilters: "Category Filters",
+    coverageShare: "Coverage Share",
     topLevelAssetClasses: "Top-level asset classes",
     assetCategories: "Asset categories",
     assets: "assets",
@@ -101,7 +108,12 @@ const en = {
     totalValue: "Total Value",
     mainAssets: "Main Assets",
     lastSeen: "Last Seen",
-    shown: "shown"
+    shown: "shown",
+    volumeShare: "Volume Share",
+    shareOfLoadedVolume: "Share of loaded volume",
+    concentration: "Concentration",
+    highestVolumeAsset: "Highest volume asset",
+    tradeDensity: "Trade Density"
   },
   search: {
     currentLoadedSnapshot: "Search current loaded snapshot",
@@ -182,6 +194,11 @@ const en = {
     time: "Time",
     units: "units"
   },
+  insight: {
+    noConcentration: "No concentration yet",
+    assetCount: "{count} assets",
+    tradeCount: "{count} trades"
+  },
   empty: {
     noActivity: "No activity yet.",
     noAssetActivity: "No asset activity yet.",
@@ -260,12 +277,22 @@ const zhHant = deepMerge(en, {
     pending: "等待中",
     latestTransaction: "最新交易",
     noTransactions: "沒有交易",
-    signalModules: "訊號模組"
+    signalModules: "訊號模組",
+    snapshotSignals: "快照訊號",
+    avgTransactionValue: "平均交易值",
+    assetsObserved: "觀察資產",
+    topAssetShare: "最高資產占比",
+    liquidityDensity: "流動密度",
+    perActiveActor: "每位活躍參與者",
+    ofLoadedVolume: "占目前成交量",
+    perAsset: "每項資產",
+    ofActiveParticipants: "占活躍參與者"
   },
   coverage: {
     assetCategoryFilter: "資產分類篩選",
     assetCoverage: "資產覆蓋",
     categoryFilters: "分類篩選",
+    coverageShare: "覆蓋占比",
     topLevelAssetClasses: "頂層資產類別",
     assetCategories: "資產分類",
     assets: "資產",
@@ -304,7 +331,12 @@ const zhHant = deepMerge(en, {
     totalValue: "總價值",
     mainAssets: "主要資產",
     lastSeen: "最後出現",
-    shown: "顯示"
+    shown: "顯示",
+    volumeShare: "成交量占比",
+    shareOfLoadedVolume: "占目前成交量",
+    concentration: "集中度",
+    highestVolumeAsset: "最高成交量資產",
+    tradeDensity: "交易密度"
   },
   search: {
     currentLoadedSnapshot: "搜尋目前載入快照",
@@ -382,6 +414,11 @@ const zhHant = deepMerge(en, {
     buyer: "買家",
     time: "時間",
     units: "單位"
+  },
+  insight: {
+    noConcentration: "尚無集中度",
+    assetCount: "{count} 項資產",
+    tradeCount: "{count} 筆交易"
   },
   empty: {
     noActivity: "尚無活動。",

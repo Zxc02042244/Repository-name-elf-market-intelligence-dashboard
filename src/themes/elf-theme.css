@@ -124,6 +124,7 @@ h2 {
 .content-panel,
 .table-panel,
 .metric-card,
+.insight-card,
 .compact-card {
   border-color: var(--theme-border-muted);
   background: var(--theme-surface);
@@ -132,28 +133,49 @@ h2 {
 
 .metric-card {
   background:
-    linear-gradient(180deg, rgb(231 199 125 / 7%), transparent 62%),
+    radial-gradient(circle at 92% 12%, rgb(var(--metric-accent-rgb, 231 199 125) / 20%), transparent 28%),
+    linear-gradient(180deg, rgb(var(--metric-accent-rgb, 231 199 125) / 12%), transparent 68%),
     var(--theme-surface);
 }
 
-.metric-card:nth-child(even) {
-  background:
-    linear-gradient(180deg, rgb(112 166 174 / 8%), transparent 62%),
-    var(--theme-surface);
+.metric-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, rgb(var(--metric-accent-rgb, 231 199 125)), transparent);
+  content: "";
+}
+
+.metric-card-trade {
+  --metric-accent-rgb: 231 198 107;
+}
+
+.metric-card-value {
+  --metric-accent-rgb: 112 166 174;
+}
+
+.metric-card-seller {
+  --metric-accent-rgb: 136 184 106;
+}
+
+.metric-card-buyer {
+  --metric-accent-rgb: 143 130 230;
 }
 
 .metric-card:hover,
+.insight-card:hover,
 .compact-card:hover {
-  border-color: rgb(231 199 125 / 34%);
+  border-color: rgb(var(--metric-accent-rgb, 231 199 125) / 44%);
   box-shadow:
     0 18px 44px var(--theme-shadow),
-    inset 0 0 0 1px rgb(231 199 125 / 10%);
+    inset 0 0 0 1px rgb(var(--metric-accent-rgb, 231 199 125) / 14%);
 }
 
 .snapshot-detail,
 .asset-class-card,
 .analytics-panel,
 .activity-metric,
+.insight-card,
 .transaction-row,
 .detail-metric,
 .search-field input,
@@ -194,6 +216,7 @@ h2 {
 }
 
 .metric-card strong,
+.insight-card strong,
 .compact-card strong,
 .summary-panel strong,
 .transaction-row strong,
@@ -204,7 +227,31 @@ h2 {
   color: var(--theme-text-strong);
 }
 
+.metric-chip {
+  border-color: rgb(var(--metric-accent-rgb, 231 199 125) / 58%);
+  background: rgb(var(--metric-accent-rgb, 231 199 125) / 14%);
+  color: rgb(var(--metric-accent-rgb, 231 199 125));
+}
+
+.metric-card-meter {
+  border: 1px solid rgb(var(--metric-accent-rgb, 231 199 125) / 28%);
+  background: rgb(7 10 8 / 54%);
+}
+
+.metric-card-meter span {
+  background:
+    linear-gradient(90deg, rgb(var(--metric-accent-rgb, 231 199 125) / 74%), rgb(var(--metric-accent-rgb, 231 199 125))),
+    var(--theme-accent-gold);
+  box-shadow: 0 0 18px rgb(var(--metric-accent-rgb, 231 199 125) / 32%);
+}
+
+.metric-detail {
+  color: rgb(var(--metric-accent-rgb, 231 199 125) / 86%);
+}
+
 .metric-card span,
+.insight-card span,
+.insight-card small,
 .transaction-row span,
 .compact-card span,
 .snapshot-list span,
@@ -334,12 +381,14 @@ h2 {
     var(--theme-input-bg);
 }
 
-.breakdown-meter {
+.breakdown-meter,
+.transaction-value-meter {
   border: 1px solid rgb(92 58 24 / 72%);
   background: rgb(8 10 8 / 52%);
 }
 
-.breakdown-meter span {
+.breakdown-meter span,
+.transaction-value-meter span {
   background: linear-gradient(90deg, var(--theme-accent-cool), var(--theme-accent-gold));
   box-shadow: 0 0 12px rgb(231 199 125 / 18%);
 }

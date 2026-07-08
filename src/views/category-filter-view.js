@@ -4,6 +4,7 @@ import { formatNumber } from "../core/utils/numbers.js";
 export function renderCategoryFilterView(model, selectedCategory, locale = defaultLocale) {
   const assetClasses = getAssetClassOptions(model, locale);
   const categories = getCategoryOptions(model, locale);
+  const totalAssets = model?.assetStats.length ?? 0;
 
   return `
     <section class="filter-panel" id="asset-coverage" aria-label="${t("coverage.assetCategoryFilter", locale)}">
@@ -12,7 +13,7 @@ export function renderCategoryFilterView(model, selectedCategory, locale = defau
         <span>${formatNumber(categories.length - 1)} ${t("coverage.categories", locale)}</span>
       </div>
       <div class="asset-class-grid" aria-label="${t("coverage.topLevelAssetClasses", locale)}">
-        ${assetClasses.map(renderAssetClassCard).join("")}
+        ${assetClasses.map((assetClass) => renderAssetClassCard(assetClass, totalAssets, locale)).join("")}
       </div>
       <div class="section-heading section-heading-compact">
         <h2>${t("coverage.categoryFilters", locale)}</h2>
@@ -59,13 +60,31 @@ function getCategoryOptions(model, locale) {
   return [{ name: t("coverage.all", locale), value: "all", count: model?.assetStats.length ?? 0 }, ...options];
 }
 
-function renderAssetClassCard(assetClass) {
+function renderAssetClassCard(assetClass, totalAssets, locale) {
+  const share = totalAssets > 0
+    ? assetClass.count / totalAssets
+    : 0;
+  const percentage = Math.round(share * 100);
+  const meterWidth = assetClass.count > 0 ? Math.max(6, percentage) : 0;
+
   return `
     <article class="asset-class-card">
       <span>${escapeHtml(assetClass.name)}</span>
       <strong>${formatNumber(assetClass.count)}</strong>
+      <small>${t("coverage.coverageShare", locale)} ${formatPercent(share)}</small>
+      <span class="breakdown-meter asset-class-meter" aria-hidden="true">
+        <span style="width: ${meterWidth}%"></span>
+      </span>
     </article>
   `;
+}
+
+function formatPercent(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0%";
+  }
+
+  return `${Math.round(value * 100)}%`;
 }
 
 function renderCategoryButton(category, selectedCategory) {

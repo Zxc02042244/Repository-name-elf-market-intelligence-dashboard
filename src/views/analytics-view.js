@@ -34,7 +34,7 @@ export function renderAnalyticsView(model, locale = defaultLocale) {
       </div>
       ${renderSectionNote(t("analytics.currentLoadedDatasetVolumeNote", locale))}
       <div class="compact-grid">
-        ${analytics?.topAssets?.map((stat) => renderTopAsset(stat, locale)).join("") || renderEmptyState(t("empty.noAssetActivity", locale))}
+        ${analytics?.topAssets?.map((stat) => renderTopAsset(stat, locale, totals?.totalVolume ?? 0)).join("") || renderEmptyState(t("empty.noAssetActivity", locale))}
       </div>
     </section>
 
@@ -106,12 +106,25 @@ function renderBreakdownRow(entry, currency, locale, maxVolume) {
   `;
 }
 
-function renderTopAsset(stat, locale) {
+function renderTopAsset(stat, locale, totalVolume) {
+  const share = totalVolume > 0
+    ? stat.totalVolume / totalVolume
+    : 0;
+  const percentage = Math.round(share * 100);
+  const meterWidth = stat.totalVolume > 0 ? Math.max(6, percentage) : 0;
+
   return `
     <article class="compact-card">
       <strong>${escapeHtml(stat.asset.name)}</strong>
       <span>${escapeHtml(stat.asset.assetClass ?? t("coverage.assetClass.unclassifiedOther", locale))}</span>
       <span>${escapeHtml(stat.asset.category)}</span>
+      <div class="data-share-row">
+        <span>${t("analytics.volumeShare", locale)}</span>
+        <strong>${formatPercent(share)}</strong>
+      </div>
+      <span class="breakdown-meter compact-card-meter" aria-hidden="true">
+        <span style="width: ${meterWidth}%"></span>
+      </span>
       <dl>
         <div><dt>${t("analytics.trades", locale)}</dt><dd>${formatNumber(stat.tradeCount)}</dd></div>
         <div><dt>${t("analytics.volume", locale)}</dt><dd>${formatValue(stat.totalVolume, stat.currency)}</dd></div>
@@ -122,6 +135,14 @@ function renderTopAsset(stat, locale) {
       </dl>
     </article>
   `;
+}
+
+function formatPercent(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0%";
+  }
+
+  return `${Math.round(value * 100)}%`;
 }
 
 function renderActorCard(stat, role, locale) {

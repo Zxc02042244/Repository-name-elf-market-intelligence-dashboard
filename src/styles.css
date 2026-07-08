@@ -415,15 +415,34 @@ h2 {
   margin-bottom: 16px;
 }
 
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .metric-card {
   position: relative;
   overflow: hidden;
-  min-height: 116px;
-  padding: 18px;
+  display: grid;
+  min-height: 136px;
+  padding: 16px;
+  align-content: space-between;
   transition:
     border-color var(--motion-fast),
     transform var(--motion-fast),
     box-shadow var(--motion-fast);
+}
+
+.metric-card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .metric-card span,
@@ -436,13 +455,53 @@ h2 {
 }
 
 .metric-card strong {
+  position: relative;
+  z-index: 1;
   display: block;
-  margin-top: 10px;
+  margin-top: 12px;
   font-family:
     "Cascadia Mono", "SFMono-Regular", "Roboto Mono", Consolas, "Liberation Mono", monospace;
   font-size: 1.65rem;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
+}
+
+.metric-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 50%;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: right;
+}
+
+.metric-card-meter {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  margin-top: 14px;
+}
+
+.metric-card-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.metric-detail {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .metric-card:hover {
@@ -462,6 +521,45 @@ h2 {
   to {
     transform: translateX(100%);
   }
+}
+
+.insight-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 92px;
+  border: 1px solid #26384d;
+  border-radius: 8px;
+  padding: 14px;
+  background: #0d141d;
+}
+
+.insight-card span,
+.insight-card strong,
+.insight-card small {
+  display: block;
+  min-width: 0;
+}
+
+.insight-card span,
+.insight-card small {
+  color: #92a5bb;
+}
+
+.insight-card span {
+  font-size: 0.8rem;
+}
+
+.insight-card strong {
+  margin-top: 8px;
+  font-size: 1.12rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.insight-card small {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
 }
 
 .summary-panel {
@@ -533,7 +631,8 @@ h2 {
 }
 
 .asset-class-card span,
-.asset-class-card strong {
+.asset-class-card strong,
+.asset-class-card small {
   display: block;
 }
 
@@ -545,6 +644,16 @@ h2 {
 .asset-class-card strong {
   margin-top: 8px;
   font-size: 1.35rem;
+}
+
+.asset-class-card small {
+  margin-top: 8px;
+  color: #92a5bb;
+  font-size: 0.78rem;
+}
+
+.asset-class-meter {
+  margin-top: 10px;
 }
 
 .section-heading-compact {
@@ -1032,6 +1141,29 @@ h2 {
   margin: 14px 0 0;
 }
 
+.data-share-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.data-share-row span {
+  color: #8ea0b3;
+  font-size: 0.82rem;
+}
+
+.data-share-row strong {
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.compact-card-meter {
+  margin-top: 8px;
+}
+
 .compact-card div {
   display: flex;
   justify-content: space-between;
@@ -1077,6 +1209,24 @@ h2 {
     border-color var(--motion-fast),
     background var(--motion-fast),
     transform var(--motion-fast);
+}
+
+.transaction-value-meter {
+  grid-column: 1 / -1;
+  display: block;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #213144;
+}
+
+.transaction-value-meter span {
+  display: block;
+  height: 100%;
+  min-width: 6px;
+  border-radius: inherit;
+  background: #77c7a2;
 }
 
 .transaction-row::before {
@@ -1182,6 +1332,7 @@ h2 {
   }
 
   .dashboard-grid,
+  .insight-grid,
   .compact-grid,
   .snapshot-result-grid,
   .snapshot-identity-grid,
@@ -1214,6 +1365,7 @@ h2 {
   }
 
   .dashboard-grid,
+  .insight-grid,
   .compact-grid,
   .snapshot-result-grid,
   .snapshot-identity-grid,
@@ -1306,6 +1458,7 @@ h2 {
   .table-panel,
   .summary-panel,
   .metric-card,
+  .insight-card,
   .compact-card,
   .snapshot-detail,
   .snapshot-detail-section,
@@ -1336,6 +1489,7 @@ h2 {
   .detail-section-heading,
   .section-heading,
   .compact-card div,
+  .data-share-row,
   .breakdown-row {
     display: grid;
     grid-template-columns: 1fr;
@@ -1352,6 +1506,17 @@ h2 {
 
   .metric-card strong {
     font-size: 1.45rem;
+  }
+
+  .metric-card-top {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .metric-chip {
+    max-width: 100%;
+    justify-self: start;
+    text-align: left;
   }
 
   h1 {

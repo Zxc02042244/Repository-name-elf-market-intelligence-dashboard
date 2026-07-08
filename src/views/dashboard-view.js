@@ -8,6 +8,7 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
   const hasTransactions = (totals?.totalTransactions ?? 0) > 0;
   const isUnavailable = status.kind === "error" && !hasTransactions;
   const metricOptions = { unavailable: isUnavailable, loading: status.kind === "loading" };
+  const marketSignals = buildMarketSignals(model, totals);
   const statusAside = status.updatedAt && status.kind !== "error"
     ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) })
     : isUnavailable
@@ -24,11 +25,39 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
     </section>
 
     <section class="dashboard-grid" id="market-overview" aria-label="${t("dashboard.marketTotals", locale)}">
-      ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0, metricOptions)}
-      ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency), metricOptions)}
-      ${renderMetricCard(t("dashboard.activeSellers", locale), totals?.activeSellers ?? 0, metricOptions)}
-      ${renderMetricCard(t("dashboard.activeBuyers", locale), totals?.activeBuyers ?? 0, metricOptions)}
+      ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0, {
+        ...metricOptions,
+        tone: "trade",
+        chip: `${formatNumber(marketSignals.transactionsPerAsset)} ${t("dashboard.perAsset", locale)}`,
+        detail: totals?.latestTransactionTime
+          ? `${t("dashboard.latestTransaction", locale)}: ${formatTime(totals.latestTransactionTime)}`
+          : t("dashboard.noTransactions", locale),
+        meter: Math.min(marketSignals.transactionsPerAsset / 3, 1)
+      })}
+      ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency), {
+        ...metricOptions,
+        tone: "value",
+        chip: formatValue(marketSignals.averageTransactionValue, currency),
+        detail: `${formatPercent(marketSignals.topAssetShare)} ${t("dashboard.ofLoadedVolume", locale)}`,
+        meter: marketSignals.topAssetShare
+      })}
+      ${renderMetricCard(t("dashboard.activeSellers", locale), totals?.activeSellers ?? 0, {
+        ...metricOptions,
+        tone: "seller",
+        chip: formatPercent(marketSignals.activeSellerShare),
+        detail: t("dashboard.ofActiveParticipants", locale),
+        meter: marketSignals.activeSellerShare
+      })}
+      ${renderMetricCard(t("dashboard.activeBuyers", locale), totals?.activeBuyers ?? 0, {
+        ...metricOptions,
+        tone: "buyer",
+        chip: formatPercent(marketSignals.activeBuyerShare),
+        detail: t("dashboard.ofActiveParticipants", locale),
+        meter: marketSignals.activeBuyerShare
+      })}
     </section>
+
+    ${renderInsightStrip(model, totals, currency, metricOptions, locale, marketSignals)}
 
     <section class="summary-panel">
       <div>
@@ -44,6 +73,64 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
         <strong>${formatNumber(model?.signals.length ?? 0)}</strong>
       </div>
     </section>
+  `;
+}
+
+function buildMarketSignals(model, totals) {
+  const totalTransactions = totals?.totalTransactions ?? 0;
+  const totalVolume = totals?.totalVolume ?? 0;
+  const activeSellers = totals?.activeSellers ?? 0;
+  const activeBuyers = totals?.activeBuyers ?? 0;
+  const activeParticipantCount = activeSellers + activeBuyers;
+  const assetCount = model?.assetStats.length ?? 0;
+  const activeActors = new Set([
+    ...(model?.actorStats ?? []).filter((stat) => stat.soldCount > 0).map((stat) => stat.actor.id),
+    ...(model?.actorStats ?? []).filter((stat) => stat.boughtCount > 0).map((stat) => stat.actor.id)
+  ]).size;
+  const topAsset = [...(model?.assetStats ?? [])].sort((left, right) => right.totalVolume - left.totalVolume)[0];
+  const topAssetShare = totalVolume > 0 && topAsset
+    ? topAsset.totalVolume / totalVolume
+    : 0;
+  const averageTransactionValue = totalTransactions > 0
+    ? totalVolume / totalTransactions
+    : 0;
+  const liquidityDensity = activeActors > 0
+    ? totalTransactions / activeActors
+    : 0;
+
+  return {
+    activeBuyerShare: activeParticipantCount > 0 ? activeBuyers / activeParticipantCount : 0,
+    activeSellerShare: activeParticipantCount > 0 ? activeSellers / activeParticipantCount : 0,
+    averageTransactionValue,
+    liquidityDensity,
+    topAsset,
+    topAssetShare,
+    transactionsPerAsset: assetCount > 0 ? totalTransactions / assetCount : 0
+  };
+}
+
+function renderInsightStrip(model, totals, currency, options, locale, signals = buildMarketSignals(model, totals)) {
+  const insightOptions = { unavailable: options.unavailable, loading: options.loading };
+
+  return `
+    <section class="insight-grid" aria-label="${t("dashboard.snapshotSignals", locale)}">
+      ${renderInsightCard(t("dashboard.avgTransactionValue", locale), formatValue(signals.averageTransactionValue, currency), t("analytics.tradeDensity", locale), insightOptions)}
+      ${renderInsightCard(t("dashboard.assetsObserved", locale), formatNumber(model?.assetStats.length ?? 0), t("insight.assetCount", locale, { count: formatNumber(model?.assetStats.length ?? 0) }), insightOptions)}
+      ${renderInsightCard(t("dashboard.topAssetShare", locale), formatPercent(signals.topAssetShare), signals.topAsset?.asset.name ?? t("insight.noConcentration", locale), insightOptions)}
+      ${renderInsightCard(t("dashboard.liquidityDensity", locale), formatNumber(signals.liquidityDensity), t("dashboard.perActiveActor", locale), insightOptions)}
+    </section>
+  `;
+}
+
+function renderInsightCard(label, value, detail, options = {}) {
+  const displayValue = options.unavailable ? "--" : value;
+
+  return `
+    <article class="insight-card ${options.unavailable ? "metric-card-unavailable" : ""} ${options.loading ? "metric-card-loading" : ""}" ${options.loading ? 'aria-busy="true"' : ""}>
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(displayValue))}</strong>
+      <small>${escapeHtml(detail)}</small>
+    </article>
   `;
 }
 
@@ -65,13 +152,40 @@ function renderSourceLine(model, status, locale) {
 
 function renderMetricCard(label, value, options = {}) {
   const displayValue = options.unavailable ? "--" : value;
+  const displayChip = options.unavailable ? "--" : options.chip;
+  const displayDetail = options.unavailable ? "" : options.detail;
+  const meterValue = options.unavailable ? 0 : clampRatio(options.meter ?? 0);
+  const toneClass = options.tone ? `metric-card-${options.tone}` : "";
 
   return `
-    <article class="metric-card ${options.unavailable ? "metric-card-unavailable" : ""} ${options.loading ? "metric-card-loading" : ""}" ${options.loading ? 'aria-busy="true"' : ""}>
-      <span>${escapeHtml(label)}</span>
+    <article class="metric-card ${toneClass} ${options.unavailable ? "metric-card-unavailable" : ""} ${options.loading ? "metric-card-loading" : ""}" ${options.loading ? 'aria-busy="true"' : ""}>
+      <div class="metric-card-top">
+        <span>${escapeHtml(label)}</span>
+        ${displayChip ? `<small class="metric-chip">${escapeHtml(displayChip)}</small>` : ""}
+      </div>
       <strong>${escapeHtml(String(displayValue))}</strong>
+      <span class="metric-card-meter" aria-hidden="true">
+        <span style="width: ${Math.round(meterValue * 100)}%"></span>
+      </span>
+      ${displayDetail ? `<small class="metric-detail">${escapeHtml(displayDetail)}</small>` : ""}
     </article>
   `;
+}
+
+function clampRatio(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return 0;
+  }
+
+  return Math.min(value, 1);
+}
+
+function formatPercent(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0%";
+  }
+
+  return `${Math.round(value * 100)}%`;
 }
 
 function localizeStatusMessage(message, locale) {
