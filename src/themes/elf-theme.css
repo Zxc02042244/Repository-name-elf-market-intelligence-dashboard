@@ -267,6 +267,24 @@ body {
   border-color: rgb(184 95 77 / 42%);
 }
 
+.unavailable-primary {
+  border-color: rgb(227 192 107 / 34%);
+  background: rgb(216 138 75 / 8%);
+}
+
+.unavailable-check {
+  border-color: var(--theme-border-muted);
+  background: var(--theme-surface-elevated);
+}
+
+.unavailable-check span {
+  color: var(--theme-text-muted);
+}
+
+.unavailable-check strong {
+  color: var(--theme-text-strong);
+}
+
 .status-updated {
   border-color: rgb(140 173 91 / 64%);
   background: rgb(111 139 74 / 28%);

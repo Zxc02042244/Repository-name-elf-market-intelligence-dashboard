@@ -99,10 +99,25 @@ function renderUnavailableWorkspace(locale) {
         <h2 id="unavailable-workspace-title">${t("status.liveDataUnavailable", locale)}</h2>
         <span>${t("dashboard.pending", locale)}</span>
       </div>
-      <p class="empty-state">
-        ${t("status.waitingForData", locale)}
-      </p>
+      <div class="unavailable-workspace-body">
+        <p class="empty-state unavailable-primary">
+          ${t("status.waitingForData", locale)}
+        </p>
+        <div class="unavailable-checklist" aria-label="${t("dashboard.modelSnapshot", locale)}">
+          ${renderUnavailableCheck(t("dashboard.modelSnapshot", locale), t("dashboard.pending", locale))}
+          ${renderUnavailableCheck(t("transactions.recentLoadedTransactions", locale), t("status.noTransactionsReturned", locale))}
+        </div>
+      </div>
     </section>
+  `;
+}
+
+function renderUnavailableCheck(label, value) {
+  return `
+    <div class="unavailable-check">
+      <span>${label}</span>
+      <strong>${value}</strong>
+    </div>
   `;
 }
 
