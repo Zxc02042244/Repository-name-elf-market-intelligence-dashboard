@@ -8,6 +8,11 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
   const hasTransactions = (totals?.totalTransactions ?? 0) > 0;
   const isUnavailable = status.kind === "error" && !hasTransactions;
   const metricOptions = { unavailable: isUnavailable };
+  const statusAside = status.updatedAt && status.kind !== "error"
+    ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) })
+    : isUnavailable
+      ? t("dashboard.pending", locale)
+      : t("status.waitingForData", locale);
 
   return `
     <section class="status-strip status-${status.kind}" role="status" aria-live="polite">
@@ -15,7 +20,7 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
         <strong>${escapeHtml(localizeStatusMessage(status.message, locale))}</strong>
         ${status.detail ? `<small>${escapeHtml(status.detail)}</small>` : ""}
       </span>
-      <span>${status.updatedAt && status.kind !== "error" ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) }) : t("status.waitingForData", locale)}</span>
+      <span>${statusAside}</span>
     </section>
 
     <section class="dashboard-grid" aria-label="${t("dashboard.marketTotals", locale)}">

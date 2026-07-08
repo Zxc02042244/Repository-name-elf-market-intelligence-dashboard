@@ -854,6 +854,11 @@ h2 {
   font-size: 1rem;
 }
 
+.unavailable-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 @media (max-width: 920px) {
   .app-header,
   .header-actions,
@@ -940,6 +945,10 @@ h2 {
 
   .unavailable-checklist {
     grid-template-columns: 1fr;
+  }
+
+  .unavailable-actions {
+    display: grid;
   }
 
   .category-tab {

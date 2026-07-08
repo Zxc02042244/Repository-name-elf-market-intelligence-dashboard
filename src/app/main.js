@@ -64,10 +64,15 @@ function renderApp() {
     renderApp();
   });
 
-  const refreshButton = appRoot.querySelector("[data-action='refresh']");
-  refreshButton?.addEventListener("click", () => {
-    void loadDashboard();
-  });
+  for (const refreshButton of appRoot.querySelectorAll("[data-action='refresh']")) {
+    refreshButton.addEventListener("click", () => {
+      if (refreshButton.hasAttribute("disabled")) {
+        return;
+      }
+
+      void loadDashboard();
+    });
+  }
 
   for (const tab of appRoot.querySelectorAll("[data-category]")) {
     tab.addEventListener("click", () => {
@@ -106,6 +111,11 @@ function renderUnavailableWorkspace(locale) {
         <div class="unavailable-checklist" aria-label="${t("dashboard.modelSnapshot", locale)}">
           ${renderUnavailableCheck(t("dashboard.modelSnapshot", locale), t("dashboard.pending", locale))}
           ${renderUnavailableCheck(t("transactions.recentLoadedTransactions", locale), t("status.noTransactionsReturned", locale))}
+        </div>
+        <div class="unavailable-actions">
+          <button class="refresh-button" type="button" data-action="refresh">
+            ${t("action.refreshLiveData", locale)}
+          </button>
         </div>
       </div>
     </section>
