@@ -6,7 +6,7 @@ export function renderCategoryFilterView(model, selectedCategory, locale = defau
   const categories = getCategoryOptions(model, locale);
 
   return `
-    <section class="filter-panel" aria-label="${t("coverage.assetCategoryFilter", locale)}">
+    <section class="filter-panel" id="asset-coverage" aria-label="${t("coverage.assetCategoryFilter", locale)}">
       <div class="section-heading">
         <h2>${t("coverage.assetCoverage", locale)}</h2>
         <span>${formatNumber(categories.length - 1)} ${t("coverage.categories", locale)}</span>

@@ -76,23 +76,32 @@ function renderActivityMetric(label, value) {
 }
 
 function renderBreakdownPanel(title, entries, currency, locale) {
+  const maxVolume = Math.max(...entries.map((entry) => entry.totalVolume), 0);
+
   return `
     <article class="analytics-panel">
       <h3>${escapeHtml(title)}</h3>
       <p class="panel-note">${t("analytics.sortedByCurrentLoadedVolume", locale)}</p>
       <div class="breakdown-list">
-        ${entries.slice(0, 6).map((entry) => renderBreakdownRow(entry, currency, locale)).join("") || renderEmptyState(t("empty.noActivity", locale))}
+        ${entries.slice(0, 6).map((entry) => renderBreakdownRow(entry, currency, locale, maxVolume)).join("") || renderEmptyState(t("empty.noActivity", locale))}
       </div>
     </article>
   `;
 }
 
-function renderBreakdownRow(entry, currency, locale) {
+function renderBreakdownRow(entry, currency, locale, maxVolume) {
+  const percentage = maxVolume > 0
+    ? Math.max(6, Math.round((entry.totalVolume / maxVolume) * 100))
+    : 0;
+
   return `
     <div class="breakdown-row">
       <span>${escapeHtml(entry.name)}</span>
       <strong>${formatValue(entry.totalVolume, currency)}</strong>
       <small>${formatNumber(entry.tradeCount)} ${t("analytics.trades", locale).toLowerCase()} / ${formatNumber(entry.assetCount)} ${t("coverage.assets", locale)}</small>
+      <span class="breakdown-meter" aria-hidden="true">
+        <span style="width: ${percentage}%"></span>
+      </span>
     </div>
   `;
 }

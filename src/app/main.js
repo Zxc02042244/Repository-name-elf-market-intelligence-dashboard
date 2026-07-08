@@ -29,9 +29,16 @@ function renderApp() {
     && (appState.model?.transactions.length ?? 0) === 0;
   const snapshotExplorer = buildSnapshotExplorer(appState.model, route);
   appRoot.innerHTML = `
-    <main class="app-shell">
+    <main class="app-shell" id="main-content" tabindex="-1">
       <section class="app-header" aria-labelledby="page-title">
-        <div>
+        <div class="header-copy">
+          <div class="ledger-rail" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
           <p class="eyebrow">${translate("app.versionEyebrow")}</p>
           <h1 id="page-title">${translate("app.title")}</h1>
           <p class="page-summary">
@@ -46,6 +53,7 @@ function renderApp() {
         </div>
       </section>
 
+      ${renderDashboardNavigation()}
       ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
       ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
         ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
@@ -95,6 +103,22 @@ function renderApp() {
       actorId: ""
     });
   });
+}
+
+function renderDashboardNavigation() {
+  const links = [
+    ["#market-overview", translate("dashboard.marketTotals")],
+    ["#asset-coverage", translate("coverage.assetCoverage")],
+    ["#activity-summary-title", translate("analytics.marketActivitySummary")],
+    ["#snapshot-explorer-title", translate("snapshot.searchTitle")],
+    ["#recent-transactions-title", translate("transactions.recentTransactions")]
+  ];
+
+  return `
+    <nav class="dashboard-nav" aria-label="Dashboard sections">
+      ${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join("")}
+    </nav>
+  `;
 }
 
 function renderUnavailableWorkspace(locale) {

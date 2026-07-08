@@ -7,7 +7,7 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
   const currency = model?.transactions[0]?.value.currency ?? t("transactions.units", locale);
   const hasTransactions = (totals?.totalTransactions ?? 0) > 0;
   const isUnavailable = status.kind === "error" && !hasTransactions;
-  const metricOptions = { unavailable: isUnavailable };
+  const metricOptions = { unavailable: isUnavailable, loading: status.kind === "loading" };
   const statusAside = status.updatedAt && status.kind !== "error"
     ? t("status.updatedAt", locale, { time: formatTime(status.updatedAt) })
     : isUnavailable
@@ -15,7 +15,7 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
       : t("status.waitingForData", locale);
 
   return `
-    <section class="status-strip status-${status.kind}" role="status" aria-live="polite">
+    <section class="status-strip status-${status.kind}" role="status" aria-live="polite" aria-busy="${status.kind === "loading" ? "true" : "false"}">
       <span>
         <strong>${escapeHtml(localizeStatusMessage(status.message, locale))}</strong>
         ${status.detail ? `<small>${escapeHtml(status.detail)}</small>` : ""}
@@ -23,7 +23,7 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
       <span>${statusAside}</span>
     </section>
 
-    <section class="dashboard-grid" aria-label="${t("dashboard.marketTotals", locale)}">
+    <section class="dashboard-grid" id="market-overview" aria-label="${t("dashboard.marketTotals", locale)}">
       ${renderMetricCard(t("dashboard.transactions", locale), totals?.totalTransactions ?? 0, metricOptions)}
       ${renderMetricCard(t("dashboard.totalVolume", locale), formatValue(totals?.totalVolume ?? 0, currency), metricOptions)}
       ${renderMetricCard(t("dashboard.activeSellers", locale), totals?.activeSellers ?? 0, metricOptions)}
@@ -67,7 +67,7 @@ function renderMetricCard(label, value, options = {}) {
   const displayValue = options.unavailable ? "--" : value;
 
   return `
-    <article class="metric-card ${options.unavailable ? "metric-card-unavailable" : ""}">
+    <article class="metric-card ${options.unavailable ? "metric-card-unavailable" : ""} ${options.loading ? "metric-card-loading" : ""}" ${options.loading ? 'aria-busy="true"' : ""}>
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(String(displayValue))}</strong>
     </article>
