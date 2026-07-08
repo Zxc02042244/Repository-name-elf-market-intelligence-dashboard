@@ -10,49 +10,43 @@ export function renderElfSkinLandingView(
 ) {
   const catalog = normalizeCatalog(skinCatalog);
   const wishlist = normalizeWishlist(wishlistState);
-  const featuredSkin = catalog.skins[0] ?? getEmptySkin();
   const supplyLeaders = catalog.skins.slice(0, 5);
   const wishlistLeaders = getWishlistLeaders(catalog.skins, wishlist);
+  const supplyChampion = supplyLeaders[0] ?? getEmptySkin();
+  const wishlistChampion = wishlistLeaders[0] ?? null;
+  const championCopy = getChampionCopy(locale);
   const topSupply = supplyLeaders[0]?.quantity ?? 0;
 
   return `
-    <section class="elf-landing elf-landing-stage-${escapeHtml(featuredSkin.tone)}" aria-labelledby="elf-landing-title">
-      <div class="elf-landing-copy">
-        <p class="eyebrow">${t("elfLanding.eyebrow", locale)}</p>
-        <h2 id="elf-landing-title">${t("elfLanding.heroKicker", locale)}</h2>
-        <p class="page-summary">${t("elfLanding.summary", locale)}</p>
-        <div class="elf-landing-actions">
-          <a class="utility-link" href="https://www.cidi.games/#/elf" target="_blank" rel="noreferrer">
-            ${t("elfLanding.officialPage", locale)}
-          </a>
-        </div>
-        <div class="elf-landing-metrics" aria-label="${t("elfLanding.localStats", locale)}">
-          ${renderLandingMetric(
-            t("elfLanding.localVisitors", locale),
-            formatNumber(wishlist.visitorCount),
-            t("elfLanding.localVisitorsHint", locale)
-          )}
-          ${renderLandingMetric(t("elfLanding.selectedWishes", locale), t("elfLanding.wishlistCount", locale, {
-            selected: formatNumber(wishlist.selectedIds.length),
-            limit: formatNumber(wishlistLimit)
-          }))}
-          ${renderLandingMetric(t("elfLanding.skinRanking", locale), t("elfLanding.rankedBySupply", locale))}
-        </div>
-      </div>
-
-      <div class="elf-feature-card">
-        <img
-          src="${escapeHtml(featuredSkin.image)}"
-          alt="${escapeHtml(featuredSkin.name)}"
-          width="192"
-          height="192"
-          loading="eager"
-          decoding="async"
-        >
-        <span>${t("elfLanding.featuredSkin", locale)}</span>
-        <strong>${escapeHtml(featuredSkin.name)}</strong>
-        ${renderSkinSupply(featuredSkin, locale)}
-      </div>
+    <section class="elf-landing elf-landing-stage-${escapeHtml(supplyChampion.tone)}" aria-label="${t("elfLanding.rankingShowcase", locale)}">
+      ${renderChampionCard({
+        skin: supplyChampion,
+        title: championCopy.supplyTitle,
+        eyebrow: t("elfLanding.supplyRankingTitle", locale),
+        meta: t("elfLanding.supplyRankingScope", locale),
+        statLabel: t("elfLanding.supply", locale),
+        statValue: supplyChampion.quantity === null
+          ? t("elfLanding.supplyPending", locale)
+          : formatNumber(supplyChampion.quantity),
+        rankLabel: "01",
+        kind: "supply",
+        eager: true
+      })}
+      ${wishlistChampion
+        ? renderChampionCard({
+          skin: wishlistChampion,
+          title: championCopy.wishlistTitle,
+          eyebrow: t("elfLanding.selectedWishes", locale),
+          meta: t("elfLanding.wishlistScope", locale),
+          statLabel: getWishCountLabel(locale, wishlistChampion.wishCount ?? 1, wishlist.community.status === "remote"),
+          statValue: wishlistChampion.isLocalSelection
+            ? t("elfLanding.cancelWish", locale)
+            : formatNumber(wishlistChampion.wishCount ?? 1),
+          rankLabel: "01",
+          kind: "wishlist",
+          action: wishlistChampion.isLocalSelection ? "cancel" : ""
+        })
+        : renderEmptyWishlistChampion(locale)}
     </section>
 
     <section class="elf-rank-showcase" aria-label="${t("elfLanding.rankingShowcase", locale)}">
@@ -103,14 +97,95 @@ export function renderElfSkinLandingView(
   `;
 }
 
-function renderLandingMetric(label, value, detail = "") {
+function renderChampionCard({
+  skin,
+  title,
+  eyebrow,
+  meta,
+  statLabel,
+  statValue,
+  rankLabel,
+  kind,
+  eager = false,
+  action = ""
+}) {
   return `
-    <div>
-      <span>${label}</span>
-      <strong>${value}</strong>
-      ${detail ? `<small>${detail}</small>` : ""}
-    </div>
+    <article class="elf-champion-card elf-champion-${escapeHtml(kind)} elf-skin-card-${escapeHtml(skin.tone)}">
+      <div class="elf-champion-heading">
+        <div>
+          <p class="eyebrow">${eyebrow}</p>
+          <h2>${title}</h2>
+        </div>
+        <span class="elf-champion-rank">#${rankLabel}</span>
+      </div>
+      <div class="elf-champion-art" aria-hidden="true">
+        <img
+          src="${escapeHtml(skin.image)}"
+          alt=""
+          width="240"
+          height="240"
+          loading="${eager ? "eager" : "lazy"}"
+          decoding="async"
+        >
+      </div>
+      <div class="elf-champion-body">
+        <span>${meta}</span>
+        <strong>${escapeHtml(skin.name)}</strong>
+        <div class="elf-champion-stat">
+          <span>${statLabel}</span>
+          ${action === "cancel" ? `
+            <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
+              ${statValue}
+            </button>
+          ` : `<strong>${statValue}</strong>`}
+        </div>
+      </div>
+    </article>
   `;
+}
+
+function renderEmptyWishlistChampion(locale) {
+  const championCopy = getChampionCopy(locale);
+
+  return `
+    <article class="elf-champion-card elf-champion-wishlist elf-champion-empty">
+      <div class="elf-champion-heading">
+        <div>
+          <p class="eyebrow">${t("elfLanding.selectedWishes", locale)}</p>
+          <h2>${championCopy.wishlistTitle}</h2>
+        </div>
+        <span class="elf-champion-rank">#01</span>
+      </div>
+      <div class="elf-champion-art elf-champion-empty-art" aria-hidden="true">
+        <span>?</span>
+      </div>
+      <div class="elf-champion-body">
+        <span>${t("elfLanding.wishlistScope", locale)}</span>
+        <strong>${t("elfLanding.emptyWishlist", locale)}</strong>
+        <div class="elf-champion-stat">
+          <span>${t("elfLanding.wishlistCount", locale, {
+            selected: formatNumber(0),
+            limit: formatNumber(wishlistLimit)
+          })}</span>
+          <strong>${t("elfLanding.addWish", locale)}</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function getChampionCopy(locale) {
+  if (locale === "zh-Hant") {
+    return {
+      supplyTitle: "供給量排名第一",
+      wishlistTitle: "願望清單第一"
+    };
+  }
+
+  return {
+    supplyTitle: "Supply Rank #1",
+    wishlistTitle: "Wish List #1"
+  };
 }
 
 function renderSupplyLeader(skin, index, topSupply, locale) {
@@ -131,17 +206,21 @@ function renderSupplyLeader(skin, index, topSupply, locale) {
 }
 
 function renderWishlistLeader(skin, index, locale) {
+  const wishCount = skin.wishCount ?? 1;
+
   return `
     <div class="elf-rank-row elf-skin-card-${escapeHtml(skin.tone)}">
       <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
         <strong>${escapeHtml(skin.name)}</strong>
-        <small>${t("elfLanding.localWishVotes", locale, { count: formatNumber(1) })}</small>
+        <small>${getWishCountLabel(locale, wishCount, skin.isRemoteLeader === true)}</small>
       </div>
-      <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
-        ${t("elfLanding.cancelWish", locale)}
-      </button>
+      ${skin.isLocalSelection ? `
+        <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
+          ${t("elfLanding.cancelWish", locale)}
+        </button>
+      ` : ""}
     </div>
   `;
 }
@@ -215,10 +294,53 @@ function renderSkinSupply(skin, locale) {
 }
 
 function getWishlistLeaders(skins, wishlist) {
+  if (wishlist.community.status === "remote" && wishlist.community.wishlistLeaders.length > 0) {
+    return wishlist.community.wishlistLeaders
+      .map((leader) => {
+        const skin = skins.find((candidate) => candidate.id === leader.skinId);
+
+        if (!skin) {
+          return null;
+        }
+
+        return {
+          ...skin,
+          wishCount: leader.wishCount,
+          isRemoteLeader: true,
+          isLocalSelection: wishlist.selectedIds.includes(skin.id)
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+
   return wishlist.selectedIds
-    .map((skinId) => skins.find((skin) => skin.id === skinId))
+    .map((skinId) => {
+      const skin = skins.find((candidate) => candidate.id === skinId);
+
+      return skin
+        ? {
+          ...skin,
+          wishCount: 1,
+          isRemoteLeader: false,
+          isLocalSelection: true
+        }
+        : null;
+    })
     .filter(Boolean)
     .slice(0, 5);
+}
+
+function getWishCountLabel(locale, count, isRemote) {
+  const formattedCount = formatNumber(count);
+
+  if (isRemote) {
+    return locale === "zh-Hant"
+      ? `${formattedCount} 個全站願望`
+      : `${formattedCount} community wishes`;
+  }
+
+  return t("elfLanding.localWishVotes", locale, { count: formattedCount });
 }
 
 function normalizeCatalog(skinCatalog) {
@@ -240,7 +362,17 @@ function normalizeWishlist(wishlistState) {
     selectedIds: Array.isArray(wishlistState?.selectedIds)
       ? wishlistState.selectedIds
       : [],
-    notice: wishlistState?.notice ?? ""
+    notice: wishlistState?.notice ?? "",
+    community: normalizeCommunity(wishlistState?.community)
+  };
+}
+
+function normalizeCommunity(communityState) {
+  return {
+    status: communityState?.status ?? "disabled",
+    wishlistLeaders: Array.isArray(communityState?.wishlistLeaders)
+      ? communityState.wishlistLeaders
+      : []
   };
 }
 

@@ -4,9 +4,16 @@ import {
   createSkinWishlistState,
   toggleSkinWishlistSelection
 } from "./skin-wishlist.js";
+import {
+  createSkinCommunityState,
+  markSkinCommunityError,
+  markSkinCommunityLoading,
+  syncSkinCommunityWishlist
+} from "./skin-community-stats.js";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
+import { formatNumber } from "../core/utils/numbers.js";
 import { loadElfLiveTransactions, loadElfMockMarketTransactions } from "../sources/elf/elf-api.js";
 import { ELF_MARKET_COVERAGE_ITEMS } from "../sources/elf/elf-items.js";
 import { getFallbackElfSkins, loadElfSkinCatalog } from "../sources/elf/elf-skins.js";
@@ -22,11 +29,14 @@ import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18
 const appState = createAppState();
 const appRoot = document.querySelector("#app");
 const localeStorageKey = "marketDashboard.locale";
+const skinWishlistLimit = 3;
 let dashboardLoadStarted = false;
 let skinCatalogLoadStarted = false;
+let skinCommunitySyncStarted = false;
 
 appState.locale = readStoredLocale();
 appState.skinWishlist = createSkinWishlistState();
+appState.skinCommunity = createSkinCommunityState();
 appState.skinCatalog = {
   kind: "fallback",
   source: "CiDi official fallback skins",
@@ -63,6 +73,7 @@ function renderApp() {
           <p class="page-summary">
             ${headerCopy.subtitle}
           </p>
+          ${isHome ? renderHomeHeaderDetails(appState.skinWishlist, appState.skinCommunity) : ""}
         </div>
         <div class="header-actions">
           ${renderLanguageSwitch(appState.locale)}
@@ -75,7 +86,7 @@ function renderApp() {
         </div>
       </section>
 
-      ${isHome ? renderElfSkinLandingView(appState.skinCatalog, appState.skinWishlist, appState.locale) : `
+      ${isHome ? renderElfSkinLandingView(appState.skinCatalog, withCommunityWishlist(appState.skinWishlist, appState.skinCommunity), appState.locale) : `
         ${renderDashboardNavigation()}
         ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
         ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
@@ -113,6 +124,7 @@ function renderApp() {
         wishlistButton.dataset.wishlistToggle
       );
       renderApp();
+      void syncSkinCommunity();
     });
   }
 
@@ -120,6 +132,7 @@ function renderApp() {
   wishlistClearButton?.addEventListener("click", () => {
     appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
     renderApp();
+    void syncSkinCommunity();
   });
 
   for (const tab of appRoot.querySelectorAll("[data-category]")) {
@@ -146,6 +159,7 @@ function renderApp() {
 
   if (isHome) {
     ensureSkinCatalogLoaded();
+    ensureSkinCommunityLoaded();
   } else {
     ensureDashboardLoaded();
   }
@@ -180,6 +194,97 @@ function renderRouteTabs(isHome) {
       `).join("")}
     </nav>
   `;
+}
+
+function renderHomeHeaderDetails(wishlistState, communityState) {
+  const wishlist = normalizeHeaderWishlist(wishlistState);
+  const community = normalizeCommunityState(communityState);
+  const visitorCount = community.visitorCount ?? wishlist.visitorCount;
+  const visitorCopy = getVisitorMetricCopy(appState.locale, community.status);
+
+  return `
+    <div class="home-header-details">
+      <div class="home-header-summary">
+        <p>${translate("elfLanding.summary")}</p>
+        <a class="utility-link" href="https://www.cidi.games/#/elf" target="_blank" rel="noreferrer">
+          ${translate("elfLanding.officialPage")}
+        </a>
+      </div>
+      <div class="home-header-metrics" aria-label="${translate("elfLanding.localStats")}">
+        ${renderHomeHeaderMetric(
+          visitorCopy.label,
+          formatNumber(visitorCount),
+          visitorCopy.detail
+        )}
+        ${renderHomeHeaderMetric(translate("elfLanding.selectedWishes"), translate("elfLanding.wishlistCount", {
+          selected: formatNumber(wishlist.selectedIds.length),
+          limit: formatNumber(skinWishlistLimit)
+        }))}
+        ${renderHomeHeaderMetric(translate("elfLanding.skinRanking"), translate("elfLanding.rankedBySupply"))}
+      </div>
+    </div>
+  `;
+}
+
+function withCommunityWishlist(wishlistState, communityState) {
+  return {
+    ...wishlistState,
+    community: normalizeCommunityState(communityState)
+  };
+}
+
+function renderHomeHeaderMetric(label, value, detail = "") {
+  return `
+    <div class="home-header-metric">
+      <span>${label}</span>
+      <strong>${value}</strong>
+      ${detail ? `<small>${detail}</small>` : ""}
+    </div>
+  `;
+}
+
+function normalizeHeaderWishlist(wishlistState) {
+  return {
+    visitorCount: Number.isFinite(Number(wishlistState?.visitorCount))
+      ? Number(wishlistState.visitorCount)
+      : 0,
+    selectedIds: Array.isArray(wishlistState?.selectedIds)
+      ? wishlistState.selectedIds
+      : []
+  };
+}
+
+function normalizeCommunityState(communityState) {
+  const visitorCount = Number(communityState?.visitorCount);
+
+  return {
+    status: communityState?.status ?? "disabled",
+    visitorCount: Number.isFinite(visitorCount) && visitorCount > 0
+      ? Math.floor(visitorCount)
+      : null,
+    wishlistLeaders: Array.isArray(communityState?.wishlistLeaders)
+      ? communityState.wishlistLeaders
+      : []
+  };
+}
+
+function getVisitorMetricCopy(locale, communityStatus) {
+  if (communityStatus === "remote" || communityStatus === "loading") {
+    return locale === "zh-Hant"
+      ? {
+        label: "全站來訪",
+        detail: "每個瀏覽器匿名計一次"
+      }
+      : {
+        label: "Community visitors",
+        detail: "One anonymous browser counts once"
+      };
+  }
+
+  return {
+    label: translate("elfLanding.localVisitors"),
+    detail: translate("elfLanding.localVisitorsHint")
+  };
 }
 
 function getHeaderCopy(isHome) {
@@ -405,6 +510,7 @@ function ensureSkinCatalogLoaded() {
   if (
     skinCatalogLoadStarted
     || appState.skinCatalog?.kind === "api"
+    || appState.skinCatalog?.error
   ) {
     return;
   }
@@ -442,6 +548,42 @@ function ensureSkinCatalogLoaded() {
         renderApp();
       }
     });
+}
+
+function ensureSkinCommunityLoaded() {
+  if (
+    skinCommunitySyncStarted
+    || appState.skinCommunity?.status === "remote"
+    || appState.skinCommunity?.status === "disabled"
+    || appState.skinCommunity?.status === "error"
+  ) {
+    return;
+  }
+
+  void syncSkinCommunity();
+}
+
+async function syncSkinCommunity() {
+  if (
+    skinCommunitySyncStarted
+    || appState.skinCommunity?.status === "disabled"
+  ) {
+    return;
+  }
+
+  skinCommunitySyncStarted = true;
+  appState.skinCommunity = markSkinCommunityLoading(appState.skinCommunity);
+
+  try {
+    appState.skinCommunity = await syncSkinCommunityWishlist(appState.skinWishlist?.selectedIds);
+  } catch (error) {
+    appState.skinCommunity = markSkinCommunityError(appState.skinCommunity, error);
+  } finally {
+    skinCommunitySyncStarted = false;
+    if (getCurrentRoute().name === "home") {
+      renderApp();
+    }
+  }
 }
 
 renderApp();

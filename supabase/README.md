@@ -1,7 +1,7 @@
 # Supabase Schema Draft
 
-This directory contains the draft Postgres schema for future historical market collection.
-It is not applied by this repository yet and does not include any Supabase client code.
+This directory contains the draft Postgres schema for future historical market collection and the optional
+ELF skin gallery community stats tables/functions.
 
 ## Purpose
 
@@ -11,6 +11,8 @@ The schema is intended to support the future manual historical collector prototy
 - market item metadata
 - normalized market transactions
 - item price snapshots
+- anonymous ELF skin gallery visitors
+- anonymous ELF skin wishlist selections
 
 The design is generic enough for reusable market sources. Elf remains the first source and should be identified
 through the `source` column, not through source-specific table names.
@@ -28,13 +30,45 @@ A future implementation phase may map collector candidates into:
 The next implementation step should be a Supabase client preflight or local dry-run mapping step. It should
 not enable scheduled collection yet.
 
+## ELF Skin Gallery Community Stats
+
+The static frontend can record cross-device skin gallery stats through Supabase REST RPC when configured.
+
+Apply `schema.sql` in the Supabase SQL editor, then set these public values in `index.html`:
+
+```html
+<meta name="elf-community-supabase-url" content="https://YOUR_PROJECT.supabase.co" />
+<meta name="elf-community-supabase-publishable-key" content="YOUR_PUBLIC_PUBLISHABLE_KEY" />
+```
+
+The frontend calls only:
+
+```txt
+POST /rest/v1/rpc/sync_skin_gallery_state
+```
+
+That RPC records one anonymous `visitor_id` per browser localStorage and stores up to three selected skin IDs.
+It returns:
+
+```json
+{
+  "visitorCount": 10,
+  "wishlistLeaders": [
+    { "skinId": "skin-id", "wishCount": 3 }
+  ]
+}
+```
+
+This counts browsers, not real legal identities. A different PC or phone usually counts once. A different browser,
+private browsing session, or cleared localStorage can count again. The design avoids IP collection and browser
+fingerprinting.
+
 ## Secrets
 
 Do not commit secrets in this directory.
 
 Never commit:
 
-- Supabase project URL
 - Supabase service role key
 - refresh tokens
 - access tokens
@@ -43,7 +77,9 @@ Never commit:
 - request headers or cookies
 - raw auth payloads
 
-Any real Supabase credentials must live only in a trusted server-side environment.
+The Supabase project URL and publishable key are public by design and may be used by the static frontend only with
+the limited RPC/RLS setup from `schema.sql`. The Supabase secret key / service role key must live only in a trusted
+server-side environment.
 
 ## Current Status
 
@@ -51,11 +87,10 @@ This is a schema draft only.
 
 Not implemented yet:
 
-- Supabase client
-- database writes
+- historical database writes
 - Row Level Security policies
 - scheduled collector
 - GitHub Actions workflow
 - Vercel Cron
 - historical read API
-- runtime UI integration
+- historical runtime UI integration
