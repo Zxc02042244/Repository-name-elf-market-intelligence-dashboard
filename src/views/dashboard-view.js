@@ -33,7 +33,7 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
     <section class="summary-panel">
       <div>
         <h2>${t("dashboard.modelSnapshot", locale)}</h2>
-        <p>${t("dashboard.source", locale)}: ${escapeHtml(model?.meta.source ?? t("dashboard.pending", locale))}</p>
+        ${renderSourceLine(model, status, locale)}
       </div>
       <div class="snapshot-list">
         <span>${t("dashboard.latestTransaction", locale)}</span>
@@ -44,6 +44,22 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
         <strong>${formatNumber(model?.signals.length ?? 0)}</strong>
       </div>
     </section>
+  `;
+}
+
+function renderSourceLine(model, status, locale) {
+  const sourceLabel = status.kind === "fallback"
+    ? t("status.elfDemoSnapshot", locale)
+    : model?.meta.source ?? t("dashboard.pending", locale);
+  const fallbackBadge = status.kind === "fallback"
+    ? `<span class="source-badge source-badge-fallback">${t("status.fallbackSnapshot", locale)}</span>`
+    : "";
+
+  return `
+    <p class="source-line">
+      <span>${t("dashboard.source", locale)}: <strong>${escapeHtml(sourceLabel)}</strong></span>
+      ${fallbackBadge}
+    </p>
   `;
 }
 

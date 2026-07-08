@@ -193,7 +193,7 @@ async function loadDemoFallback(liveError) {
     appState,
     liveError,
     translate("status.liveUnavailableShowingDemoSnapshot"),
-    getStatusMessage(liveError)
+    translate("status.liveSourceFailed", { reason: getStatusMessage(liveError) })
   );
 }
 

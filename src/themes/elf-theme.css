@@ -317,6 +317,17 @@ body {
   color: var(--theme-accent-gold);
 }
 
+.source-badge {
+  color: var(--theme-text-muted);
+  background: rgb(241 223 176 / 5%);
+}
+
+.source-badge-fallback {
+  border-color: rgb(227 192 107 / 58%);
+  color: var(--theme-accent-gold);
+  background: rgb(227 192 107 / 12%);
+}
+
 .status-error strong {
   color: #f0a08f;
 }
