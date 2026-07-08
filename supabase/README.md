@@ -12,6 +12,7 @@ The schema is intended to support the future manual historical collector prototy
 - normalized market transactions
 - item price snapshots
 - anonymous ELF skin gallery visitors
+- official ELF skin allowlist
 - anonymous ELF skin wishlist selections
 
 The design is generic enough for reusable market sources. Elf remains the first source and should be identified
@@ -48,6 +49,8 @@ POST /rest/v1/rpc/sync_skin_gallery_state
 ```
 
 That RPC records one anonymous `visitor_id` per browser localStorage and stores up to three selected skin IDs.
+Only skin IDs in `skin_gallery_allowed_skins` are accepted. Re-running `schema.sql` refreshes the current official
+skin allowlist and removes wishlist rows that are no longer allowed before adding the foreign key constraint.
 It returns:
 
 ```json

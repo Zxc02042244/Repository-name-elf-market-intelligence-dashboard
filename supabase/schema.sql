@@ -128,6 +128,76 @@ create table if not exists skin_gallery_visitors (
     check (visit_count > 0)
 );
 
+create table if not exists skin_gallery_allowed_skins (
+  skin_id text primary key,
+  skin_name text not null,
+  updated_at timestamptz not null default now(),
+  constraint skin_gallery_allowed_skins_skin_id_check
+    check (skin_id ~ '^[a-z0-9]+(-[a-z0-9]+)*$')
+);
+
+insert into skin_gallery_allowed_skins (
+  skin_id,
+  skin_name,
+  updated_at
+)
+values
+  ('genesis-pioneer', 'Genesis Pioneer', now()),
+  ('pioneer-spark', 'Pioneer Spark', now()),
+  ('pioneer-swift', 'Pioneer Swift', now()),
+  ('take-my-pi', 'Take My Pi', now()),
+  ('cidi-echo', 'CiDi Echo', now()),
+  ('arale', 'Arale', now()),
+  ('pink-bunny', 'Pink Bunny', now()),
+  ('trailblazer', 'Trailblazer', now()),
+  ('shark-hoodie', 'Shark Hoodie', now()),
+  ('arcane-prince', 'Arcane Prince', now()),
+  ('spinning-kicker', 'Spinning Kicker', now()),
+  ('dune-walker', 'Dune Walker', now()),
+  ('cosmic-sovereign', 'Cosmic Sovereign', now()),
+  ('galactic-cadet', 'Galactic Cadet', now()),
+  ('toy-sheriff', 'Toy Sheriff', now()),
+  ('lion-dance', 'Lion Dance', now()),
+  ('amber-miner', 'Amber Miner', now()),
+  ('tomato-darling', 'Tomato Darling', now()),
+  ('chick-starlet', 'Chick Starlet', now()),
+  ('cloudtop-chef', 'Cloudtop Chef', now()),
+  ('hornwood-spirit', 'Hornwood Spirit', now()),
+  ('moo-moo', 'Moo Moo', now()),
+  ('prairie-wanderer', 'Prairie Wanderer', now()),
+  ('pumpkin-whisper', 'Pumpkin Whisper', now()),
+  ('treasure-hunter', 'Treasure Hunter', now()),
+  ('workshop-artisan', 'Workshop Artisan', now()),
+  ('octo-pirate', 'Octo Pirate', now()),
+  ('steel-enforcer', 'Steel Enforcer', now()),
+  ('starborn-warrior', 'Starborn Warrior', now()),
+  ('heroic-guardian', 'Heroic Guardian', now()),
+  ('mantis-fighter', 'Mantis Fighter', now()),
+  ('alien-hunter', 'Alien Hunter', now()),
+  ('stardeep-warden', 'Stardeep Warden', now()),
+  ('arena-gladiator', 'Arena Gladiator', now()),
+  ('claw-ranger', 'Claw Ranger', now()),
+  ('wolf-hood', 'Wolf Hood', now()),
+  ('desert-lizard', 'Desert Lizard', now()),
+  ('shield-commander', 'Shield Commander', now()),
+  ('emerald-sage', 'Emerald Sage', now()),
+  ('frost-enchantress', 'Frost Enchantress', now()),
+  ('flame-brawler', 'Flame Brawler', now()),
+  ('bio-warrior', 'Bio Warrior', now()),
+  ('frost-envoy', 'Frost Envoy', now()),
+  ('flame-runner', 'Flame Runner', now()),
+  ('zombie-walker', 'Zombie Walker', now()),
+  ('bubble-beast', 'Bubble Beast', now()),
+  ('pumpkin-head', 'Pumpkin Head', now()),
+  ('dark-ooze', 'Dark Ooze', now()),
+  ('tree-guardian', 'Tree Guardian', now()),
+  ('apple-darling', 'Apple Darling fallback alias', now()),
+  ('tigerstripe', 'Tigerstripe fallback alias', now())
+on conflict (skin_id) do update
+  set
+    skin_name = excluded.skin_name,
+    updated_at = excluded.updated_at;
+
 create table if not exists skin_gallery_wishes (
   visitor_id uuid not null references skin_gallery_visitors(visitor_id) on delete cascade,
   skin_id text not null,
@@ -141,10 +211,33 @@ create index if not exists skin_gallery_wishes_skin_id_idx
   on skin_gallery_wishes (skin_id);
 
 alter table skin_gallery_visitors enable row level security;
+alter table skin_gallery_allowed_skins enable row level security;
 alter table skin_gallery_wishes enable row level security;
 
 revoke all on skin_gallery_visitors from anon, authenticated;
+revoke all on skin_gallery_allowed_skins from anon, authenticated;
 revoke all on skin_gallery_wishes from anon, authenticated;
+
+delete from skin_gallery_wishes wishes
+where not exists (
+  select 1
+  from skin_gallery_allowed_skins allowed
+  where allowed.skin_id = wishes.skin_id
+);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'skin_gallery_wishes_allowed_skin_fk'
+  ) then
+    alter table skin_gallery_wishes
+      add constraint skin_gallery_wishes_allowed_skin_fk
+      foreign key (skin_id) references skin_gallery_allowed_skins(skin_id);
+  end if;
+end;
+$$;
 
 create or replace function get_skin_gallery_stats()
 returns jsonb
@@ -166,11 +259,13 @@ as $$
         )
         from (
           select
-            skin_id,
+            wishes.skin_id,
             count(*)::integer as wish_count
-          from skin_gallery_wishes
-          group by skin_id
-          order by count(*) desc, skin_id
+          from skin_gallery_wishes wishes
+          inner join skin_gallery_allowed_skins allowed
+            on allowed.skin_id = wishes.skin_id
+          group by wishes.skin_id
+          order by count(*) desc, wishes.skin_id
           limit 5
         ) ranked
       ),
@@ -214,7 +309,11 @@ begin
       from (
         select distinct trim(skin_id) as skin_id
         from unnest(coalesce(p_skin_ids, '{}'::text[])) as skin_id
-        where length(trim(skin_id)) > 0
+        where exists (
+          select 1
+          from skin_gallery_allowed_skins allowed
+          where allowed.skin_id = trim(skin_id)
+        )
         order by 1
         limit 3
       ) normalized
@@ -232,7 +331,11 @@ begin
   from (
     select distinct trim(skin_id) as skin_id
     from unnest(coalesce(p_skin_ids, '{}'::text[])) as skin_id
-    where length(trim(skin_id)) > 0
+    where exists (
+      select 1
+      from skin_gallery_allowed_skins allowed
+      where allowed.skin_id = trim(skin_id)
+    )
     order by 1
     limit 3
   ) normalized
