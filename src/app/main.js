@@ -16,7 +16,7 @@ import {
   markSkinSupplyError,
   markSkinSupplyLoading,
   syncSkinSupplySnapshots
-} from "./skin-supply-stats.js?v=20260709-skin-supply-baseline-fix";
+} from "./skin-supply-stats.js?v=20260709-today-added-rank";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
@@ -30,7 +30,7 @@ import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
-import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-skin-supply-snapshots";
+import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-today-added-rank";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();

@@ -111,7 +111,11 @@ const en = {
     wishlistLimitReached: "This browser can keep up to {limit} skin wishes. Remove one before adding another.",
     localWishVotes: "{count} local wish",
     todayAdded: "Today +{count}",
-    todayAddedUnknown: "Today --"
+    todayAddedUnknown: "Today --",
+    todayAddedRankingTitle: "Today Added Top 5",
+    todayAddedRankingScope: "Ranked by daily supply increase",
+    todayAddedBaseline: "Daily baseline is building. New supply rankings appear after the next recorded day.",
+    todayAddedMetricLabel: "Added today"
   },
   coverage: {
     assetCategoryFilter: "Asset category filter",
@@ -382,7 +386,11 @@ const zhHant = deepMerge(en, {
     wishlistLimitReached: "這個瀏覽器最多保留 {limit} 個皮膚願望。請先移除一個再新增。",
     localWishVotes: "{count} 個本地願望",
     todayAdded: "今日 +{count}",
-    todayAddedUnknown: "今日 --"
+    todayAddedUnknown: "今日 --",
+    todayAddedRankingTitle: "今日新增前五名",
+    todayAddedRankingScope: "依今日供給增量排序",
+    todayAddedBaseline: "今日基準建立中；下一個紀錄日後會顯示新增排行。",
+    todayAddedMetricLabel: "今日新增"
   },
   coverage: {
     assetCategoryFilter: "資產分類篩選",
@@ -588,7 +596,11 @@ const ja = deepMerge(en, {
     wishlistLimitReached: "このブラウザでは最大{limit}件まで保存できます。追加する前に1件削除してください。",
     localWishVotes: "{count}件の願い",
     todayAdded: "今日 +{count}",
-    todayAddedUnknown: "今日 --"
+    todayAddedUnknown: "今日 --",
+    todayAddedRankingTitle: "今日追加 Top 5",
+    todayAddedRankingScope: "本日の供給増加順",
+    todayAddedBaseline: "本日の基準を作成中です。次の記録日以降に追加ランキングが表示されます。",
+    todayAddedMetricLabel: "今日追加"
   },
   app: { title: "市場インテリジェンスダッシュボード", subtitle: "Elf Continent を最初のソース adapter とする再利用可能な市場モデル基盤。", versionEyebrow: "V2-2 市場カバレッジ" },
   language: { label: "言語", nativeName: "日本語" },
@@ -795,7 +807,11 @@ const ko = deepMerge(en, {
     wishlistLimitReached: "이 브라우저는 최대 {limit}개의 스킨 위시를 저장할 수 있습니다. 하나를 제거한 뒤 추가하세요.",
     localWishVotes: "{count}개의 위시",
     todayAdded: "오늘 +{count}",
-    todayAddedUnknown: "오늘 --"
+    todayAddedUnknown: "오늘 --",
+    todayAddedRankingTitle: "오늘 증가 Top 5",
+    todayAddedRankingScope: "오늘 공급 증가량 기준",
+    todayAddedBaseline: "오늘 기준 데이터를 만드는 중입니다. 다음 기록일부터 증가 순위가 표시됩니다.",
+    todayAddedMetricLabel: "오늘 증가"
   },
   app: { title: "시장 인텔리전스 대시보드", subtitle: "Elf Continent를 첫 소스 adapter로 사용하는 재사용 가능한 시장 모델 기반.", versionEyebrow: "V2-2 시장 커버리지" },
   language: { label: "언어", nativeName: "한국어" },
@@ -1002,7 +1018,11 @@ const vi = deepMerge(en, {
     wishlistLimitReached: "Trình duyệt này chỉ lưu tối đa {limit} ước chọn skin. Hãy xóa một mục trước khi thêm.",
     localWishVotes: "{count} ước chọn",
     todayAdded: "Hôm nay +{count}",
-    todayAddedUnknown: "Hôm nay --"
+    todayAddedUnknown: "Hôm nay --",
+    todayAddedRankingTitle: "Top 5 tăng hôm nay",
+    todayAddedRankingScope: "Xếp theo mức tăng nguồn cung trong ngày",
+    todayAddedBaseline: "Đang tạo mốc dữ liệu hôm nay. Bảng tăng sẽ xuất hiện từ ngày ghi nhận tiếp theo.",
+    todayAddedMetricLabel: "Tăng hôm nay"
   },
   app: { title: "Bảng Điều Khiển Tình Báo Thị Trường", subtitle: "Nền tảng MarketModel tái sử dụng với Elf Continent là adapter nguồn đầu tiên.", versionEyebrow: "V2-2 Phạm Vi Thị Trường" },
   language: { label: "Ngôn ngữ", nativeName: "Tiếng Việt" },

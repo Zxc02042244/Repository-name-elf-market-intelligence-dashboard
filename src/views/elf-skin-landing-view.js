@@ -12,10 +12,12 @@ export function renderElfSkinLandingView(
   const wishlist = normalizeWishlist(wishlistState);
   const supplyLeaders = catalog.skins.slice(0, 5);
   const wishlistLeaders = getWishlistLeaders(catalog.skins, wishlist);
+  const todayAddedLeaders = getTodayAddedLeaders(catalog.skins);
   const supplyChampion = supplyLeaders[0] ?? getEmptySkin();
   const wishlistChampion = wishlistLeaders[0] ?? null;
   const championCopy = getChampionCopy(locale);
   const topSupply = supplyLeaders[0]?.quantity ?? 0;
+  const topTodayAdded = todayAddedLeaders[0]?.todayAdded ?? 0;
 
   return `
     <section class="elf-landing elf-landing-stage-${escapeHtml(supplyChampion.tone)}" aria-label="${t("elfLanding.rankingShowcase", locale)}">
@@ -49,6 +51,8 @@ export function renderElfSkinLandingView(
         })
         : renderEmptyWishlistChampion(locale)}
     </section>
+
+    ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
 
     <section class="elf-rank-showcase" aria-label="${t("elfLanding.rankingShowcase", locale)}">
       <article class="elf-rank-panel elf-rank-panel-supply">
@@ -94,6 +98,24 @@ export function renderElfSkinLandingView(
       <div class="elf-skin-grid">
         ${catalog.skins.map((skin, index) => renderSkinCard(skin, index, wishlist, locale)).join("")}
       </div>
+    </section>
+  `;
+}
+
+function renderTodayAddedRanking(leaders, topTodayAdded, locale) {
+  return `
+    <section class="elf-delta-panel" aria-label="${t("elfLanding.todayAddedRankingTitle", locale)}">
+      <div class="section-heading">
+        <h2>${t("elfLanding.todayAddedRankingTitle", locale)}</h2>
+        <span>${t("elfLanding.todayAddedRankingScope", locale)}</span>
+      </div>
+      ${leaders.length > 0 ? `
+        <div class="elf-delta-track">
+          ${leaders.map((skin, index) => renderTodayAddedLeader(skin, index, topTodayAdded, locale)).join("")}
+        </div>
+      ` : `
+        <p class="empty-state elf-delta-empty">${t("elfLanding.todayAddedBaseline", locale)}</p>
+      `}
     </section>
   `;
 }
@@ -247,6 +269,24 @@ function renderWishlistLeader(skin, index, locale) {
   `;
 }
 
+function renderTodayAddedLeader(skin, index, topTodayAdded, locale) {
+  const todayAdded = Math.max(0, Number(skin.todayAdded ?? 0));
+  const share = topTodayAdded > 0 ? Math.max(8, Math.min(100, (todayAdded / topTodayAdded) * 100)) : 0;
+
+  return `
+    <article class="elf-delta-card elf-skin-card-${escapeHtml(skin.tone)}">
+      <span class="elf-delta-rank">TOP ${index + 1}</span>
+      <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="72" height="72" loading="lazy" decoding="async">
+      <div class="elf-delta-body">
+        <strong>${escapeHtml(skin.name)}</strong>
+        <small>${t("elfLanding.todayAddedMetricLabel", locale)}</small>
+        <p>+${formatNumber(todayAdded)}</p>
+        <div class="elf-delta-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
+      </div>
+    </article>
+  `;
+}
+
 function renderSkinCard(skin, index, wishlist, locale) {
   const selected = wishlist.selectedIds.includes(skin.id);
   const disabled = !selected && wishlist.selectedIds.length >= wishlistLimit;
@@ -373,6 +413,29 @@ function getWishlistLeaders(skins, wishlist) {
         : null;
     })
     .filter(Boolean)
+    .slice(0, 5);
+}
+
+function getTodayAddedLeaders(skins) {
+  return skins
+    .map((skin) => {
+      const todayAdded = skin?.supplyTrend?.todayAdded;
+
+      return typeof todayAdded === "number"
+        ? {
+          ...skin,
+          todayAdded: Math.max(0, todayAdded)
+        }
+        : null;
+    })
+    .filter(Boolean)
+    .sort((left, right) => {
+      const rightQuantity = right.quantity ?? -1;
+      const leftQuantity = left.quantity ?? -1;
+      return right.todayAdded - left.todayAdded
+        || rightQuantity - leftQuantity
+        || left.name.localeCompare(right.name);
+    })
     .slice(0, 5);
 }
 
