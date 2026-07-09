@@ -1283,17 +1283,6 @@ h3 {
   color: var(--skin-accent, #70c7d8);
 }
 
-.elf-delta-card::before {
-  position: absolute;
-  inset: auto 10px 10px auto;
-  width: 54px;
-  height: 54px;
-  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
-  border-radius: 50%;
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  content: "";
-}
-
 .elf-delta-rank {
   position: absolute;
   top: 8px;
