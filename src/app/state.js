@@ -14,6 +14,7 @@ export function createAppState() {
     skinCatalog: null,
     skinWishlist: null,
     skinCommunity: null,
+    skinSupply: null,
     selectedCategory: "all",
     coverageModel: null,
     model: null,

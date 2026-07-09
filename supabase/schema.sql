@@ -347,3 +347,145 @@ $$;
 
 grant execute on function get_skin_gallery_stats() to anon, authenticated;
 grant execute on function sync_skin_gallery_state(uuid, text[]) to anon, authenticated;
+
+-- ELF skin daily supply snapshots.
+-- Public clients use only sync_skin_supply_snapshot(); they do not write tables directly.
+-- The snapshot stores one row per skin per Taipei date, then compares it with
+-- the latest earlier snapshot to calculate today's added supply.
+
+create table if not exists skin_supply_snapshots (
+  snapshot_date date not null default ((now() at time zone 'Asia/Taipei')::date),
+  skin_id text not null references skin_gallery_allowed_skins(skin_id),
+  skin_name text not null,
+  supply integer not null,
+  observed_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  primary key (snapshot_date, skin_id),
+  constraint skin_supply_snapshots_supply_check
+    check (supply >= 0)
+);
+
+create index if not exists skin_supply_snapshots_skin_date_idx
+  on skin_supply_snapshots (skin_id, snapshot_date desc);
+
+alter table skin_supply_snapshots enable row level security;
+
+revoke all on skin_supply_snapshots from anon, authenticated;
+
+create or replace function get_skin_supply_stats()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with current_snapshot_day as (
+    select (now() at time zone 'Asia/Taipei')::date as snapshot_date
+  ),
+  today_rows as (
+    select
+      snapshots.snapshot_date,
+      snapshots.skin_id,
+      snapshots.skin_name,
+      snapshots.supply,
+      snapshots.observed_at
+    from skin_supply_snapshots snapshots
+    cross join current_snapshot_day
+    where snapshots.snapshot_date = current_snapshot_day.snapshot_date
+  ),
+  previous_rows as (
+    select distinct on (snapshots.skin_id)
+      snapshots.skin_id,
+      snapshots.supply as previous_supply,
+      snapshots.snapshot_date as previous_snapshot_date
+    from skin_supply_snapshots snapshots
+    cross join current_snapshot_day
+    where snapshots.snapshot_date < current_snapshot_day.snapshot_date
+    order by snapshots.skin_id, snapshots.snapshot_date desc
+  )
+  select jsonb_build_object(
+    'snapshotDate', current_snapshot_day.snapshot_date::text,
+    'skinTrends', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'skinId', today_rows.skin_id,
+          'skinName', today_rows.skin_name,
+          'snapshotDate', today_rows.snapshot_date::text,
+          'supply', today_rows.supply,
+          'previousSupply', previous_rows.previous_supply,
+          'todayAdded',
+            case
+              when previous_rows.previous_supply is null then null
+              else greatest(today_rows.supply - previous_rows.previous_supply, 0)
+            end,
+          'observedAt', today_rows.observed_at
+        )
+        order by today_rows.supply desc, today_rows.skin_id
+      ) filter (where today_rows.skin_id is not null),
+      '[]'::jsonb
+    )
+  )
+  from current_snapshot_day
+  left join today_rows
+    on true
+  left join previous_rows
+    on previous_rows.skin_id = today_rows.skin_id
+  group by current_snapshot_day.snapshot_date;
+$$;
+
+create or replace function sync_skin_supply_snapshot(
+  p_skins jsonb default '[]'::jsonb
+)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  v_snapshot_date date := (now() at time zone 'Asia/Taipei')::date;
+begin
+  insert into skin_supply_snapshots as snapshots (
+    snapshot_date,
+    skin_id,
+    skin_name,
+    supply,
+    observed_at
+  )
+  select
+    v_snapshot_date,
+    allowed.skin_id,
+    normalized.skin_name,
+    normalized.supply,
+    now()
+  from (
+    select
+      trim(records."skinId") as skin_id,
+      trim(records."skinName") as skin_name,
+      floor(records.supply)::integer as supply
+    from jsonb_to_recordset(coalesce(p_skins, '[]'::jsonb)) as records(
+      "skinId" text,
+      "skinName" text,
+      supply numeric
+    )
+    where length(trim(records."skinId")) > 0
+      and length(trim(records."skinName")) > 0
+      and records.supply is not null
+      and records.supply >= 0
+    order by trim(records."skinId")
+    limit 100
+  ) normalized
+  inner join skin_gallery_allowed_skins allowed
+    on allowed.skin_id = normalized.skin_id
+  on conflict (snapshot_date, skin_id) do update
+    set
+      skin_name = excluded.skin_name,
+      supply = greatest(snapshots.supply, excluded.supply),
+      observed_at = excluded.observed_at;
+
+  return get_skin_supply_stats();
+end;
+$$;
+
+grant execute on function get_skin_supply_stats() to anon, authenticated;
+grant execute on function sync_skin_supply_snapshot(jsonb) to anon, authenticated;

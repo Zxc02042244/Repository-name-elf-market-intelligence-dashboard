@@ -28,6 +28,7 @@ export function renderElfSkinLandingView(
         statValue: supplyChampion.quantity === null
           ? t("elfLanding.supplyPending", locale)
           : formatNumber(supplyChampion.quantity),
+        statDetail: getSupplyDeltaLabel(supplyChampion, locale),
         rankLabel: "TOP 1",
         kind: "supply",
         eager: true
@@ -104,6 +105,7 @@ function renderChampionCard({
   meta,
   statLabel,
   statValue,
+  statDetail = "",
   rankLabel,
   kind,
   eager = false,
@@ -134,7 +136,7 @@ function renderChampionCard({
         <span>${meta}</span>
         <strong>${escapeHtml(skin.name)}</strong>
         <div class="elf-champion-stat">
-          <span>${statLabel}</span>
+          <span>${statLabel}${statDetail ? `<small>${statDetail}</small>` : ""}</span>
           ${action === "cancel" ? `
             <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
               ${statValue}
@@ -218,7 +220,7 @@ function renderSupplyLeader(skin, index, topSupply, locale) {
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
         <strong>${escapeHtml(skin.name)}</strong>
-        <small>${t("elfLanding.supply", locale)} ${formatNumber(supply)}</small>
+        <small>${t("elfLanding.supply", locale)} ${formatNumber(supply)}${renderInlineSupplyDelta(skin, locale)}</small>
         <div class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
       </div>
     </div>
@@ -304,13 +306,36 @@ function renderSkinSupply(skin, locale) {
   const supply = skin.quantity === null
     ? t("elfLanding.supplyPending", locale)
     : formatNumber(skin.quantity);
+  const supplyDelta = getSupplyDeltaLabel(skin, locale);
 
   return `
     <p class="elf-skin-stat">
       <span>${t("elfLanding.supply", locale)}</span>
       <strong>${supply}</strong>
+      ${supplyDelta ? `<small>${supplyDelta}</small>` : ""}
     </p>
   `;
+}
+
+function renderInlineSupplyDelta(skin, locale) {
+  const label = getSupplyDeltaLabel(skin, locale);
+  return label ? ` / ${label}` : "";
+}
+
+function getSupplyDeltaLabel(skin, locale) {
+  if (!skin?.supplyTrend) {
+    return "";
+  }
+
+  const todayAdded = skin.supplyTrend.todayAdded;
+
+  if (typeof todayAdded !== "number") {
+    return t("elfLanding.todayAddedUnknown", locale);
+  }
+
+  return t("elfLanding.todayAdded", locale, {
+    count: formatNumber(Math.max(0, todayAdded))
+  });
 }
 
 function getWishlistLeaders(skins, wishlist) {

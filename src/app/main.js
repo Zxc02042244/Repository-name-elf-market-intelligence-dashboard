@@ -10,6 +10,13 @@ import {
   markSkinCommunityLoading,
   syncSkinCommunityWishlist
 } from "./skin-community-stats.js";
+import {
+  applySkinSupplyStatsToCatalog,
+  createSkinSupplyState,
+  markSkinSupplyError,
+  markSkinSupplyLoading,
+  syncSkinSupplySnapshots
+} from "./skin-supply-stats.js";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
@@ -23,7 +30,7 @@ import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
-import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-skin-i18n-fix";
+import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-skin-supply-snapshots";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();
@@ -33,10 +40,12 @@ const skinWishlistLimit = 3;
 let dashboardLoadStarted = false;
 let skinCatalogLoadStarted = false;
 let skinCommunitySyncStarted = false;
+let skinSupplySyncStarted = false;
 
 appState.locale = readStoredLocale();
 appState.skinWishlist = createSkinWishlistState();
 appState.skinCommunity = createSkinCommunityState();
+appState.skinSupply = createSkinSupplyState();
 appState.skinCatalog = {
   kind: "fallback",
   source: "CiDi official fallback skins",
@@ -86,7 +95,11 @@ function renderApp() {
         </div>
       </section>
 
-      ${isHome ? renderElfSkinLandingView(appState.skinCatalog, withCommunityWishlist(appState.skinWishlist, appState.skinCommunity), appState.locale) : `
+      ${isHome ? renderElfSkinLandingView(
+        applySkinSupplyStatsToCatalog(appState.skinCatalog, appState.skinSupply),
+        withCommunityWishlist(appState.skinWishlist, appState.skinCommunity),
+        appState.locale
+      ) : `
         ${renderDashboardNavigation()}
         ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
         ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
@@ -160,6 +173,7 @@ function renderApp() {
   if (isHome) {
     ensureSkinCatalogLoaded();
     ensureSkinCommunityLoaded();
+    ensureSkinSupplyLoaded();
   } else {
     ensureDashboardLoaded();
   }
@@ -533,6 +547,7 @@ function ensureSkinCatalogLoaded() {
         skins: skinCatalog.skins,
         error: null
       };
+      void syncSkinSupply();
     })
     .catch((error) => {
       appState.skinCatalog = {
@@ -564,6 +579,20 @@ function ensureSkinCommunityLoaded() {
   void syncSkinCommunity();
 }
 
+function ensureSkinSupplyLoaded() {
+  if (
+    skinSupplySyncStarted
+    || appState.skinSupply?.status === "remote"
+    || appState.skinSupply?.status === "disabled"
+    || appState.skinSupply?.status === "error"
+    || appState.skinCatalog?.kind !== "api"
+  ) {
+    return;
+  }
+
+  void syncSkinSupply();
+}
+
 async function syncSkinCommunity() {
   if (
     skinCommunitySyncStarted
@@ -581,6 +610,30 @@ async function syncSkinCommunity() {
     appState.skinCommunity = markSkinCommunityError(appState.skinCommunity, error);
   } finally {
     skinCommunitySyncStarted = false;
+    if (getCurrentRoute().name === "home") {
+      renderApp();
+    }
+  }
+}
+
+async function syncSkinSupply() {
+  if (
+    skinSupplySyncStarted
+    || appState.skinSupply?.status === "disabled"
+    || appState.skinCatalog?.kind !== "api"
+  ) {
+    return;
+  }
+
+  skinSupplySyncStarted = true;
+  appState.skinSupply = markSkinSupplyLoading(appState.skinSupply);
+
+  try {
+    appState.skinSupply = await syncSkinSupplySnapshots(appState.skinCatalog?.skins);
+  } catch (error) {
+    appState.skinSupply = markSkinSupplyError(appState.skinSupply, error);
+  } finally {
+    skinSupplySyncStarted = false;
     if (getCurrentRoute().name === "home") {
       renderApp();
     }

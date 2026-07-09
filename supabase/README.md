@@ -46,9 +46,10 @@ The frontend calls only:
 
 ```txt
 POST /rest/v1/rpc/sync_skin_gallery_state
+POST /rest/v1/rpc/sync_skin_supply_snapshot
 ```
 
-That RPC records one anonymous `visitor_id` per browser localStorage and stores up to three selected skin IDs.
+`sync_skin_gallery_state` records one anonymous `visitor_id` per browser localStorage and stores up to three selected skin IDs.
 Only skin IDs in `skin_gallery_allowed_skins` are accepted. Re-running `schema.sql` refreshes the current official
 skin allowlist and removes wishlist rows that are no longer allowed before adding the foreign key constraint.
 It returns:
@@ -65,6 +66,27 @@ It returns:
 This counts browsers, not real legal identities. A different PC or phone usually counts once. A different browser,
 private browsing session, or cleared localStorage can count again. The design avoids IP collection and browser
 fingerprinting.
+
+`sync_skin_supply_snapshot` records one official supply number per skin per Taipei date. It compares today's
+latest saved supply with the latest earlier saved day and returns:
+
+```json
+{
+  "snapshotDate": "2026-07-09",
+  "skinTrends": [
+    {
+      "skinId": "skin-id",
+      "skinName": "Skin Name",
+      "supply": 100,
+      "previousSupply": 95,
+      "todayAdded": 5
+    }
+  ]
+}
+```
+
+The first day has no earlier baseline, so the UI shows `Today --` / `今日 --`. From the second recorded day onward,
+the UI can show each skin's daily added supply such as `Today +5` / `今日 +5`.
 
 ## Secrets
 

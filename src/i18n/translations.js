@@ -109,7 +109,9 @@ const en = {
     clearWishes: "Clear wishes",
     wishlistFull: "Limit Reached",
     wishlistLimitReached: "This browser can keep up to {limit} skin wishes. Remove one before adding another.",
-    localWishVotes: "{count} local wish"
+    localWishVotes: "{count} local wish",
+    todayAdded: "Today +{count}",
+    todayAddedUnknown: "Today --"
   },
   coverage: {
     assetCategoryFilter: "Asset category filter",
@@ -378,7 +380,9 @@ const zhHant = deepMerge(en, {
     clearWishes: "清空願望",
     wishlistFull: "已達上限",
     wishlistLimitReached: "這個瀏覽器最多保留 {limit} 個皮膚願望。請先移除一個再新增。",
-    localWishVotes: "{count} 個本地願望"
+    localWishVotes: "{count} 個本地願望",
+    todayAdded: "今日 +{count}",
+    todayAddedUnknown: "今日 --"
   },
   coverage: {
     assetCategoryFilter: "資產分類篩選",
@@ -582,7 +586,9 @@ const ja = deepMerge(en, {
     clearWishes: "願いをクリア",
     wishlistFull: "上限に達しました",
     wishlistLimitReached: "このブラウザでは最大{limit}件まで保存できます。追加する前に1件削除してください。",
-    localWishVotes: "{count}件の願い"
+    localWishVotes: "{count}件の願い",
+    todayAdded: "今日 +{count}",
+    todayAddedUnknown: "今日 --"
   },
   app: { title: "市場インテリジェンスダッシュボード", subtitle: "Elf Continent を最初のソース adapter とする再利用可能な市場モデル基盤。", versionEyebrow: "V2-2 市場カバレッジ" },
   language: { label: "言語", nativeName: "日本語" },
@@ -787,7 +793,9 @@ const ko = deepMerge(en, {
     clearWishes: "위시 지우기",
     wishlistFull: "한도 도달",
     wishlistLimitReached: "이 브라우저는 최대 {limit}개의 스킨 위시를 저장할 수 있습니다. 하나를 제거한 뒤 추가하세요.",
-    localWishVotes: "{count}개의 위시"
+    localWishVotes: "{count}개의 위시",
+    todayAdded: "오늘 +{count}",
+    todayAddedUnknown: "오늘 --"
   },
   app: { title: "시장 인텔리전스 대시보드", subtitle: "Elf Continent를 첫 소스 adapter로 사용하는 재사용 가능한 시장 모델 기반.", versionEyebrow: "V2-2 시장 커버리지" },
   language: { label: "언어", nativeName: "한국어" },
@@ -992,7 +1000,9 @@ const vi = deepMerge(en, {
     clearWishes: "Xóa ước chọn",
     wishlistFull: "Đã đạt giới hạn",
     wishlistLimitReached: "Trình duyệt này chỉ lưu tối đa {limit} ước chọn skin. Hãy xóa một mục trước khi thêm.",
-    localWishVotes: "{count} ước chọn"
+    localWishVotes: "{count} ước chọn",
+    todayAdded: "Hôm nay +{count}",
+    todayAddedUnknown: "Hôm nay --"
   },
   app: { title: "Bảng Điều Khiển Tình Báo Thị Trường", subtitle: "Nền tảng MarketModel tái sử dụng với Elf Continent là adapter nguồn đầu tiên.", versionEyebrow: "V2-2 Phạm Vi Thị Trường" },
   language: { label: "Ngôn ngữ", nativeName: "Tiếng Việt" },

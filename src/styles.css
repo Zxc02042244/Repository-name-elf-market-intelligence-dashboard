@@ -908,6 +908,15 @@ h3 {
   font-size: 0.8rem;
 }
 
+.elf-champion-stat span small {
+  display: block;
+  margin-top: 3px;
+  color: color-mix(in srgb, currentColor 72%, #fff7da);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
 .elf-champion-stat strong {
   color: #fff7da;
   font-size: 1.05rem;
@@ -1502,8 +1511,8 @@ h3 {
 
 .elf-feature-card .elf-skin-stat,
 .elf-skin-stat {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   width: 100%;
@@ -1529,10 +1538,20 @@ h3 {
 
 .elf-feature-card .elf-skin-stat strong,
 .elf-skin-stat strong {
+  justify-self: end;
   margin: 0;
   color: #fff7da;
   font-size: 0.9rem;
   line-height: 1;
+}
+
+.elf-skin-stat small {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+  color: color-mix(in srgb, var(--skin-accent, #f2b84b) 76%, #b8c8d8);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .elf-wishlist-button {
