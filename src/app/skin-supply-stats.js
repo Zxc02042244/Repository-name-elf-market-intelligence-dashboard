@@ -142,6 +142,10 @@ function normalizeUrl(value) {
 }
 
 function normalizeNullableCount(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
   const numberValue = Number(value);
   return Number.isFinite(numberValue) && numberValue >= 0
     ? Math.floor(numberValue)
