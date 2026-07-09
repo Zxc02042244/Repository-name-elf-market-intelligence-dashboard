@@ -58,7 +58,7 @@ function renderApp() {
     && (appState.model?.transactions.length ?? 0) === 0;
   const snapshotExplorer = buildSnapshotExplorer(appState.model, route);
   appRoot.innerHTML = `
-    <main class="app-shell" id="main-content" tabindex="-1">
+    <main class="app-shell ${isHome ? "app-shell-home" : ""}" id="main-content" tabindex="-1">
       <section class="app-header ${isHome ? "app-header-skins" : ""}" aria-labelledby="page-title">
         <div class="header-copy">
           <div class="ledger-rail" aria-hidden="true">
@@ -210,6 +210,7 @@ function renderHomeHeaderDetails(wishlistState, communityState) {
           ${translate("elfLanding.officialPage")}
         </a>
       </div>
+      <p class="home-header-disclaimer">${translate("elfLanding.communityDisclaimer")}</p>
       <div class="home-header-metrics" aria-label="${translate("elfLanding.localStats")}">
         ${renderHomeHeaderMetric(
           visitorCopy.label,
