@@ -109,8 +109,10 @@ function renderChampionCard({
   eager = false,
   action = ""
 }) {
+  const frameClass = getChampionFrameClass(skin, kind);
+
   return `
-    <article class="elf-champion-card elf-champion-${escapeHtml(kind)} elf-skin-card-${escapeHtml(skin.tone)}">
+    <article class="elf-champion-card elf-champion-${escapeHtml(kind)} elf-skin-card-${escapeHtml(skin.tone)} ${frameClass}">
       <div class="elf-champion-heading">
         <div>
           <p class="eyebrow">${eyebrow}</p>
@@ -142,6 +144,24 @@ function renderChampionCard({
       </div>
     </article>
   `;
+}
+
+function getChampionFrameClass(skin, kind) {
+  if (kind !== "wishlist") {
+    return "";
+  }
+
+  const normalizedName = String(skin?.name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (normalizedName === "flame-runner") {
+    return "elf-champion-frame-flame-runner";
+  }
+
+  return "";
 }
 
 function renderEmptyWishlistChampion(locale) {
