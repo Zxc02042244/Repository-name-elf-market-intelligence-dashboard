@@ -147,17 +147,17 @@ function renderChampionCard({
 }
 
 function getChampionFrameClass(skin, kind) {
-  if (kind !== "wishlist") {
-    return "";
-  }
-
   const normalizedName = String(skin?.name ?? "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  if (normalizedName === "flame-runner") {
+  if (kind === "supply" && normalizedName === "spinning-kicker") {
+    return "elf-champion-frame-spinning-kicker";
+  }
+
+  if (kind === "wishlist" && normalizedName === "flame-runner") {
     return "elf-champion-frame-flame-runner";
   }
 
