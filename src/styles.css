@@ -480,10 +480,12 @@ h3 {
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner {
   --skin-accent: #ff8a2a;
+  grid-template-rows: auto minmax(300px, 1fr) auto;
   border-color: rgb(255 146 54 / 82%);
+  padding: clamp(20px, 5vw, 30px);
   background:
-    linear-gradient(180deg, rgb(10 4 3 / 42%) 0 15%, transparent 32%),
-    linear-gradient(180deg, transparent 54%, rgb(7 3 2 / 76%) 84%),
+    linear-gradient(180deg, rgb(10 4 3 / 34%) 0 18%, transparent 34%),
+    linear-gradient(180deg, transparent 56%, rgb(7 3 2 / 82%) 88%),
     url("../assets/skin-frames/flame-runner-card-frame.jpg") center / cover no-repeat,
     rgb(16 5 3);
   box-shadow:
@@ -500,26 +502,38 @@ h3 {
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner::after {
   background:
-    linear-gradient(180deg, rgb(0 0 0 / 42%) 0 18%, transparent 32%),
-    linear-gradient(180deg, transparent 54%, rgb(0 0 0 / 48%) 82%),
-    radial-gradient(circle at 50% 49%, rgb(255 126 28 / 18%), transparent 32%),
-    repeating-linear-gradient(90deg, rgb(255 189 96 / 7%) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(0deg, rgb(255 189 96 / 5%) 0 1px, transparent 1px 22px);
+    radial-gradient(circle at 50% 50%, rgb(255 126 28 / 18%), transparent 34%),
+    linear-gradient(180deg, rgb(0 0 0 / 38%) 0 14%, transparent 28%),
+    linear-gradient(180deg, transparent 56%, rgb(0 0 0 / 52%) 88%);
+}
+
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-heading {
+  display: grid;
+  justify-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: clamp(24px, 7vw, 48px);
+  text-align: center;
+}
+
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-heading h2 {
+  font-size: clamp(1.65rem, 7vw, 2.45rem);
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 56%),
+    0 0 18px rgb(255 92 24 / 34%);
 }
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-art {
-  min-height: clamp(260px, 52vw, 360px);
-  border-color: rgb(255 169 74 / 34%);
+  min-height: clamp(300px, 72vw, 430px);
+  margin: clamp(8px, 3vw, 18px) 0 0;
+  border-color: transparent;
   background:
-    radial-gradient(circle at 50% 56%, rgb(255 118 28 / 28%) 0 18%, transparent 33%),
-    linear-gradient(180deg, rgb(8 3 2 / 10%), rgb(0 0 0 / 20%));
-  box-shadow:
-    inset 0 0 0 1px rgb(255 217 143 / 10%),
-    inset 0 0 44px rgb(255 85 20 / 12%);
+    radial-gradient(circle at 50% 58%, rgb(255 118 28 / 24%) 0 17%, transparent 32%);
+  box-shadow: none;
 }
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-art img {
-  width: min(82%, 280px);
+  width: min(86%, 315px);
   filter:
     drop-shadow(0 30px 30px rgb(0 0 0 / 68%))
     drop-shadow(0 0 20px rgb(255 94 22 / 42%))
@@ -537,6 +551,25 @@ h3 {
     0 16px 30px rgb(0 0 0 / 32%);
 }
 
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-rank {
+  min-width: 128px;
+}
+
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-body {
+  justify-items: center;
+  padding-bottom: clamp(10px, 4vw, 24px);
+  text-align: center;
+}
+
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-body > span {
+  color: #ffd79b;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 56%);
+}
+
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-stat {
+  width: min(100%, 420px);
+}
+
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .eyebrow,
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-stat strong {
   color: #ffb45f;
@@ -547,6 +580,12 @@ h3 {
   text-shadow:
     0 2px 0 rgb(0 0 0 / 48%),
     0 0 18px rgb(255 86 24 / 26%);
+}
+
+.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-rank-cancel {
+  min-width: 140px;
+  border-color: rgb(255 184 86 / 60%);
+  background: rgb(9 6 4 / 74%);
 }
 
 .elf-champion-card.elf-champion-supply {
