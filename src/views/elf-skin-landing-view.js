@@ -28,7 +28,7 @@ export function renderElfSkinLandingView(
         statValue: supplyChampion.quantity === null
           ? t("elfLanding.supplyPending", locale)
           : formatNumber(supplyChampion.quantity),
-        rankLabel: "01",
+        rankLabel: "TOP 1",
         kind: "supply",
         eager: true
       })}
@@ -42,7 +42,7 @@ export function renderElfSkinLandingView(
           statValue: wishlistChampion.isLocalSelection
             ? t("elfLanding.cancelWish", locale)
             : formatNumber(wishlistChampion.wishCount ?? 1),
-          rankLabel: "01",
+          rankLabel: "TOP 1",
           kind: "wishlist",
           action: wishlistChampion.isLocalSelection ? "cancel" : ""
         })
@@ -118,7 +118,7 @@ function renderChampionCard({
           <p class="eyebrow">${eyebrow}</p>
           <h2>${title}</h2>
         </div>
-        <span class="elf-champion-rank">#${rankLabel}</span>
+        <span class="elf-champion-rank">${escapeHtml(rankLabel)}</span>
       </div>
       <div class="elf-champion-art" aria-hidden="true">
         <img

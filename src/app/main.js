@@ -23,7 +23,7 @@ import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
-import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-spinning-kicker-frame";
+import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-champion-rank-polish";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();

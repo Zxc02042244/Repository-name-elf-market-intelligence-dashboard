@@ -543,7 +543,7 @@ h3 {
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner {
   --skin-accent: #ff8a2a;
   grid-template-rows: auto minmax(300px, 1fr) auto;
-  border-color: rgb(255 146 54 / 82%);
+  border-color: transparent;
   padding: clamp(20px, 5vw, 30px);
   background:
     linear-gradient(180deg, rgb(10 4 3 / 34%) 0 18%, transparent 34%),
@@ -552,9 +552,7 @@ h3 {
     rgb(16 5 3);
   box-shadow:
     0 34px 90px rgb(0 0 0 / 48%),
-    0 0 34px rgb(255 82 18 / 20%),
-    inset 0 1px 0 rgb(255 220 150 / 24%),
-    inset 0 0 0 1px rgb(255 176 86 / 18%);
+    0 0 34px rgb(255 82 18 / 22%);
   color: #ff9a3d;
 }
 
@@ -574,7 +572,7 @@ h3 {
   justify-items: center;
   justify-content: center;
   gap: 0;
-  margin-top: clamp(48px, 13vw, 78px);
+  margin-top: clamp(42px, 11vw, 72px);
   text-align: center;
 }
 
@@ -602,25 +600,28 @@ h3 {
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-rank,
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-stat {
-  border-color: rgb(255 175 78 / 58%);
+  border-color: transparent;
   background:
-    linear-gradient(135deg, rgb(255 119 31 / 20%), transparent 58%),
-    rgb(8 6 5 / 72%);
+    linear-gradient(135deg, rgb(255 119 31 / 16%), transparent 58%),
+    rgb(8 5 3 / 52%);
   box-shadow:
-    inset 0 1px 0 rgb(255 226 166 / 16%),
-    0 16px 30px rgb(0 0 0 / 32%);
+    0 16px 30px rgb(0 0 0 / 32%),
+    0 0 22px rgb(255 82 18 / 12%);
 }
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-rank {
-  min-width: 104px;
+  min-width: 116px;
   min-height: 42px;
-  border-color: rgb(255 190 92 / 64%);
+  border: 0;
   background:
-    radial-gradient(circle at 50% 0%, rgb(255 165 64 / 18%), transparent 48%),
-    linear-gradient(135deg, rgb(255 119 31 / 22%), transparent 58%),
-    rgb(10 7 5 / 74%);
+    radial-gradient(circle at 50% 52%, rgb(255 111 28 / 24%), transparent 60%);
   color: #fff4d5;
-  font-size: 1.12rem;
+  font-size: clamp(1.18rem, 2vw, 1.42rem);
+  letter-spacing: 0.1em;
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 68%),
+    0 0 18px rgb(255 86 24 / 54%),
+    0 0 4px rgb(255 207 116 / 50%);
 }
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-body {
@@ -636,11 +637,23 @@ h3 {
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-stat {
   width: min(100%, 420px);
+  min-height: 52px;
+  border: 0;
+  border-radius: 4px 4px 14px 14px;
+  padding: 8px 10px 8px 14px;
+  background:
+    linear-gradient(90deg, rgb(255 125 36 / 14%), transparent 48%),
+    radial-gradient(circle at 100% 50%, rgb(255 190 92 / 18%), transparent 32%),
+    rgb(15 6 2 / 78%);
 }
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .eyebrow,
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-stat strong {
   color: #ffb45f;
+  font-size: clamp(1.28rem, 2.5vw, 1.65rem);
+  text-shadow:
+    0 1px 0 rgb(0 0 0 / 60%),
+    0 0 12px rgb(255 108 31 / 34%);
 }
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-body > strong {
@@ -655,7 +668,7 @@ h3 {
   background-clip: text;
   font-family:
     "Aptos Display", "Segoe UI Semibold", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.75rem, 7vw, 2.35rem);
+  font-size: clamp(2.05rem, 7.8vw, 2.85rem);
   font-weight: 900;
   text-shadow:
     0 2px 0 rgb(0 0 0 / 70%),
@@ -684,8 +697,11 @@ h3 {
 
 .elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-rank-cancel {
   min-width: 140px;
-  border-color: rgb(255 184 86 / 60%);
-  background: rgb(9 6 4 / 74%);
+  border: 0;
+  background:
+    linear-gradient(135deg, rgb(255 117 31 / 16%), transparent 58%),
+    rgb(9 6 4 / 74%);
+  color: #fff4d5;
 }
 
 .elf-champion-card.elf-champion-supply {
@@ -927,7 +943,7 @@ h3 {
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker {
   --skin-accent: #8ec7ff;
   grid-template-rows: auto minmax(310px, 1fr) auto;
-  border-color: rgb(236 200 122 / 86%);
+  border-color: transparent;
   padding: clamp(18px, 3vw, 28px);
   background:
     linear-gradient(180deg, rgb(5 15 36 / 34%) 0 16%, transparent 36%),
@@ -936,9 +952,7 @@ h3 {
     rgb(3 13 34);
   box-shadow:
     0 34px 90px rgb(0 0 0 / 50%),
-    0 0 38px rgb(73 154 255 / 22%),
-    inset 0 1px 0 rgb(255 244 205 / 26%),
-    inset 0 0 0 1px rgb(86 165 255 / 18%);
+    0 0 38px rgb(73 154 255 / 24%);
   color: #8ec7ff;
 }
 
@@ -955,15 +969,17 @@ h3 {
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-heading {
-  align-items: flex-start;
-  min-height: clamp(74px, 8vw, 98px);
+  display: grid;
+  justify-items: center;
+  justify-content: center;
+  min-height: auto;
+  margin-top: clamp(38px, 6vw, 56px);
+  text-align: center;
 }
 
+.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-heading .eyebrow,
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-heading h2 {
-  color: #fff8d9;
-  text-shadow:
-    0 2px 0 rgb(0 0 0 / 50%),
-    0 0 18px rgb(98 174 255 / 24%);
+  display: none;
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .eyebrow {
@@ -972,18 +988,23 @@ h3 {
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-rank {
-  min-width: 82px;
-  min-height: 48px;
-  border-color: rgb(242 202 126 / 70%);
+  min-width: 116px;
+  min-height: 42px;
+  border: 0;
   background:
-    radial-gradient(circle at 50% 0%, rgb(130 196 255 / 22%), transparent 50%),
-    linear-gradient(135deg, rgb(235 199 124 / 22%), rgb(3 11 26 / 82%));
+    radial-gradient(circle at 50% 50%, rgb(117 200 255 / 24%), transparent 62%);
   color: #fff8d9;
+  font-size: clamp(1.18rem, 2vw, 1.42rem);
+  letter-spacing: 0.1em;
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 62%),
+    0 0 18px rgb(90 184 255 / 58%),
+    0 0 4px rgb(242 210 132 / 50%);
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-art {
-  min-height: clamp(300px, 48vw, 430px);
-  margin: clamp(0px, 1vw, 6px) 0 clamp(8px, 2vw, 16px);
+  min-height: clamp(300px, 48vw, 420px);
+  margin: clamp(4px, 1vw, 8px) 0 clamp(8px, 2vw, 14px);
   border-color: transparent;
   background:
     radial-gradient(circle at 50% 68%, rgb(84 169 255 / 22%) 0 18%, transparent 34%);
@@ -1004,8 +1025,9 @@ h3 {
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body {
-  justify-items: start;
+  justify-items: center;
   padding-bottom: clamp(4px, 1vw, 12px);
+  text-align: center;
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body > span {
@@ -1014,11 +1036,15 @@ h3 {
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body > strong {
   position: relative;
+  display: inline-grid;
+  place-items: center;
   width: fit-content;
+  min-width: min(100%, 270px);
+  padding: 4px 18px 7px;
   color: transparent;
   background: linear-gradient(180deg, #fff9da 0%, #f6d68a 45%, #75bcff 100%);
   background-clip: text;
-  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-size: clamp(2.05rem, 5.2vw, 2.85rem);
   font-weight: 900;
   letter-spacing: 0;
   text-shadow: none;
@@ -1026,15 +1052,39 @@ h3 {
   -webkit-background-clip: text;
 }
 
+.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body > strong::before,
+.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body > strong::after {
+  position: absolute;
+  top: 50%;
+  width: 38px;
+  height: 1px;
+  background:
+    linear-gradient(90deg, transparent, rgb(137 207 255 / 86%), rgb(238 203 126 / 68%), transparent);
+  content: "";
+}
+
+.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body > strong::before {
+  right: calc(100% - 10px);
+}
+
+.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-body > strong::after {
+  left: calc(100% - 10px);
+}
+
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-stat {
   width: min(100%, 420px);
-  border-color: rgb(236 200 122 / 62%);
+  min-height: 52px;
+  border: 0;
+  border-radius: 8px 8px 16px 16px;
+  padding: 9px 12px;
   background:
-    linear-gradient(135deg, rgb(74 153 255 / 18%), transparent 58%),
-    rgb(3 13 30 / 74%);
+    linear-gradient(90deg, rgb(49 152 255 / 20%), transparent 50%),
+    radial-gradient(circle at 100% 50%, rgb(236 200 122 / 16%), transparent 32%),
+    rgb(3 13 30 / 78%);
   box-shadow:
     inset 0 1px 0 rgb(255 244 205 / 16%),
-    0 16px 32px rgb(0 0 0 / 30%);
+    0 16px 32px rgb(0 0 0 / 30%),
+    0 0 22px rgb(69 159 255 / 12%);
 }
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-stat span {
@@ -1043,6 +1093,10 @@ h3 {
 
 .elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-stat strong {
   color: #fff8d6;
+  font-size: clamp(1.28rem, 2.5vw, 1.65rem);
+  text-shadow:
+    0 1px 0 rgb(0 0 0 / 60%),
+    0 0 12px rgb(90 184 255 / 34%);
 }
 
 .elf-landing-copy {
