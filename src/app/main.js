@@ -16,7 +16,7 @@ import {
   markSkinSupplyError,
   markSkinSupplyLoading,
   syncSkinSupplySnapshots
-} from "./skin-supply-stats.js";
+} from "./skin-supply-stats.js?v=20260709-skin-supply-baseline-fix";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
