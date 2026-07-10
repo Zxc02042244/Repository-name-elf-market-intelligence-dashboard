@@ -37,6 +37,7 @@ const appState = createAppState();
 const appRoot = document.querySelector("#app");
 const localeStorageKey = "marketDashboard.locale";
 const skinWishlistLimit = 3;
+const skinHomeTabs = new Set(["wishlist", "supply", "gallery"]);
 let dashboardLoadStarted = false;
 let skinCatalogLoadStarted = false;
 let skinCommunitySyncStarted = false;
@@ -98,7 +99,8 @@ function renderApp() {
       ${isHome ? renderElfSkinLandingView(
         applySkinSupplyStatsToCatalog(appState.skinCatalog, appState.skinSupply),
         withCommunityWishlist(appState.skinWishlist, appState.skinCommunity),
-        appState.locale
+        appState.locale,
+        appState.skinHomeTab
       ) : `
         ${renderDashboardNavigation()}
         ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
@@ -138,6 +140,19 @@ function renderApp() {
       );
       renderApp();
       void syncSkinCommunity();
+    });
+  }
+
+  for (const skinHomeTab of appRoot.querySelectorAll("[data-skin-home-tab]")) {
+    skinHomeTab.addEventListener("click", () => {
+      const nextTab = skinHomeTab.dataset.skinHomeTab;
+
+      if (!skinHomeTabs.has(nextTab)) {
+        return;
+      }
+
+      appState.skinHomeTab = nextTab;
+      renderApp();
     });
   }
 
@@ -196,6 +211,14 @@ function renderDashboardNavigation() {
 }
 
 function renderRouteTabs(isHome) {
+  if (isHome) {
+    return `
+      <a class="route-market-link" href="#market">
+        ${translate("elfLanding.analyzeMarket")}
+      </a>
+    `;
+  }
+
   const tabs = [
     ["#home", translate("elfLanding.siteShortTitle"), isHome],
     ["#market", translate("elfLanding.analyzeMarket"), !isHome]
@@ -212,30 +235,20 @@ function renderRouteTabs(isHome) {
 
 function renderHomeHeaderDetails(wishlistState, communityState) {
   const wishlist = normalizeHeaderWishlist(wishlistState);
-  const community = normalizeCommunityState(communityState);
-  const visitorCount = community.visitorCount ?? wishlist.visitorCount;
-  const visitorCopy = getVisitorMetricCopy(appState.locale, community.status);
 
   return `
     <div class="home-header-details">
       <div class="home-header-summary">
         <p>${translate("elfLanding.summary")}</p>
-        <a class="utility-link" href="https://www.cidi.games/#/elf" target="_blank" rel="noreferrer">
-          ${translate("elfLanding.officialPage")}
-        </a>
       </div>
-      <p class="home-header-disclaimer">${translate("elfLanding.communityDisclaimer")}</p>
       <div class="home-header-metrics" aria-label="${translate("elfLanding.localStats")}">
-        ${renderHomeHeaderMetric(
-          visitorCopy.label,
-          formatNumber(visitorCount),
-          visitorCopy.detail
-        )}
         ${renderHomeHeaderMetric(translate("elfLanding.selectedWishes"), translate("elfLanding.wishlistCount", {
           selected: formatNumber(wishlist.selectedIds.length),
           limit: formatNumber(skinWishlistLimit)
         }))}
-        ${renderHomeHeaderMetric(translate("elfLanding.skinRanking"), translate("elfLanding.rankedBySupply"))}
+        <button class="home-header-edit-wishes" type="button" data-skin-home-tab="gallery">
+          ${getSkinHomeUiText("editWishes", appState.locale)}
+        </button>
       </div>
     </div>
   `;
@@ -508,6 +521,28 @@ function writeStoredLocale(locale) {
 
 function translate(key, params) {
   return t(key, appState.locale, params);
+}
+
+function getSkinHomeUiText(key, locale) {
+  const copy = {
+    en: {
+      editWishes: "Edit wishes"
+    },
+    "zh-Hant": {
+      editWishes: "編輯願望"
+    },
+    ja: {
+      editWishes: "願いを編集"
+    },
+    ko: {
+      editWishes: "위시 편집"
+    },
+    vi: {
+      editWishes: "Chỉnh ước chọn"
+    }
+  };
+
+  return copy[locale]?.[key] ?? copy.en[key] ?? key;
 }
 
 function ensureDashboardLoaded() {

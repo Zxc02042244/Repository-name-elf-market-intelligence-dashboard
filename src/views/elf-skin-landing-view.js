@@ -6,100 +6,147 @@ const wishlistLimit = 3;
 export function renderElfSkinLandingView(
   skinCatalog,
   wishlistState,
-  locale = defaultLocale
+  locale = defaultLocale,
+  activeTab = "wishlist"
 ) {
   const catalog = normalizeCatalog(skinCatalog);
   const wishlist = normalizeWishlist(wishlistState);
+  const currentTab = normalizeHomeTab(activeTab);
   const supplyLeaders = catalog.skins.slice(0, 5);
   const wishlistLeaders = getWishlistLeaders(catalog.skins, wishlist);
   const todayAddedLeaders = getTodayAddedLeaders(catalog.skins);
   const supplyChampion = supplyLeaders[0] ?? getEmptySkin();
   const wishlistChampion = wishlistLeaders[0] ?? null;
-  const championCopy = getChampionCopy(locale);
   const topSupply = supplyLeaders[0]?.quantity ?? 0;
   const topTodayAdded = todayAddedLeaders[0]?.todayAdded ?? 0;
 
   return `
-    <section class="elf-landing elf-landing-stage-${escapeHtml(supplyChampion.tone)}" aria-label="${t("elfLanding.rankingShowcase", locale)}">
-      ${renderChampionCard({
+    <section class="elf-home-workspace" aria-label="${t("elfLanding.rankingShowcase", locale)}">
+      ${renderHomeTabs(currentTab, locale)}
+      ${currentTab === "wishlist" ? renderWishlistTab(wishlistLeaders, wishlist, locale) : ""}
+      ${currentTab === "supply" ? renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLeaders, topTodayAdded, locale) : ""}
+      ${currentTab === "gallery" ? renderOfficialSkinTab(catalog, wishlist, locale) : ""}
+    </section>
+
+    ${renderSkinFooter(catalog, wishlist, locale)}
+  `;
+}
+
+function renderHomeTabs(activeTab, locale) {
+  const tabs = [
+    ["wishlist", skinLandingText("homeTabWishlist", locale)],
+    ["supply", skinLandingText("homeTabSupply", locale)],
+    ["gallery", skinLandingText("homeTabOfficial", locale)]
+  ];
+
+  return `
+    <nav class="elf-home-tabs" aria-label="${t("elfLanding.skinGallery", locale)}">
+      ${tabs.map(([tab, label]) => `
+        <button
+          class="elf-home-tab ${tab === activeTab ? "elf-home-tab-active" : ""}"
+          type="button"
+          data-skin-home-tab="${tab}"
+          ${tab === activeTab ? "aria-current=\"page\"" : ""}
+        >
+          ${label}
+        </button>
+      `).join("")}
+    </nav>
+  `;
+}
+
+function renderWishlistTab(wishlistLeaders, wishlist, locale) {
+  const wishlistChampion = wishlistLeaders[0] ?? null;
+
+  return `
+    <section class="elf-tab-panel elf-tab-panel-wishlist" aria-labelledby="elf-wishlist-title">
+      <div class="section-heading">
+        <h2 id="elf-wishlist-title">${t("elfLanding.wishlistTitle", locale)}</h2>
+        <span>${t("elfLanding.wishlistScope", locale)}</span>
+      </div>
+      ${wishlist.notice === "limit" ? `
+        <p class="elf-wishlist-notice" role="status">
+          ${t("elfLanding.wishlistLimitReached", locale, { limit: formatNumber(wishlistLimit) })}
+        </p>
+      ` : ""}
+      ${wishlistChampion ? renderChampionCard({
+        skin: wishlistChampion,
+        title: "TOP 1",
+        eyebrow: skinLandingText("homeTabWishlist", locale),
+        meta: t("elfLanding.wishlistScope", locale),
+        statLabel: getWishCountLabel(locale, wishlistChampion.wishCount ?? 1, wishlist.community.status === "remote"),
+        statValue: wishlistChampion.isLocalSelection
+          ? t("elfLanding.cancelWish", locale)
+          : formatNumber(wishlistChampion.wishCount ?? 1),
+        rankLabel: "TOP 1",
+        kind: "wishlist",
+        action: wishlistChampion.isLocalSelection ? "cancel" : "",
+        compact: true
+      }) : ""}
+      ${wishlistLeaders.length > 0 ? `
+        <div class="elf-rank-actions">
+          <button class="elf-clear-wishlist" type="button" data-wishlist-clear>
+            ${t("elfLanding.clearWishes", locale)}
+          </button>
+        </div>
+        <div class="elf-rank-list elf-wishlist-rank-list">
+          ${wishlistLeaders.map((skin, index) => renderWishlistLeader(skin, index, locale)).join("")}
+        </div>
+      ` : `
+        <p class="empty-state">${t("elfLanding.emptyWishlist", locale)}</p>
+      `}
+    </section>
+  `;
+}
+
+function renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLeaders, topTodayAdded, locale) {
+  return `
+    <section class="elf-tab-panel elf-tab-panel-supply" aria-labelledby="elf-supply-title">
+      <div class="section-heading">
+        <h2 id="elf-supply-title">${t("elfLanding.supplyRankingTitle", locale)}</h2>
+        <span>${t("elfLanding.supplyRankingScope", locale)}</span>
+      </div>
+      ${supplyLeaders.length > 0 ? renderChampionCard({
         skin: supplyChampion,
-        title: championCopy.supplyTitle,
-        eyebrow: t("elfLanding.supplyRankingTitle", locale),
+        title: "TOP 1",
+        eyebrow: skinLandingText("homeTabSupply", locale),
         meta: t("elfLanding.supplyRankingScope", locale),
         statLabel: t("elfLanding.supply", locale),
         statValue: supplyChampion.quantity === null
           ? t("elfLanding.supplyPending", locale)
           : formatNumber(supplyChampion.quantity),
-        statDetail: getSupplyDeltaLabel(supplyChampion, locale),
         rankLabel: "TOP 1",
         kind: "supply",
-        eager: true
-      })}
-      ${wishlistChampion
-        ? renderChampionCard({
-          skin: wishlistChampion,
-          title: championCopy.wishlistTitle,
-          eyebrow: t("elfLanding.selectedWishes", locale),
-          meta: t("elfLanding.wishlistScope", locale),
-          statLabel: getWishCountLabel(locale, wishlistChampion.wishCount ?? 1, wishlist.community.status === "remote"),
-          statValue: wishlistChampion.isLocalSelection
-            ? t("elfLanding.cancelWish", locale)
-            : formatNumber(wishlistChampion.wishCount ?? 1),
-          rankLabel: "TOP 1",
-          kind: "wishlist",
-          action: wishlistChampion.isLocalSelection ? "cancel" : ""
-        })
-        : renderEmptyWishlistChampion(locale)}
+        eager: true,
+        compact: true
+      }) : ""}
+      <div class="elf-rank-list">
+        ${supplyLeaders.map((skin, index) => renderSupplyLeader(skin, index, topSupply, locale)).join("")}
+      </div>
+      ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
     </section>
+  `;
+}
 
-    ${renderSkinSourcePanel(catalog, wishlist, locale)}
+function renderOfficialSkinTab(catalog, wishlist, locale) {
+  const hasOfficialCatalog = catalog.kind === "api" && catalog.skins.length > 0;
 
-    ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
-
-    <section class="elf-rank-showcase" aria-label="${t("elfLanding.rankingShowcase", locale)}">
-      <article class="elf-rank-panel elf-rank-panel-supply">
-        <div class="section-heading">
-          <h2>${t("elfLanding.supplyRankingTitle", locale)}</h2>
-          <span>${t("elfLanding.supplyRankingScope", locale)}</span>
-        </div>
-        <div class="elf-rank-list">
-          ${supplyLeaders.map((skin, index) => renderSupplyLeader(skin, index, topSupply, locale)).join("")}
-        </div>
-      </article>
-
-      <article class="elf-rank-panel elf-rank-panel-wishlist">
-        <div class="section-heading">
-          <h2>${t("elfLanding.wishlistTitle", locale)}</h2>
-          <span>${t("elfLanding.wishlistScope", locale)}</span>
-        </div>
-        ${wishlist.notice === "limit" ? `
-          <p class="elf-wishlist-notice" role="status">
-            ${t("elfLanding.wishlistLimitReached", locale, { limit: formatNumber(wishlistLimit) })}
-          </p>
-        ` : ""}
-        ${wishlistLeaders.length > 0 ? `
-          <div class="elf-rank-actions">
-            <button class="elf-clear-wishlist" type="button" data-wishlist-clear>
-              ${t("elfLanding.clearWishes", locale)}
-            </button>
-          </div>
-          <div class="elf-rank-list">
-            ${wishlistLeaders.map((skin, index) => renderWishlistLeader(skin, index, locale)).join("")}
-          </div>
-        ` : `
-          <p class="empty-state">${t("elfLanding.emptyWishlist", locale)}</p>
-        `}
-      </article>
-    </section>
-
-    <section class="elf-skin-panel" aria-labelledby="elf-skin-grid-title">
+  return `
+    <section class="elf-tab-panel elf-tab-panel-gallery" aria-labelledby="elf-skin-grid-title">
       <div class="section-heading">
         <h2 id="elf-skin-grid-title">${t("elfLanding.skinGallery", locale)}</h2>
         <span>${renderCatalogStatus(catalog, locale)}</span>
       </div>
-      <div class="elf-skin-grid">
-        ${catalog.skins.map((skin, index) => renderSkinCard(skin, index, wishlist, locale)).join("")}
-      </div>
+      ${hasOfficialCatalog ? `
+        <div class="elf-skin-grid">
+          ${catalog.skins.map((skin, index) => renderSkinCard(skin, index, wishlist, locale)).join("")}
+        </div>
+      ` : `
+        <p class="empty-state elf-official-empty">
+          <strong>${skinLandingText("officialSkinEmptyTitle", locale)}</strong>
+          <span>${skinLandingText("officialSkinEmptyBody", locale)}</span>
+        </p>
+      `}
     </section>
   `;
 }
@@ -133,6 +180,36 @@ function renderSkinSourcePanel(catalog, wishlist, locale) {
         )}
       </div>
     </section>
+  `;
+}
+
+function renderSkinFooter(catalog, wishlist, locale) {
+  const visitorCount = wishlist.community.visitorCount ?? wishlist.visitorCount;
+  const updatedAt = catalog.fetchedAt || catalog.serverTime || "";
+
+  return `
+    <footer class="elf-home-footer" aria-label="${skinLandingText("footerInfoTitle", locale)}">
+      <div class="elf-footer-metrics">
+        ${renderFooterMetric(t("elfLanding.localVisitors", locale), formatNumber(visitorCount))}
+        ${renderFooterMetric(t("elfLanding.skinRanking", locale), t("elfLanding.rankedBySupply", locale))}
+        ${renderFooterMetric(
+          skinLandingText("updateTime", locale),
+          updatedAt ? escapeHtml(updatedAt) : t("dashboard.pending", locale)
+        )}
+        ${renderFooterMetric(skinLandingText("version", locale), t("app.versionEyebrow", locale))}
+      </div>
+      ${renderSkinSourcePanel(catalog, wishlist, locale)}
+      <p class="elf-footer-disclaimer">${t("elfLanding.communityDisclaimer", locale)}</p>
+    </footer>
+  `;
+}
+
+function renderFooterMetric(label, value) {
+  return `
+    <div class="elf-footer-metric">
+      <span>${escapeHtml(label)}</span>
+      <strong>${value}</strong>
+    </div>
   `;
 }
 
@@ -174,12 +251,13 @@ function renderChampionCard({
   rankLabel,
   kind,
   eager = false,
-  action = ""
+  action = "",
+  compact = false
 }) {
   const frameClass = getChampionFrameClass(skin, kind);
 
   return `
-    <article class="elf-champion-card elf-champion-${escapeHtml(kind)} elf-skin-card-${escapeHtml(skin.tone)} ${frameClass}">
+    <article class="elf-champion-card ${compact ? "elf-champion-card-compact" : ""} elf-champion-${escapeHtml(kind)} elf-skin-card-${escapeHtml(skin.tone)} ${frameClass}">
       <div class="elf-champion-heading">
         <div>
           <p class="eyebrow">${eyebrow}</p>
@@ -264,8 +342,8 @@ function renderEmptyWishlistChampion(locale) {
 function getChampionCopy(locale) {
   if (locale === "zh-Hant") {
     return {
-      supplyTitle: "供給量排名第一",
-      wishlistTitle: "願望清單第一"
+      supplyTitle: "靘策???洵銝",
+      wishlistTitle: "憿?皜蝚砌?"
     };
   }
 
@@ -285,7 +363,7 @@ function renderSupplyLeader(skin, index, topSupply, locale) {
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
         <strong>${escapeHtml(skin.name)}</strong>
-        <small>${t("elfLanding.supply", locale)} ${formatNumber(supply)}${renderInlineSupplyDelta(skin, locale)}</small>
+        <small>${t("elfLanding.supply", locale)} ${formatNumber(supply)}</small>
         <div class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
       </div>
     </div>
@@ -294,6 +372,9 @@ function renderSupplyLeader(skin, index, topSupply, locale) {
 
 function renderWishlistLeader(skin, index, locale) {
   const wishCount = skin.wishCount ?? 1;
+  const supply = skin.quantity === null
+    ? t("elfLanding.supplyPending", locale)
+    : formatNumber(skin.quantity);
 
   return `
     <div class="elf-rank-row elf-skin-card-${escapeHtml(skin.tone)}">
@@ -301,7 +382,10 @@ function renderWishlistLeader(skin, index, locale) {
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
         <strong>${escapeHtml(skin.name)}</strong>
-        <small>${getWishCountLabel(locale, wishCount, skin.isRemoteLeader === true)}</small>
+        <small>
+          <strong>${getWishCountLabel(locale, wishCount, skin.isRemoteLeader === true)}</strong>
+          <span>${t("elfLanding.supply", locale)} ${supply}</span>
+        </small>
       </div>
       ${skin.isLocalSelection ? `
         <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
@@ -486,14 +570,11 @@ function getWishCountLabel(locale, count, isRemote) {
   const formattedCount = formatNumber(count);
 
   if (isRemote) {
-    return locale === "zh-Hant"
-      ? `${formattedCount} 個全站願望`
-      : `${formattedCount} community wishes`;
+    return skinLandingText("communityWishVotes", locale, { count: formattedCount });
   }
 
   return t("elfLanding.localWishVotes", locale, { count: formattedCount });
 }
-
 function normalizeCatalog(skinCatalog) {
   const skins = Array.isArray(skinCatalog?.skins) && skinCatalog.skins.length > 0
     ? skinCatalog.skins
@@ -503,6 +584,10 @@ function normalizeCatalog(skinCatalog) {
     kind: skinCatalog?.kind ?? "fallback",
     skins
   };
+}
+
+function normalizeHomeTab(tab) {
+  return ["wishlist", "supply", "gallery"].includes(tab) ? tab : "wishlist";
 }
 
 function normalizeWishlist(wishlistState) {
@@ -519,8 +604,13 @@ function normalizeWishlist(wishlistState) {
 }
 
 function normalizeCommunity(communityState) {
+  const visitorCount = Number(communityState?.visitorCount);
+
   return {
     status: communityState?.status ?? "disabled",
+    visitorCount: Number.isFinite(visitorCount) && visitorCount > 0
+      ? Math.floor(visitorCount)
+      : null,
     wishlistLeaders: Array.isArray(communityState?.wishlistLeaders)
       ? communityState.wishlistLeaders
       : []
@@ -545,3 +635,70 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+function skinLandingText(key, locale, params = {}) {
+  const copy = {
+    en: {
+      homeTabWishlist: "Wishes",
+      homeTabSupply: "Supply",
+      homeTabOfficial: "Skins",
+      footerInfoTitle: "Skin page details",
+      updateTime: "Updated",
+      version: "Version",
+      communityWishVotes: "{count} community wishes",
+      officialSkinEmptyTitle: "No official skins announced yet.",
+      officialSkinEmptyBody: "After official skins are released, they will appear here based on official data."
+    },
+    "zh-Hant": {
+      homeTabWishlist: "願望清單",
+      homeTabSupply: "供給量排行",
+      homeTabOfficial: "官方皮膚",
+      footerInfoTitle: "皮膚頁面資訊",
+      updateTime: "更新時間",
+      version: "版本",
+      communityWishVotes: "{count} 個全站願望",
+      officialSkinEmptyTitle: "目前尚未公布官方皮膚。",
+      officialSkinEmptyBody: "官方皮膚推出後，將依官方資料顯示於此。"
+    },
+    ja: {
+      homeTabWishlist: "願いリスト",
+      homeTabSupply: "供給ランキング",
+      homeTabOfficial: "公式スキン",
+      footerInfoTitle: "スキンページ情報",
+      updateTime: "更新時刻",
+      version: "バージョン",
+      communityWishVotes: "{count} 件のコミュニティ願い",
+      officialSkinEmptyTitle: "公式スキンはまだ公開されていません。",
+      officialSkinEmptyBody: "公式スキンが公開された後、公式データに基づいてここに表示されます。"
+    },
+    ko: {
+      homeTabWishlist: "위시 목록",
+      homeTabSupply: "공급량 순위",
+      homeTabOfficial: "공식 스킨",
+      footerInfoTitle: "스킨 페이지 정보",
+      updateTime: "업데이트 시간",
+      version: "버전",
+      communityWishVotes: "커뮤니티 위시 {count}개",
+      officialSkinEmptyTitle: "아직 공식 스킨이 공개되지 않았습니다.",
+      officialSkinEmptyBody: "공식 스킨이 출시되면 공식 데이터에 따라 여기에 표시됩니다."
+    },
+    vi: {
+      homeTabWishlist: "Danh sách ước",
+      homeTabSupply: "Xếp hạng cung",
+      homeTabOfficial: "Skin chính thức",
+      footerInfoTitle: "Thông tin trang skin",
+      updateTime: "Cập nhật",
+      version: "Phiên bản",
+      communityWishVotes: "{count} ước chọn cộng đồng",
+      officialSkinEmptyTitle: "Hiện chưa công bố skin chính thức.",
+      officialSkinEmptyBody: "Sau khi skin chính thức được phát hành, trang sẽ hiển thị tại đây theo dữ liệu chính thức."
+    }
+  };
+  const value = copy[locale]?.[key] ?? copy.en[key] ?? key;
+
+  return Object.entries(params).reduce(
+    (text, [name, entry]) => text.replaceAll(`{${name}}`, String(entry)),
+    value
+  );
+}
+

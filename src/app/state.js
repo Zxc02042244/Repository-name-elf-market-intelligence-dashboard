@@ -15,6 +15,7 @@ export function createAppState() {
     skinWishlist: null,
     skinCommunity: null,
     skinSupply: null,
+    skinHomeTab: "wishlist",
     selectedCategory: "all",
     coverageModel: null,
     model: null,

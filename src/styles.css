@@ -2844,6 +2844,203 @@ h2 {
   justify-content: flex-start;
 }
 
+.route-market-link,
+.home-header-edit-wishes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid rgb(231 199 125 / 42%);
+  border-radius: 8px;
+  padding: 0 14px;
+  background:
+    linear-gradient(180deg, rgb(255 219 127 / 18%), rgb(82 48 24 / 16%)),
+    rgb(24 24 18 / 76%);
+  color: #fff4d2;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.home-header-edit-wishes {
+  width: 100%;
+  font: inherit;
+}
+
+.route-market-link:hover,
+.route-market-link:focus-visible,
+.home-header-edit-wishes:hover,
+.home-header-edit-wishes:focus-visible {
+  border-color: #88d17c;
+  background:
+    linear-gradient(180deg, rgb(136 209 124 / 16%), rgb(82 48 24 / 16%)),
+    rgb(28 31 22 / 82%);
+}
+
+.elf-home-workspace {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.elf-home-tabs {
+  position: sticky;
+  z-index: 18;
+  top: 0;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid rgb(231 199 125 / 30%);
+  border-radius: 8px;
+  padding: 4px;
+  background: rgb(8 12 10 / 86%);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 22%);
+  backdrop-filter: blur(10px);
+}
+
+.elf-home-tab {
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: transparent;
+  color: #cbd8e6;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.elf-home-tab-active {
+  border-color: rgb(231 199 125 / 56%);
+  background:
+    linear-gradient(180deg, rgb(231 199 125 / 22%), rgb(210 130 72 / 14%)),
+    rgb(36 30 21 / 82%);
+  color: #fff4d2;
+}
+
+.elf-tab-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(231 199 125 / 24%);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgb(255 244 210 / 6%), transparent 38%),
+    repeating-linear-gradient(90deg, rgb(231 199 125 / 4%) 0 1px, transparent 1px 18px),
+    rgb(13 18 14 / 82%);
+  box-shadow:
+    0 18px 44px rgb(0 0 0 / 24%),
+    inset 0 1px 0 rgb(255 226 142 / 10%);
+}
+
+.elf-tab-panel-wishlist {
+  background:
+    radial-gradient(circle at 14% 18%, rgb(255 138 42 / 14%), transparent 24%),
+    linear-gradient(135deg, rgb(169 140 240 / 10%), transparent 42%),
+    repeating-linear-gradient(90deg, rgb(231 199 125 / 4%) 0 1px, transparent 1px 18px),
+    rgb(15 13 20 / 88%);
+}
+
+.elf-tab-panel-supply {
+  background:
+    radial-gradient(circle at 88% 12%, rgb(112 199 216 / 15%), transparent 26%),
+    linear-gradient(135deg, rgb(73 126 255 / 12%), transparent 44%),
+    repeating-linear-gradient(90deg, rgb(231 199 125 / 4%) 0 1px, transparent 1px 18px),
+    rgb(9 15 24 / 88%);
+}
+
+.elf-champion-card-compact {
+  min-height: 430px;
+  margin-bottom: 12px;
+}
+
+.elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker,
+.elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner {
+  grid-template-rows: auto minmax(210px, 1fr) auto;
+}
+
+.elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-heading,
+.elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-heading {
+  margin-top: clamp(22px, 4vw, 38px);
+}
+
+.elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-art,
+.elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-art {
+  min-height: clamp(210px, 44vw, 320px);
+}
+
+.elf-rank-body small {
+  display: grid;
+  gap: 2px;
+}
+
+.elf-rank-body small strong {
+  color: #fff4d2;
+  font-size: 0.92rem;
+}
+
+.elf-rank-body small span {
+  color: #9db3c4;
+}
+
+.elf-home-footer {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgb(231 199 125 / 20%);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 14px;
+  background: rgb(8 12 10 / 64%);
+}
+
+.elf-footer-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.elf-footer-metric {
+  border: 1px solid rgb(231 199 125 / 16%);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: rgb(255 244 210 / 4%);
+}
+
+.elf-footer-metric span,
+.elf-footer-metric strong {
+  display: block;
+}
+
+.elf-footer-metric span {
+  color: #9db3c4;
+  font-size: 0.74rem;
+}
+
+.elf-footer-metric strong {
+  margin-top: 3px;
+  color: #fff4d2;
+  font-size: 0.84rem;
+}
+
+.elf-footer-disclaimer {
+  margin: 0;
+  color: #ffd89a;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.elf-home-footer .data-source-panel {
+  margin: 0;
+}
+
 @media (max-width: 920px) {
   .app-header,
   .header-copy,
@@ -2868,6 +3065,7 @@ h2 {
   .app-header.app-header-skins {
     grid-template-columns: 1fr;
     min-height: auto;
+    gap: 10px;
   }
 
   .dashboard-grid,
@@ -2887,6 +3085,10 @@ h2 {
 
   .elf-landing {
     grid-template-columns: 1fr;
+  }
+
+  .elf-footer-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .elf-champion-card {
@@ -2933,7 +3135,7 @@ h2 {
 @media (max-width: 620px) {
   .app-shell {
     width: min(100% - 20px, 1180px);
-    padding-top: 16px;
+    padding-top: 10px;
   }
 
   .dashboard-grid,
@@ -2972,8 +3174,107 @@ h2 {
     border-radius: 8px;
   }
 
+  .app-header.app-header-skins {
+    padding: 12px;
+  }
+
+  .app-header-skins .header-copy {
+    gap: 8px 10px;
+  }
+
+  .app-header-skins .header-copy h1 {
+    font-size: 1.9rem;
+    line-height: 1.02;
+  }
+
+  .app-header-skins .ledger-rail {
+    min-height: 56px;
+  }
+
+  .home-header-details {
+    gap: 8px;
+  }
+
+  .home-header-summary p {
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
+  .home-header-metrics {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .home-header-metric {
+    min-height: 40px;
+  }
+
+  .home-header-edit-wishes {
+    width: 100%;
+    min-height: 40px;
+    padding-inline: 10px;
+    font-size: 0.82rem;
+  }
+
+  .route-market-link {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .elf-home-tabs {
+    gap: 3px;
+  }
+
+  .elf-home-tab {
+    min-height: 40px;
+    padding-inline: 5px;
+    font-size: 0.78rem;
+  }
+
+  .elf-tab-panel {
+    padding: 10px;
+  }
+
   .elf-champion-card {
     min-height: 420px;
+  }
+
+  .elf-champion-card-compact {
+    min-height: 360px;
+    padding: 12px;
+  }
+
+  .elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker,
+  .elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner {
+    grid-template-rows: auto minmax(180px, 1fr) auto;
+  }
+
+  .elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-heading,
+  .elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-heading {
+    margin-top: 18px;
+  }
+
+  .elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-art,
+  .elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-art {
+    min-height: 180px;
+    margin-block: 0 6px;
+  }
+
+  .elf-champion-card-compact.elf-champion-card.elf-champion-supply.elf-champion-frame-spinning-kicker .elf-champion-art img,
+  .elf-champion-card-compact.elf-champion-card.elf-champion-wishlist.elf-champion-frame-flame-runner .elf-champion-art img {
+    width: min(72%, 210px);
+  }
+
+  .elf-champion-card-compact .elf-champion-body > strong {
+    font-size: clamp(1.45rem, 8vw, 2.05rem);
+  }
+
+  .elf-champion-card-compact .elf-champion-stat {
+    min-height: 46px;
+  }
+
+  .elf-footer-metrics {
+    grid-template-columns: 1fr;
   }
 
   .elf-delta-panel {
@@ -3135,15 +3436,15 @@ h2 {
 
   .app-header.app-header-skins {
     min-height: auto;
-    padding: 16px;
+    padding: 10px;
   }
 
   .app-header-skins .header-copy h1 {
-    font-size: 2.45rem;
+    font-size: 1.72rem;
   }
 
   .app-header-skins .ledger-rail {
-    min-height: 76px;
+    min-height: 52px;
   }
 
   .header-copy {
@@ -3181,6 +3482,28 @@ h2 {
   .home-header-metric,
   .elf-champion-card {
     padding: 12px;
+  }
+
+  .home-header-metric {
+    padding: 7px 9px;
+  }
+
+  .home-header-metric strong {
+    font-size: 0.86rem;
+  }
+
+  .elf-home-workspace {
+    gap: 10px;
+  }
+
+  .elf-champion-card-compact {
+    min-height: 342px;
+  }
+
+  .elf-rank-row,
+  .elf-rank-panel-supply .elf-rank-row {
+    min-height: 76px;
+    padding: 8px;
   }
 
   .elf-landing-copy h1 {
