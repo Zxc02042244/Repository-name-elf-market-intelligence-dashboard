@@ -86,7 +86,7 @@ function renderApp() {
           ${isHome ? renderHomeHeaderDetails(appState.skinWishlist, appState.skinCommunity) : ""}
         </div>
         <div class="header-actions">
-          ${renderLanguageSwitch(appState.locale)}
+          ${!isHome ? renderLanguageSwitch(appState.locale) : ""}
           ${renderRouteTabs(isHome)}
           ${!isHome ? `
             <button class="refresh-button" type="button" data-action="refresh" ${isLoading ? "disabled" : ""}>
@@ -235,6 +235,8 @@ function renderRouteTabs(isHome) {
 
 function renderHomeHeaderDetails(wishlistState, communityState) {
   const wishlist = normalizeHeaderWishlist(wishlistState);
+  const community = normalizeCommunityState(communityState);
+  const visitorCount = community.visitorCount ?? wishlist.visitorCount;
 
   return `
     <div class="home-header-details">
@@ -246,9 +248,11 @@ function renderHomeHeaderDetails(wishlistState, communityState) {
           selected: formatNumber(wishlist.selectedIds.length),
           limit: formatNumber(skinWishlistLimit)
         }))}
+        ${renderHomeHeaderMetric(getSkinHomeUiText("visitors", appState.locale), formatNumber(visitorCount))}
         <button class="home-header-edit-wishes" type="button" data-skin-home-tab="gallery">
           ${getSkinHomeUiText("editWishes", appState.locale)}
         </button>
+        ${renderLanguageSwitch(appState.locale)}
       </div>
     </div>
   `;
@@ -320,7 +324,7 @@ function getHeaderCopy(isHome) {
     return {
       eyebrow: translate("elfLanding.siteEyebrow"),
       title: translate("elfLanding.siteTitle"),
-      subtitle: translate("elfLanding.siteSubtitle")
+      subtitle: translate("elfLanding.communityDisclaimer")
     };
   }
 
@@ -526,19 +530,24 @@ function translate(key, params) {
 function getSkinHomeUiText(key, locale) {
   const copy = {
     en: {
-      editWishes: "Edit wishes"
+      editWishes: "Edit wishes",
+      visitors: "Views"
     },
     "zh-Hant": {
-      editWishes: "編輯願望"
+      editWishes: "編輯願望",
+      visitors: "瀏覽次數"
     },
     ja: {
-      editWishes: "願いを編集"
+      editWishes: "願いを編集",
+      visitors: "閲覧数"
     },
     ko: {
-      editWishes: "위시 편집"
+      editWishes: "위시 편집",
+      visitors: "조회수"
     },
     vi: {
-      editWishes: "Chỉnh ước chọn"
+      editWishes: "Chỉnh ước chọn",
+      visitors: "Lượt xem"
     }
   };
 
