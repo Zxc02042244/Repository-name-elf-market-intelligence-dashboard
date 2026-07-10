@@ -25,12 +25,12 @@ import { loadElfLiveTransactions, loadElfMockMarketTransactions } from "../sourc
 import { ELF_MARKET_COVERAGE_ITEMS } from "../sources/elf/elf-items.js";
 import { getFallbackElfSkins, loadElfSkinCatalog } from "../sources/elf/elf-skins.js";
 import { renderCategoryFilterView } from "../views/category-filter-view.js";
-import { renderDashboardView } from "../views/dashboard-view.js";
+import { renderDashboardView } from "../views/dashboard-view.js?v=20260710-source-disclosure";
 import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
-import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260709-today-added-rank";
+import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260710-source-disclosure";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();

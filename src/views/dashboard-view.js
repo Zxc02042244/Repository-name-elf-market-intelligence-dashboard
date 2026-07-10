@@ -59,6 +59,8 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
 
     ${renderInsightStrip(model, totals, currency, metricOptions, locale, marketSignals)}
 
+    ${renderMarketSourcePanel(model, status, locale)}
+
     <section class="summary-panel">
       <div>
         <h2>${t("dashboard.modelSnapshot", locale)}</h2>
@@ -73,6 +75,47 @@ export function renderDashboardView(model, status, route, locale = defaultLocale
         <strong>${formatNumber(model?.signals.length ?? 0)}</strong>
       </div>
     </section>
+  `;
+}
+
+function renderMarketSourcePanel(model, status, locale) {
+  const sourceLabel = status.kind === "fallback"
+    ? t("status.elfDemoSnapshot", locale)
+    : model?.meta.source ?? t("dashboard.pending", locale);
+  const liveDetail = status.kind === "fallback"
+    ? t("dashboard.marketSourceLiveFallbackDetail", locale)
+    : t("dashboard.marketSourceLiveDetail", locale);
+
+  return `
+    <section class="data-source-panel data-source-panel-market" aria-label="${t("dashboard.marketSourceTitle", locale)}">
+      <div class="section-heading">
+        <h2>${t("dashboard.marketSourceTitle", locale)}</h2>
+        <span>${escapeHtml(sourceLabel)}</span>
+      </div>
+      <div class="data-source-grid">
+        ${renderDataSourceItem(
+          t("dashboard.marketSourceLive", locale),
+          liveDetail
+        )}
+        ${renderDataSourceItem(
+          t("dashboard.marketSourceModel", locale),
+          t("dashboard.marketSourceModelDetail", locale)
+        )}
+        ${renderDataSourceItem(
+          t("dashboard.marketSourcePrivacy", locale),
+          t("dashboard.marketSourcePrivacyDetail", locale)
+        )}
+      </div>
+    </section>
+  `;
+}
+
+function renderDataSourceItem(title, detail) {
+  return `
+    <article class="data-source-item">
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(detail)}</span>
+    </article>
   `;
 }
 

@@ -52,6 +52,8 @@ export function renderElfSkinLandingView(
         : renderEmptyWishlistChampion(locale)}
     </section>
 
+    ${renderSkinSourcePanel(catalog, wishlist, locale)}
+
     ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
 
     <section class="elf-rank-showcase" aria-label="${t("elfLanding.rankingShowcase", locale)}">
@@ -99,6 +101,47 @@ export function renderElfSkinLandingView(
         ${catalog.skins.map((skin, index) => renderSkinCard(skin, index, wishlist, locale)).join("")}
       </div>
     </section>
+  `;
+}
+
+function renderSkinSourcePanel(catalog, wishlist, locale) {
+  const catalogDetail = catalog.kind === "api"
+    ? t("elfLanding.skinSourceOfficialDetail", locale)
+    : t("elfLanding.skinSourceFallbackDetail", locale);
+  const wishlistDetail = wishlist.community.status === "remote"
+    ? t("elfLanding.skinSourceWishlistRemoteDetail", locale)
+    : t("elfLanding.skinSourceWishlistLocalDetail", locale);
+
+  return `
+    <section class="data-source-panel data-source-panel-skins" aria-label="${t("elfLanding.skinSourceTitle", locale)}">
+      <div class="section-heading">
+        <h2>${t("elfLanding.skinSourceTitle", locale)}</h2>
+        <span>${t("elfLanding.skinSourceSummary", locale)}</span>
+      </div>
+      <div class="data-source-grid">
+        ${renderDataSourceItem(
+          t("elfLanding.skinSourceOfficial", locale),
+          catalogDetail
+        )}
+        ${renderDataSourceItem(
+          t("elfLanding.skinSourceWishlist", locale),
+          wishlistDetail
+        )}
+        ${renderDataSourceItem(
+          t("elfLanding.skinSourceSupplySnapshot", locale),
+          t("elfLanding.skinSourceSupplySnapshotDetail", locale)
+        )}
+      </div>
+    </section>
+  `;
+}
+
+function renderDataSourceItem(title, detail) {
+  return `
+    <article class="data-source-item">
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(detail)}</span>
+    </article>
   `;
 }
 
