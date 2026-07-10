@@ -67,8 +67,10 @@ This counts browsers, not real legal identities. A different PC or phone usually
 private browsing session, or cleared localStorage can count again. The design avoids IP collection and browser
 fingerprinting.
 
-`sync_skin_supply_snapshot` records one official supply number per skin per Taipei date. It compares today's
-latest saved supply with the latest earlier saved day and returns:
+`sync_skin_supply_snapshot` records one positive official supply number per skin per Taipei date. The current
+frontend does not send zero or missing supply values, because those skins may be unreleased, undisclosed, or
+governed by special platform rules. It compares today's latest saved supply with the latest earlier saved day
+and returns:
 
 ```json
 {

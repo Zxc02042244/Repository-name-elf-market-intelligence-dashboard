@@ -133,7 +133,7 @@ function normalizeSupplySkins(skins) {
       skinName: String(skin?.name ?? "").trim(),
       supply: normalizeNullableCount(skin?.quantity)
     }))
-    .filter((skin) => skin.skinId && skin.skinName && skin.supply !== null)
+    .filter((skin) => skin.skinId && skin.skinName && skin.supply !== null && skin.supply > 0)
     .slice(0, 100);
 }
 

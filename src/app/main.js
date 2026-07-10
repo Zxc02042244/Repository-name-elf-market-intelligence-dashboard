@@ -16,7 +16,7 @@ import {
   markSkinSupplyError,
   markSkinSupplyLoading,
   syncSkinSupplySnapshots
-} from "./skin-supply-stats.js?v=20260709-today-added-rank";
+} from "./skin-supply-stats.js?v=20260710-positive-supply-only";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
