@@ -1,0 +1,28 @@
+name: Sync Skin Supply Snapshot
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Sync positive skin supply snapshot
+        env:
+          ELF_SUPABASE_URL: ${{ secrets.ELF_SUPABASE_URL }}
+          ELF_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.ELF_SUPABASE_PUBLISHABLE_KEY }}
+        run: node scripts/sync-skin-supply-snapshot.mjs

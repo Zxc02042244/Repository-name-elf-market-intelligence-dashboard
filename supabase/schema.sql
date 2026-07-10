@@ -349,7 +349,7 @@ grant execute on function get_skin_gallery_stats() to anon, authenticated;
 grant execute on function sync_skin_gallery_state(uuid, text[]) to anon, authenticated;
 
 -- ELF skin daily supply snapshots.
--- Public clients use only sync_skin_supply_snapshot(); they do not write tables directly.
+-- Public clients read with get_skin_supply_stats(); the scheduled worker writes through sync_skin_supply_snapshot().
 -- The snapshot stores one row per skin per Taipei date, then compares it with
 -- the latest earlier snapshot to calculate today's added supply.
 

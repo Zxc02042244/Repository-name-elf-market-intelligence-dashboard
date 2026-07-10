@@ -13,10 +13,10 @@ import {
 import {
   applySkinSupplyStatsToCatalog,
   createSkinSupplyState,
+  loadSkinSupplySnapshots,
   markSkinSupplyError,
-  markSkinSupplyLoading,
-  syncSkinSupplySnapshots
-} from "./skin-supply-stats.js?v=20260710-positive-supply-only";
+  markSkinSupplyLoading
+} from "./skin-supply-stats.js?v=20260710-hourly-supply-action";
 import { buildRouteHash, getCurrentRoute } from "./router.js";
 import { buildMarketModel } from "../core/data/market-model.js";
 import { buildSnapshotExplorer } from "../core/analytics/snapshot-details.js";
@@ -547,7 +547,7 @@ function ensureSkinCatalogLoaded() {
         skins: skinCatalog.skins,
         error: null
       };
-      void syncSkinSupply();
+      void loadSkinSupply();
     })
     .catch((error) => {
       appState.skinCatalog = {
@@ -590,7 +590,7 @@ function ensureSkinSupplyLoaded() {
     return;
   }
 
-  void syncSkinSupply();
+  void loadSkinSupply();
 }
 
 async function syncSkinCommunity() {
@@ -616,7 +616,7 @@ async function syncSkinCommunity() {
   }
 }
 
-async function syncSkinSupply() {
+async function loadSkinSupply() {
   if (
     skinSupplySyncStarted
     || appState.skinSupply?.status === "disabled"
@@ -629,7 +629,7 @@ async function syncSkinSupply() {
   appState.skinSupply = markSkinSupplyLoading(appState.skinSupply);
 
   try {
-    appState.skinSupply = await syncSkinSupplySnapshots(appState.skinCatalog?.skins);
+    appState.skinSupply = await loadSkinSupplySnapshots();
   } catch (error) {
     appState.skinSupply = markSkinSupplyError(appState.skinSupply, error);
   } finally {

@@ -42,11 +42,11 @@ Apply `schema.sql` in the Supabase SQL editor, then set these public values in `
 <meta name="elf-community-supabase-publishable-key" content="YOUR_PUBLIC_PUBLISHABLE_KEY" />
 ```
 
-The frontend calls only:
+The public frontend calls only:
 
 ```txt
 POST /rest/v1/rpc/sync_skin_gallery_state
-POST /rest/v1/rpc/sync_skin_supply_snapshot
+POST /rest/v1/rpc/get_skin_supply_stats
 ```
 
 `sync_skin_gallery_state` records one anonymous `visitor_id` per browser localStorage and stores up to three selected skin IDs.
@@ -67,10 +67,13 @@ This counts browsers, not real legal identities. A different PC or phone usually
 private browsing session, or cleared localStorage can count again. The design avoids IP collection and browser
 fingerprinting.
 
-`sync_skin_supply_snapshot` records one positive official supply number per skin per Taipei date. The current
-frontend does not send zero or missing supply values, because those skins may be unreleased, undisclosed, or
-governed by special platform rules. It compares today's latest saved supply with the latest earlier saved day
-and returns:
+`get_skin_supply_stats` is the read-only endpoint used by the public frontend.
+
+`sync_skin_supply_snapshot` is intended for the scheduled GitHub Actions worker in
+`.github/workflows/sync-skin-supply-snapshot.yml`. It records one positive official supply number per skin per
+Taipei date. The current worker does not send zero or missing supply values, because those skins may be unreleased,
+undisclosed, or governed by special platform rules. It compares today's latest saved supply with the latest earlier
+saved day and returns:
 
 ```json
 {
@@ -87,8 +90,12 @@ and returns:
 }
 ```
 
-The first day has no earlier baseline, so the UI shows `Today --` / `今日 --`. From the second recorded day onward,
-the UI can show each skin's daily added supply such as `Today +5` / `今日 +5`.
+The first day has no earlier baseline, so the UI shows an unknown daily delta. From the second recorded day onward,
+the UI can show each skin's daily added supply, such as `Today +5`.
+
+The scheduled worker runs once per hour by default. With the current daily table schema, hourly runs refresh the
+same Taipei-date row and keep the latest positive supply for that day. It does not store separate per-hour history
+unless a future hourly history table is added.
 
 ## Secrets
 

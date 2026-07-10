@@ -48,6 +48,31 @@ export async function syncSkinSupplySnapshots(skins) {
   return normalizeSupplyPayload(payload);
 }
 
+export async function loadSkinSupplySnapshots() {
+  const config = readSupplyConfig();
+
+  if (!config.enabled) {
+    return createSkinSupplyState();
+  }
+
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/get_skin_supply_stats`, {
+    method: "POST",
+    headers: {
+      apikey: config.supabasePublishableKey,
+      Authorization: `Bearer ${config.supabasePublishableKey}`,
+      "Content-Type": "application/json"
+    },
+    body: "{}"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Skin supply snapshot read failed with HTTP ${response.status}.`);
+  }
+
+  const payload = await response.json();
+  return normalizeSupplyPayload(payload);
+}
+
 export function markSkinSupplyLoading(state) {
   return {
     ...state,
