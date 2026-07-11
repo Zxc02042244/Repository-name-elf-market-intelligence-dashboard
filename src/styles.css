@@ -4339,6 +4339,47 @@ h2 {
       0 0 16px rgb(255 78 24 / 32%);
   }
 
+  .elf-rank-row.elf-skin-id-bubble-beast {
+    --skin-accent: #ff65c8;
+    min-height: 196px;
+    border-color: transparent;
+    background:
+      linear-gradient(90deg, rgb(0 0 0 / 0%) 0 45%, rgb(13 2 20 / 30%) 66%),
+      url("../assets/skin-frames/bubble-beast-card-frame.jpg") center / cover no-repeat,
+      rgb(12 3 18);
+    box-shadow:
+      0 18px 42px rgb(0 0 0 / 36%),
+      0 0 24px rgb(255 93 203 / 16%);
+  }
+
+  .elf-rank-row.elf-skin-id-bubble-beast::before {
+    background: none;
+  }
+
+  .elf-rank-row.elf-skin-id-bubble-beast .elf-rank-index {
+    border-right: 0;
+    color: #ffe2f5;
+    text-shadow:
+      0 2px 0 rgb(0 0 0 / 70%),
+      0 0 18px rgb(255 93 203 / 52%);
+  }
+
+  .elf-rank-row.elf-skin-id-bubble-beast img {
+    width: 86px;
+    height: 86px;
+    transform: translate(-8px, 18px);
+    filter:
+      drop-shadow(0 20px 16px rgb(0 0 0 / 64%))
+      drop-shadow(0 0 18px rgb(255 93 203 / 42%));
+  }
+
+  .elf-rank-row.elf-skin-id-bubble-beast .elf-rank-body strong {
+    color: #ffd5f0;
+    text-shadow:
+      0 2px 0 rgb(0 0 0 / 68%),
+      0 0 16px rgb(255 93 203 / 32%);
+  }
+
   .elf-rank-body {
     align-self: center;
     gap: 8px;
