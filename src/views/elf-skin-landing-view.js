@@ -2,6 +2,7 @@ import { formatNumber } from "../core/utils/numbers.js";
 import { defaultLocale, t } from "../i18n/i18n.js";
 
 const wishlistLimit = 3;
+const rankingLimit = 10;
 
 export function renderElfSkinLandingView(
   skinCatalog,
@@ -12,7 +13,7 @@ export function renderElfSkinLandingView(
   const catalog = normalizeCatalog(skinCatalog);
   const wishlist = normalizeWishlist(wishlistState);
   const currentTab = normalizeHomeTab(activeTab);
-  const supplyLeaders = catalog.skins.slice(0, 5);
+  const supplyLeaders = catalog.skins.slice(0, rankingLimit);
   const wishlistLeaders = getWishlistLeaders(catalog.skins, wishlist);
   const todayAddedLeaders = getTodayAddedLeaders(catalog.skins);
   const supplyChampion = supplyLeaders[0] ?? getEmptySkin();
@@ -57,6 +58,7 @@ function renderHomeTabs(activeTab, locale) {
 
 function renderWishlistTab(wishlistLeaders, wishlist, locale) {
   const wishlistChampion = wishlistLeaders[0] ?? null;
+  const wishlistSlots = Array.from({ length: rankingLimit }, (_, index) => wishlistLeaders[index] ?? null);
 
   return `
     <section class="elf-tab-panel elf-tab-panel-wishlist" aria-labelledby="elf-wishlist-title">
@@ -90,7 +92,10 @@ function renderWishlistTab(wishlistLeaders, wishlist, locale) {
           </button>
         </div>
         <div class="elf-rank-list elf-wishlist-rank-list">
-          ${wishlistLeaders.map((skin, index) => renderWishlistLeader(skin, index, locale)).join("")}
+          ${wishlistSlots.map((skin, index) => skin
+            ? renderWishlistLeader(skin, index, locale)
+            : renderWishlistPlaceholder(index, locale)
+          ).join("")}
         </div>
       ` : `
         <p class="empty-state">${t("elfLanding.emptyWishlist", locale)}</p>
@@ -100,6 +105,8 @@ function renderWishlistTab(wishlistLeaders, wishlist, locale) {
 }
 
 function renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLeaders, topTodayAdded, locale) {
+  const supplySlots = Array.from({ length: rankingLimit }, (_, index) => supplyLeaders[index] ?? null);
+
   return `
     <section class="elf-tab-panel elf-tab-panel-supply" aria-labelledby="elf-supply-title">
       <div class="section-heading">
@@ -121,7 +128,10 @@ function renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLea
         compact: true
       }) : ""}
       <div class="elf-rank-list">
-        ${supplyLeaders.map((skin, index) => renderSupplyLeader(skin, index, topSupply, locale)).join("")}
+        ${supplySlots.map((skin, index) => skin
+          ? renderSupplyLeader(skin, index, topSupply, locale)
+          : renderSupplyPlaceholder(index, locale)
+        ).join("")}
       </div>
       ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
     </section>
@@ -223,19 +233,20 @@ function renderDataSourceItem(title, detail) {
 }
 
 function renderTodayAddedRanking(leaders, topTodayAdded, locale) {
+  const slots = Array.from({ length: rankingLimit }, (_, index) => leaders[index] ?? null);
+
   return `
     <section class="elf-delta-panel" aria-label="${t("elfLanding.todayAddedRankingTitle", locale)}">
       <div class="section-heading">
         <h2>${t("elfLanding.todayAddedRankingTitle", locale)}</h2>
         <span>${t("elfLanding.todayAddedRankingScope", locale)}</span>
       </div>
-      ${leaders.length > 0 ? `
-        <div class="elf-delta-track">
-          ${leaders.map((skin, index) => renderTodayAddedLeader(skin, index, topTodayAdded, locale)).join("")}
-        </div>
-      ` : `
-        <p class="empty-state elf-delta-empty">${t("elfLanding.todayAddedBaseline", locale)}</p>
-      `}
+      <div class="elf-delta-track">
+        ${slots.map((skin, index) => skin
+          ? renderTodayAddedLeader(skin, index, topTodayAdded, locale)
+          : renderTodayAddedPlaceholder(index, locale)
+        ).join("")}
+      </div>
     </section>
   `;
 }
@@ -370,6 +381,20 @@ function renderSupplyLeader(skin, index, topSupply, locale) {
   `;
 }
 
+function renderSupplyPlaceholder(index, locale) {
+  return `
+    <div class="elf-rank-row elf-rank-row-empty">
+      <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
+      <div class="elf-rank-empty-mark" aria-hidden="true">--</div>
+      <div class="elf-rank-body">
+        <strong>${t("dashboard.pending", locale)}</strong>
+        <small>${t("elfLanding.supply", locale)} ${t("elfLanding.supplyPending", locale)}</small>
+        <div class="elf-rank-meter" aria-hidden="true"><span style="width: 0%"></span></div>
+      </div>
+    </div>
+  `;
+}
+
 function renderWishlistLeader(skin, index, locale) {
   const wishCount = skin.wishCount ?? 1;
   const supply = skin.quantity === null
@@ -396,6 +421,22 @@ function renderWishlistLeader(skin, index, locale) {
   `;
 }
 
+function renderWishlistPlaceholder(index, locale) {
+  return `
+    <div class="elf-rank-row elf-rank-row-empty">
+      <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
+      <div class="elf-rank-empty-mark" aria-hidden="true">--</div>
+      <div class="elf-rank-body">
+        <strong>${t("dashboard.pending", locale)}</strong>
+        <small>
+          <strong>${skinLandingText("communityWishVotes", locale, { count: formatNumber(0) })}</strong>
+          <span>${t("elfLanding.supply", locale)} ${t("elfLanding.supplyPending", locale)}</span>
+        </small>
+      </div>
+    </div>
+  `;
+}
+
 function renderTodayAddedLeader(skin, index, topTodayAdded, locale) {
   const todayAdded = Math.max(0, Number(skin.todayAdded ?? 0));
   const share = topTodayAdded > 0 ? Math.max(8, Math.min(100, (todayAdded / topTodayAdded) * 100)) : 0;
@@ -409,6 +450,21 @@ function renderTodayAddedLeader(skin, index, topTodayAdded, locale) {
         <small>${t("elfLanding.todayAddedMetricLabel", locale)}</small>
         <p>+${formatNumber(todayAdded)}</p>
         <div class="elf-delta-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
+      </div>
+    </article>
+  `;
+}
+
+function renderTodayAddedPlaceholder(index, locale) {
+  return `
+    <article class="elf-delta-card elf-delta-card-empty">
+      <span class="elf-delta-rank">TOP ${index + 1}</span>
+      <div class="elf-delta-empty-mark" aria-hidden="true">--</div>
+      <div class="elf-delta-body">
+        <strong>${t("dashboard.pending", locale)}</strong>
+        <small>${t("elfLanding.todayAddedMetricLabel", locale)}</small>
+        <p>+0</p>
+        <div class="elf-delta-meter" aria-hidden="true"><span style="width: 0%"></span></div>
       </div>
     </article>
   `;
@@ -523,7 +579,7 @@ function getWishlistLeaders(skins, wishlist) {
         };
       })
       .filter(Boolean)
-      .slice(0, 5);
+      .slice(0, rankingLimit);
   }
 
   return wishlist.selectedIds
@@ -540,7 +596,7 @@ function getWishlistLeaders(skins, wishlist) {
         : null;
     })
     .filter(Boolean)
-    .slice(0, 5);
+    .slice(0, rankingLimit);
 }
 
 function getTodayAddedLeaders(skins) {
@@ -563,7 +619,7 @@ function getTodayAddedLeaders(skins) {
         || rightQuantity - leftQuantity
         || left.name.localeCompare(right.name);
     })
-    .slice(0, 5);
+    .slice(0, rankingLimit);
 }
 
 function getWishCountLabel(locale, count, isRemote) {
