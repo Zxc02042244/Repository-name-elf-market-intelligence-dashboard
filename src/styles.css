@@ -4228,6 +4228,27 @@ h2 {
     pointer-events: none;
   }
 
+  .elf-rank-row.elf-skin-id-starborn-warrior {
+    --skin-accent: #ffc64b;
+    border-color: rgb(255 198 75 / 70%);
+    background:
+      linear-gradient(90deg, rgb(0 0 0 / 4%) 0 48%, rgb(0 0 0 / 42%) 64%),
+      linear-gradient(180deg, rgb(255 198 75 / 4%), rgb(0 0 0 / 14%)),
+      url("../assets/skin-frames/starborn-warrior-card-frame.jpg") center / cover no-repeat,
+      rgb(8 7 6);
+    box-shadow:
+      0 18px 42px rgb(0 0 0 / 34%),
+      0 0 24px rgb(255 181 35 / 16%),
+      inset 0 1px 0 rgb(255 238 174 / 20%);
+  }
+
+  .elf-rank-row.elf-skin-id-starborn-warrior::before {
+    background:
+      radial-gradient(circle at 32% 72%, rgb(255 185 35 / 28%), transparent 20%),
+      linear-gradient(90deg, rgb(0 0 0 / 8%), transparent 38%, rgb(0 0 0 / 38%) 72%),
+      repeating-linear-gradient(0deg, rgb(255 220 119 / 4%) 0 1px, transparent 1px 18px);
+  }
+
   .elf-rank-index,
   .elf-rank-row img,
   .elf-rank-empty-mark,
@@ -4264,6 +4285,15 @@ h2 {
       drop-shadow(0 0 14px color-mix(in srgb, currentColor 30%, transparent));
   }
 
+  .elf-rank-row.elf-skin-id-starborn-warrior img {
+    width: 86px;
+    height: 86px;
+    transform: translateX(-5px);
+    filter:
+      drop-shadow(0 20px 16px rgb(0 0 0 / 62%))
+      drop-shadow(0 0 18px rgb(255 198 75 / 36%));
+  }
+
   .elf-rank-body {
     align-self: center;
     gap: 8px;
@@ -4275,6 +4305,13 @@ h2 {
       "Yu Mincho", "Noto Serif TC", "Microsoft JhengHei", "Aptos Display", serif;
     font-size: clamp(1.25rem, 5.4vw, 1.75rem);
     line-height: 1.05;
+  }
+
+  .elf-rank-row.elf-skin-id-starborn-warrior .elf-rank-body strong {
+    color: #ffe6a5;
+    text-shadow:
+      0 2px 0 rgb(0 0 0 / 66%),
+      0 0 16px rgb(255 190 56 / 26%);
   }
 
   .elf-rank-body small {

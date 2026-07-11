@@ -369,7 +369,7 @@ function renderSupplyLeader(skin, index, topSupply, locale) {
   const share = topSupply > 0 ? Math.max(6, Math.min(100, (supply / topSupply) * 100)) : 0;
 
   return `
-    <div class="elf-rank-row elf-skin-card-${escapeHtml(skin.tone)}">
+    <div class="elf-rank-row ${getSkinClassNames(skin)}">
       <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
@@ -402,7 +402,7 @@ function renderWishlistLeader(skin, index, locale) {
     : formatNumber(skin.quantity);
 
   return `
-    <div class="elf-rank-row elf-skin-card-${escapeHtml(skin.tone)}">
+    <div class="elf-rank-row ${getSkinClassNames(skin)}">
       <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
@@ -459,7 +459,7 @@ function renderTodayAddedLeader(skin, index, topTodayAdded, locale) {
   const share = topTodayAdded > 0 ? Math.max(8, Math.min(100, (todayAdded / topTodayAdded) * 100)) : 0;
 
   return `
-    <article class="elf-delta-card elf-skin-card-${escapeHtml(skin.tone)}">
+    <article class="elf-delta-card ${getSkinClassNames(skin)}">
       <span class="elf-delta-rank">TOP ${index + 1}</span>
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="72" height="72" loading="lazy" decoding="async">
       <div class="elf-delta-body">
@@ -492,7 +492,7 @@ function renderSkinCard(skin, index, wishlist, locale) {
   const disabled = !selected && wishlist.selectedIds.length >= wishlistLimit;
 
   return `
-    <article class="elf-skin-card elf-skin-card-${escapeHtml(skin.tone)} ${selected ? "is-wishlisted" : ""}">
+    <article class="elf-skin-card ${getSkinClassNames(skin)} ${selected ? "is-wishlisted" : ""}">
       <div class="elf-skin-image-frame">
         <img
           src="${escapeHtml(skin.image)}"
@@ -555,6 +555,13 @@ function renderSkinSupply(skin, locale) {
       ${supplyDelta ? `<small>${supplyDelta}</small>` : ""}
     </p>
   `;
+}
+
+function getSkinClassNames(skin) {
+  return [
+    `elf-skin-card-${escapeHtml(skin.tone)}`,
+    `elf-skin-id-${escapeHtml(skin.id)}`
+  ].join(" ");
 }
 
 function renderInlineSupplyDelta(skin, locale) {
