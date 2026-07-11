@@ -1,5 +1,6 @@
 const visitorStorageKey = "elfSkinGallery.visitorId.v1";
 const wishlistLimit = 3;
+const wishlistRankingLimit = 10;
 
 export function createSkinCommunityState() {
   const config = readCommunityConfig();
@@ -72,7 +73,7 @@ function normalizeCommunityPayload(payload, visitorId) {
           wishCount: normalizeCount(leader?.wishCount)
         }))
         .filter((leader) => leader.skinId && leader.wishCount > 0)
-        .slice(0, 5)
+        .slice(0, wishlistRankingLimit)
       : [],
     detail: ""
   };

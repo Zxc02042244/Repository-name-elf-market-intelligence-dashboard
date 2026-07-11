@@ -266,7 +266,7 @@ as $$
             on allowed.skin_id = wishes.skin_id
           group by wishes.skin_id
           order by count(*) desc, wishes.skin_id
-          limit 5
+          limit 10
         ) ranked
       ),
       '[]'::jsonb
