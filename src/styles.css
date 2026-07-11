@@ -4339,7 +4339,8 @@ h2 {
       0 0 16px rgb(255 78 24 / 32%);
   }
 
-  .elf-rank-row.elf-skin-id-bubble-beast {
+  .elf-rank-row.elf-skin-id-bubble-beast,
+  .elf-rank-row.elf-skin-name-bubble-beast {
     --skin-accent: #ff65c8;
     min-height: 196px;
     border-color: transparent;
@@ -4352,11 +4353,13 @@ h2 {
       0 0 24px rgb(255 93 203 / 16%);
   }
 
-  .elf-rank-row.elf-skin-id-bubble-beast::before {
+  .elf-rank-row.elf-skin-id-bubble-beast::before,
+  .elf-rank-row.elf-skin-name-bubble-beast::before {
     background: none;
   }
 
-  .elf-rank-row.elf-skin-id-bubble-beast .elf-rank-index {
+  .elf-rank-row.elf-skin-id-bubble-beast .elf-rank-index,
+  .elf-rank-row.elf-skin-name-bubble-beast .elf-rank-index {
     border-right: 0;
     color: #ffe2f5;
     text-shadow:
@@ -4364,7 +4367,8 @@ h2 {
       0 0 18px rgb(255 93 203 / 52%);
   }
 
-  .elf-rank-row.elf-skin-id-bubble-beast img {
+  .elf-rank-row.elf-skin-id-bubble-beast img,
+  .elf-rank-row.elf-skin-name-bubble-beast img {
     width: 86px;
     height: 86px;
     transform: translate(-8px, 18px);
@@ -4373,7 +4377,8 @@ h2 {
       drop-shadow(0 0 18px rgb(255 93 203 / 42%));
   }
 
-  .elf-rank-row.elf-skin-id-bubble-beast .elf-rank-body strong {
+  .elf-rank-row.elf-skin-id-bubble-beast .elf-rank-body strong,
+  .elf-rank-row.elf-skin-name-bubble-beast .elf-rank-body strong {
     color: #ffd5f0;
     text-shadow:
       0 2px 0 rgb(0 0 0 / 68%),

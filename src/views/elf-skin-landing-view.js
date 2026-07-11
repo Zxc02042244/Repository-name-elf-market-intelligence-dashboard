@@ -558,10 +558,17 @@ function renderSkinSupply(skin, locale) {
 }
 
 function getSkinClassNames(skin) {
+  const normalizedName = String(skin?.name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
   return [
     `elf-skin-card-${escapeHtml(skin.tone)}`,
-    `elf-skin-id-${escapeHtml(skin.id)}`
-  ].join(" ");
+    `elf-skin-id-${escapeHtml(skin.id)}`,
+    normalizedName ? `elf-skin-name-${escapeHtml(normalizedName)}` : ""
+  ].filter(Boolean).join(" ");
 }
 
 function renderInlineSupplyDelta(skin, locale) {
