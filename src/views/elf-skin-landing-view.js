@@ -24,7 +24,7 @@ export function renderElfSkinLandingView(
   return `
     <section class="elf-home-workspace" aria-label="${t("elfLanding.rankingShowcase", locale)}">
       ${renderHomeTabs(currentTab, locale)}
-      ${currentTab === "wishlist" ? renderWishlistTab(wishlistLeaders, wishlist, locale) : ""}
+      ${currentTab === "wishlist" ? renderWishlistTab(catalog.skins, wishlistLeaders, wishlist, locale) : ""}
       ${currentTab === "supply" ? renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLeaders, topTodayAdded, locale) : ""}
       ${currentTab === "gallery" ? renderOfficialSkinTab(catalog, wishlist, locale) : ""}
     </section>
@@ -56,9 +56,9 @@ function renderHomeTabs(activeTab, locale) {
   `;
 }
 
-function renderWishlistTab(wishlistLeaders, wishlist, locale) {
+function renderWishlistTab(skins, wishlistLeaders, wishlist, locale) {
   const wishlistChampion = wishlistLeaders[0] ?? null;
-  const wishlistSlots = Array.from({ length: rankingLimit }, (_, index) => wishlistLeaders[index] ?? null);
+  const wishlistSlots = getWishlistSlots(skins, wishlistLeaders, wishlist);
 
   return `
     <section class="elf-tab-panel elf-tab-panel-wishlist" aria-labelledby="elf-wishlist-title">
@@ -419,6 +419,23 @@ function renderWishlistLeader(skin, index, locale) {
       ` : ""}
     </div>
   `;
+}
+
+function getWishlistSlots(skins, wishlistLeaders, wishlist) {
+  const usedIds = new Set(wishlistLeaders.map((skin) => skin.id));
+  const fillerSkins = skins
+    .filter((skin) => !usedIds.has(skin.id))
+    .map((skin) => ({
+      ...skin,
+      wishCount: 0,
+      isRemoteLeader: wishlist.community.status === "remote",
+      isLocalSelection: wishlist.selectedIds.includes(skin.id),
+      isWishlistFiller: true
+    }));
+
+  const slots = [...wishlistLeaders, ...fillerSkins].slice(0, rankingLimit);
+
+  return Array.from({ length: rankingLimit }, (_, index) => slots[index] ?? null);
 }
 
 function renderWishlistPlaceholder(index, locale) {
