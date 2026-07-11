@@ -4298,6 +4298,47 @@ h2 {
       drop-shadow(0 0 18px rgb(255 198 75 / 36%));
   }
 
+  .elf-rank-row.elf-skin-id-flame-runner {
+    --skin-accent: #ff6330;
+    min-height: 196px;
+    border-color: transparent;
+    background:
+      linear-gradient(90deg, rgb(0 0 0 / 0%) 0 45%, rgb(9 2 9 / 28%) 66%),
+      url("../assets/skin-frames/flame-runner-card-frame.jpg") center / cover no-repeat,
+      rgb(12 3 10);
+    box-shadow:
+      0 18px 42px rgb(0 0 0 / 36%),
+      0 0 24px rgb(255 83 31 / 16%);
+  }
+
+  .elf-rank-row.elf-skin-id-flame-runner::before {
+    background: none;
+  }
+
+  .elf-rank-row.elf-skin-id-flame-runner .elf-rank-index {
+    border-right: 0;
+    color: #ffe6c2;
+    text-shadow:
+      0 2px 0 rgb(0 0 0 / 70%),
+      0 0 18px rgb(255 86 24 / 52%);
+  }
+
+  .elf-rank-row.elf-skin-id-flame-runner img {
+    width: 86px;
+    height: 86px;
+    transform: translate(-10px, 18px);
+    filter:
+      drop-shadow(0 20px 16px rgb(0 0 0 / 64%))
+      drop-shadow(0 0 18px rgb(255 86 24 / 42%));
+  }
+
+  .elf-rank-row.elf-skin-id-flame-runner .elf-rank-body strong {
+    color: #ffd6a0;
+    text-shadow:
+      0 2px 0 rgb(0 0 0 / 68%),
+      0 0 16px rgb(255 78 24 / 32%);
+  }
+
   .elf-rank-body {
     align-self: center;
     gap: 8px;
