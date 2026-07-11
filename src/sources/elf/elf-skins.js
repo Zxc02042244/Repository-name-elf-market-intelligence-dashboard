@@ -2,43 +2,67 @@ const ELF_SKIN_API_URL = "https://api-prd.cidi.games/api/v1/elf/skins";
 
 const toneCycle = Object.freeze(["amber", "cyan", "rose", "violet", "emerald"]);
 
-const fallbackElfSkins = Object.freeze([
-  {
-    id: "apple-darling",
-    name: "Apple Darling",
-    image: "https://www.cidi.games/elfs/elf-set_apple_darling-idle.png",
-    quantity: null,
-    tone: "amber"
-  },
-  {
-    id: "chick-starlet",
-    name: "Chick Starlet",
-    image: "https://www.cidi.games/elfs/elf-set_chick_starlet-idle.png",
-    quantity: null,
-    tone: "cyan"
-  },
-  {
-    id: "moo-moo",
-    name: "Moo Moo",
-    image: "https://www.cidi.games/elfs/elf-set_moo_moo-idle.png",
-    quantity: null,
-    tone: "rose"
-  },
-  {
-    id: "pumpkin-whisper",
-    name: "Pumpkin Whisper",
-    image: "https://www.cidi.games/elfs/elf-set_pumpkin_whisper-idle.png",
-    quantity: null,
-    tone: "violet"
-  },
-  {
-    id: "tigerstripe",
-    name: "Tigerstripe",
-    image: "https://www.cidi.games/elfs/elf-set_tigerstripe-idle.png",
-    quantity: null,
-    tone: "emerald"
-  }
+const fallbackElfSkinNames = Object.freeze([
+  "Genesis Pioneer",
+  "Pioneer Spark",
+  "Pioneer Swift",
+  "Take My Pi",
+  "CiDi Echo",
+  "Arale",
+  "Pink Bunny",
+  "Trailblazer",
+  "Shark Hoodie",
+  "Arcane Prince",
+  "Spinning Kicker",
+  "Dune Walker",
+  "Cosmic Sovereign",
+  "Galactic Cadet",
+  "Toy Sheriff",
+  "Lion Dance",
+  "Amber Miner",
+  "Tomato Darling",
+  "Chick Starlet",
+  "Cloudtop Chef",
+  "Hornwood Spirit",
+  "Moo Moo",
+  "Prairie Wanderer",
+  "Pumpkin Whisper",
+  "Treasure Hunter",
+  "Workshop Artisan",
+  "Octo Pirate",
+  "Steel Enforcer",
+  "Starborn Warrior",
+  "Heroic Guardian",
+  "Mantis Fighter",
+  "Alien Hunter",
+  "Stardeep Warden",
+  "Arena Gladiator",
+  "Claw Ranger",
+  "Wolf Hood",
+  "Desert Lizard",
+  "Shield Commander",
+  "Emerald Sage",
+  "Frost Enchantress",
+  "Flame Brawler",
+  "Bio Warrior",
+  "Frost Envoy",
+  "Flame Runner",
+  "Zombie Walker",
+  "Bubble Beast",
+  "Pumpkin Head",
+  "Dark Ooze",
+  "Tree Guardian"
 ]);
+
+const fallbackElfSkins = Object.freeze(
+  fallbackElfSkinNames.map((name, index) => ({
+    id: createSkinId(name),
+    name,
+    image: createFallbackSkinImageUrl(name),
+    quantity: null,
+    tone: inferSkinTone(name, index)
+  }))
+);
 
 export function getFallbackElfSkins() {
   return fallbackElfSkins.map((skin) => ({ ...skin }));
@@ -126,4 +150,14 @@ function createSkinId(name) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function createFallbackSkinImageUrl(name) {
+  const fileName = String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return `https://www.cidi.games/elfs/elf-set_${fileName}-idle.png`;
 }
