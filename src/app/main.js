@@ -33,7 +33,7 @@ import { renderSignalsView } from "../views/signals-view.js";
 import {
   renderElfSkinHomeTabs,
   renderElfSkinLandingView
-} from "../views/elf-skin-landing-view.js?v=20260712-layered-frames-12";
+} from "../views/elf-skin-landing-view.js?v=20260712-mobile-navigation-1";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();

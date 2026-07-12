@@ -48,6 +48,11 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
   await expect(page.locator(".mobile-primary-nav")).toBeVisible();
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#home");
+  await expect(page.locator(".app-header .route-market-link")).toBeHidden();
+  await expect(page.locator(".app-header-skins .page-summary")).toBeHidden();
+
+  const homeHeaderHeight = await page.locator(".app-header-skins").evaluate((element) => element.getBoundingClientRect().height);
+  expect(homeHeaderHeight).toBeLessThanOrEqual(130);
 });
 
 test("mobile market uses a sticky horizontal section navigation", async ({ page }) => {
@@ -58,6 +63,11 @@ test("mobile market uses a sticky horizontal section navigation", async ({ page 
   await expect(sectionNavigation).toBeVisible();
   await expect(sectionNavigation.locator("a")).toHaveCount(5);
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#market");
+  await expect(page.locator(".app-header .route-tabs")).toBeHidden();
+  await expect(page.locator(".app-header .page-summary")).toBeHidden();
+
+  const marketHeaderHeight = await page.locator(".app-header").evaluate((element) => element.getBoundingClientRect().height);
+  expect(marketHeaderHeight).toBeLessThanOrEqual(150);
 
   const navigationStyle = await sectionNavigation.evaluate((element) => {
     const style = getComputedStyle(element);
@@ -73,4 +83,27 @@ test("mobile market uses a sticky horizontal section navigation", async ({ page 
     overflowX: "auto",
     position: "sticky"
   });
+});
+
+test("desktop keeps the full header and does not render mobile navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?v=playwright-desktop-navigation#home", { waitUntil: "domcontentloaded" });
+
+  await expect(page.locator(".mobile-primary-nav")).toBeHidden();
+  await expect(page.locator(".app-header-skins .route-market-link")).toBeVisible();
+  await expect(page.locator(".elf-home-tabs-desktop")).toBeVisible();
+
+  const desktopSupplyTab = page.locator(".elf-home-tabs-desktop [data-skin-home-tab='supply']");
+  await desktopSupplyTab.click();
+  await expect(page).toHaveURL(/#home&tab=supply$/);
+  await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
+
+  const desktopGalleryTab = page.locator(".elf-home-tabs-desktop [data-skin-home-tab='gallery']");
+  await desktopGalleryTab.click();
+  await expect(page).toHaveURL(/#home&tab=gallery$/);
+  await expect(page.locator(".elf-tab-panel-gallery")).toBeVisible();
+
+  await page.goto("/?v=playwright-desktop-navigation#market", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".mobile-primary-nav")).toBeHidden();
+  await expect(page.locator(".app-header .route-tabs")).toBeVisible();
 });

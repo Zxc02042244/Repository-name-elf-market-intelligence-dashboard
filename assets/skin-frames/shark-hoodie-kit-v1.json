@@ -1,0 +1,23 @@
+{
+  "skinId": "shark-hoodie",
+  "canvas": {
+    "width": 1041,
+    "height": 1511
+  },
+  "rankPlaque": {
+    "file": "shark-hoodie-rank-plaque-v1.png",
+    "width": 601,
+    "height": 168,
+    "x": 220,
+    "y": 78
+  },
+  "namePlaque": {
+    "file": "shark-hoodie-name-plaque-v1.png",
+    "width": 801,
+    "height": 180,
+    "x": 120,
+    "y": 1264
+  },
+  "baseFrame": "shark-hoodie-card-frame-base-v1.png",
+  "preview": "shark-hoodie-card-frame-preview-v1.png"
+}

@@ -15,7 +15,8 @@ const unifiedChampionFrames = new Set([
   "elf-champion-frame-zombie-walker",
   "elf-champion-frame-cosmic-sovereign",
   "elf-champion-frame-toy-sheriff",
-  "elf-champion-frame-arale"
+  "elf-champion-frame-arale",
+  "elf-champion-frame-shark-hoodie"
 ]);
 const layeredChampionFrames = new Set([
   "elf-champion-frame-flame-runner",
@@ -29,7 +30,8 @@ const layeredChampionFrames = new Set([
   "elf-champion-frame-starborn-warrior",
   "elf-champion-frame-cosmic-sovereign",
   "elf-champion-frame-toy-sheriff",
-  "elf-champion-frame-arale"
+  "elf-champion-frame-arale",
+  "elf-champion-frame-shark-hoodie"
 ]);
 
 export function renderElfSkinLandingView(
@@ -71,17 +73,21 @@ export function renderElfSkinHomeTabs(activeTab, locale = defaultLocale, placeme
   return `
     <nav class="elf-home-tabs elf-home-tabs-${placement === "desktop" ? "desktop" : "content"}" aria-label="${t("elfLanding.skinGallery", locale)}">
       ${tabs.map(([tab, label]) => `
-        <button
+        <a
           class="elf-home-tab ${tab === activeTab ? "elf-home-tab-active" : ""}"
-          type="button"
+          href="${buildHomeTabHash(tab)}"
           data-skin-home-tab="${tab}"
           ${tab === activeTab ? "aria-current=\"page\"" : ""}
         >
           ${label}
-        </button>
+        </a>
       `).join("")}
     </nav>
   `;
+}
+
+function buildHomeTabHash(tab) {
+  return tab === "wishlist" ? "#home" : `#home&tab=${tab}`;
 }
 
 function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPreviewId) {
@@ -358,7 +364,8 @@ function getChampionFrameClass(skin, kind) {
     "zombie-walker",
     "cosmic-sovereign",
     "toy-sheriff",
-    "arale"
+    "arale",
+    "shark-hoodie"
   ]);
 
   if (supportedFrames.has(normalizedName)) {
