@@ -1,0 +1,23 @@
+{
+  "skinId": "genesis-pioneer",
+  "canvas": {
+    "width": 1041,
+    "height": 1511
+  },
+  "rankPlaque": {
+    "file": "genesis-pioneer-rank-plaque-v1.png",
+    "width": 601,
+    "height": 168,
+    "x": 220,
+    "y": 78
+  },
+  "namePlaque": {
+    "file": "genesis-pioneer-name-plaque-v1.png",
+    "width": 801,
+    "height": 180,
+    "x": 120,
+    "y": 1264
+  },
+  "baseFrame": "genesis-pioneer-card-frame-base-v1.png",
+  "preview": "genesis-pioneer-card-frame-preview-v1.png"
+}

@@ -40,7 +40,7 @@ test("Toy Sheriff three-piece frame stays aligned", async ({ page }, testInfo) =
   await expect(skinButton).toHaveCount(1);
   await skinButton.click();
 
-  const card = page.locator(".elf-champion-frame-toy-sheriff");
+  const card = page.locator('[data-view="desktop"] .elf-champion-frame-toy-sheriff');
   const rank = card.locator(".elf-champion-rank");
   const name = card.locator(".elf-champion-body > strong");
   await expect(card).toHaveClass(/elf-champion-layered-frame/);
@@ -93,13 +93,13 @@ test("Toy Sheriff three-piece frame stays aligned", async ({ page }, testInfo) =
   await page.locator(".elf-skin-card", { hasText: "Toy Sheriff" }).locator("[data-wishlist-toggle]").click();
   await page.locator("[data-skin-home-tab='wishlist']").first().click();
 
-  const wishlistCard = page.locator(".elf-champion-wishlist.elf-champion-frame-toy-sheriff");
+  const wishlistCard = page.locator('[data-view="desktop"] .elf-champion-wishlist.elf-champion-frame-toy-sheriff');
   await expect(wishlistCard).toHaveCount(1);
   await expectLegacyChampionLayersDisabled(wishlistCard);
 });
 
 async function expectLegacyChampionLayersDisabled(card) {
-  const layers = await card.locator(".elf-champion-art").evaluate((element) => {
+  await expect.poll(async () => card.locator(".elf-champion-art").evaluate((element) => {
     const before = window.getComputedStyle(element, "::before");
     const after = window.getComputedStyle(element, "::after");
     const style = window.getComputedStyle(element);
@@ -110,10 +110,10 @@ async function expectLegacyChampionLayersDisabled(card) {
       beforeDisplay: before.display,
       afterDisplay: after.display
     };
+  })).toEqual({
+    backgroundImage: "none",
+    borderTopWidth: "0px",
+    beforeDisplay: "none",
+    afterDisplay: "none"
   });
-
-  expect(layers.backgroundImage).toBe("none");
-  expect(layers.borderTopWidth).toBe("0px");
-  expect(layers.beforeDisplay).toBe("none");
-  expect(layers.afterDisplay).toBe("none");
 }

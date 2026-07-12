@@ -3,16 +3,28 @@ import { expect, test } from "@playwright/test";
 test.use({ viewport: { width: 1440, height: 900 } });
 
 test("Bio Warrior three-piece frame stays aligned", async ({ page }, testInfo) => {
+  const transparentPixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+  await page.route("**/api/v1/elf/skins**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        code: 0,
+        skins: [
+          { skinName: "Bio Warrior", skinUrl: transparentPixel, quantity: 999 },
+          { skinName: "Flame Runner", skinUrl: transparentPixel, quantity: 8 }
+        ]
+      })
+    });
+  });
+
   await page.goto("/?v=playwright-bio-warrior#home", {
     waitUntil: "domcontentloaded"
   });
   await page.waitForTimeout(1_200);
+  await page.locator("[data-skin-home-tab='supply']").first().click();
 
-  const skinButton = page.getByRole("button", { name: /Bio Warrior/ });
-  await expect(skinButton).toHaveCount(1);
-  await skinButton.click();
-
-  const card = page.locator(".elf-champion-frame-bio-warrior");
+  const card = page.locator('[data-view="desktop"] .elf-champion-frame-bio-warrior');
   const rank = card.locator(".elf-champion-rank");
   const name = card.locator(".elf-champion-body > strong");
   await expect(card).toHaveClass(/elf-champion-layered-frame/);

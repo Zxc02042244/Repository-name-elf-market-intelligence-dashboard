@@ -12,7 +12,7 @@ test("Frost Enchantress rank text is optically aligned in its plaque", async ({ 
   await expect(frostButton).toHaveCount(1);
   await frostButton.click();
 
-  const card = page.locator(".elf-champion-frame-frost-enchantress");
+  const card = page.locator('[data-view="desktop"] .elf-champion-frame-frost-enchantress');
   const rank = card.locator(".elf-champion-rank");
   await expect(card).toHaveClass(/elf-champion-layered-frame/);
   await expect(rank).toContainText("TOP");

@@ -1,0 +1,186 @@
+/* Mobile ranking deck: a compact collectible-card frame inside Web Awesome Carousel. */
+@media (max-width: 920px) {
+  .elf-mobile-champion-carousel {
+    --aspect-ratio: 17 / 21;
+    --scroll-hint: 9%;
+    --slide-gap: var(--space-3);
+    margin: -2px 0 2px;
+  }
+
+  .elf-mobile-champion-carousel wa-carousel-item {
+    padding-block: 4px 20px;
+  }
+
+  .elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card {
+    position: relative;
+    display: grid;
+    min-height: 0;
+    aspect-ratio: 17 / 21;
+    grid-template-rows: 48px minmax(0, 1fr) auto;
+    gap: var(--space-2);
+    overflow: hidden;
+    border: 1px solid rgb(231 199 125 / 58%);
+    border-radius: var(--radius-card) var(--radius-card) 26px 26px;
+    padding: var(--radius-lg);
+    background:
+      linear-gradient(135deg, transparent 0 47%, rgb(231 199 125 / 5%) 47% 48%, transparent 48% 100%),
+      radial-gradient(circle at 50% 43%, rgb(119 82 184 / 22%), transparent 42%),
+      linear-gradient(155deg, #111922 0 48%, #090e14 100%);
+    box-shadow:
+      inset 0 0 0 3px rgb(7 10 13 / 82%),
+      inset 0 0 0 4px rgb(231 199 125 / 16%),
+      0 12px 30px rgb(0 0 0 / 38%);
+  }
+
+  .elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card::before {
+    content: "";
+    position: absolute;
+    z-index: var(--layer-content);
+    inset: 8px;
+    border: 1px solid rgb(231 199 125 / 14%);
+    border-radius: 12px 12px 20px 20px;
+    background:
+      linear-gradient(90deg, transparent 49.7%, rgb(231 199 125 / 8%) 50%, transparent 50.3%),
+      linear-gradient(0deg, transparent 49.7%, rgb(231 199 125 / 6%) 50%, transparent 50.3%);
+    pointer-events: none;
+  }
+
+  .elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card::after {
+    content: "";
+    position: absolute;
+    z-index: calc(var(--layer-content) + 2);
+    right: 18px;
+    bottom: 12px;
+    left: 18px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-card-gold) 22% 78%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-heading,
+  .elf-mobile-champion-carousel .elf-champion-art,
+  .elf-mobile-champion-carousel .elf-champion-body {
+    position: relative;
+    z-index: calc(var(--layer-content) + 1);
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-heading {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-heading > div,
+  .elf-mobile-champion-carousel .elf-champion-art::before,
+  .elf-mobile-champion-carousel .elf-champion-art::after,
+  .elf-mobile-champion-carousel .elf-champion-body > span {
+    display: none;
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-rank {
+    display: grid;
+    width: 100%;
+    min-height: 44px;
+    place-items: center;
+    border: 1px solid rgb(231 199 125 / 50%);
+    border-radius: 9px 9px 14px 14px;
+    background:
+      linear-gradient(180deg, rgb(231 199 125 / 20%), rgb(231 199 125 / 4%)),
+      #13151a;
+    color: #fff0bc;
+    font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace;
+    font-size: 1.22rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-shadow: 0 2px 0 #49300f, 0 0 12px rgb(231 199 125 / 34%);
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-art {
+    display: grid;
+    min-height: 0;
+    margin: 0;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgb(151 123 208 / 42%);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(circle at 50% 46%, rgb(139 101 209 / 28%), transparent 34%),
+      linear-gradient(135deg, rgb(255 255 255 / 3%), transparent 45%),
+      rgb(7 11 17 / 76%);
+    box-shadow: inset 0 0 28px rgb(115 77 190 / 13%);
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-art img {
+    width: min(78%, 236px);
+    height: min(88%, 236px);
+    object-fit: contain;
+    filter: drop-shadow(0 12px 13px rgb(0 0 0 / 48%));
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-body {
+    display: grid;
+    gap: 6px;
+    min-height: 92px;
+    padding: 2px 4px 6px;
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-body > strong {
+    overflow: hidden;
+    color: var(--color-card-text);
+    font-size: clamp(1.18rem, 6.4vw, 1.55rem);
+    font-weight: 900;
+    line-height: 1.08;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgb(0 0 0 / 72%);
+    white-space: nowrap;
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-stat {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin: 0;
+    border: 1px solid var(--color-card-gold-soft);
+    border-radius: 10px;
+    padding: 0 12px;
+    background: rgb(5 10 16 / 74%);
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-stat span {
+    color: var(--color-card-muted);
+    font-size: 0.78rem;
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-stat strong,
+  .elf-mobile-champion-carousel .elf-rank-cancel {
+    color: var(--color-card-text-strong);
+    font-size: 1.08rem;
+    font-weight: 900;
+  }
+
+  .elf-mobile-champion-carousel::part(navigation-button) {
+    border-color: rgb(231 199 125 / 54%);
+    border-radius: 50%;
+    background: rgb(6 11 17 / 92%);
+    box-shadow: 0 5px 16px rgb(0 0 0 / 42%);
+  }
+
+  .elf-mobile-champion-carousel::part(pagination) {
+    gap: 7px;
+  }
+
+  .elf-mobile-champion-carousel::part(pagination-item) {
+    width: 18px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+  }
+
+  .elf-mobile-champion-carousel::part(pagination-item-active) {
+    width: 32px;
+    background: var(--color-card-gold);
+  }
+}

@@ -12,7 +12,7 @@ test("Starborn Warrior three-piece frame stays aligned", async ({ page }, testIn
   await expect(skinButton).toHaveCount(1);
   await skinButton.click();
 
-  const card = page.locator(".elf-champion-frame-starborn-warrior");
+  const card = page.locator('[data-view="desktop"] .elf-champion-frame-starborn-warrior');
   const rank = card.locator(".elf-champion-rank");
   const name = card.locator(".elf-champion-body > strong");
   await expect(card).toHaveClass(/elf-champion-layered-frame/);

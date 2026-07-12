@@ -46,6 +46,10 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
 
   await expect(page).toHaveURL(/#home&tab=supply$/);
   await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
+  await expect(page.locator(".elf-mobile-champion-carousel")).toBeVisible();
+  await expect(page.locator('[data-view="mobile"]')).toBeVisible();
+  await expect(page.locator('[data-view="desktop"]')).toBeHidden();
+  await expect(page.locator(".elf-mobile-champion-carousel wa-carousel-item")).toHaveCount(3);
   await expect(page.locator(".mobile-primary-nav")).toBeVisible();
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#home");
   await expect(page.locator(".app-header .route-market-link")).toBeHidden();
@@ -53,6 +57,59 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
 
   const homeHeaderHeight = await page.locator(".app-header-skins").evaluate((element) => element.getBoundingClientRect().height);
   expect(homeHeaderHeight).toBeLessThanOrEqual(130);
+
+  const carouselUpgraded = await page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
+    Boolean(customElements.get("wa-carousel")) && Boolean(element.shadowRoot)
+  ));
+  expect(carouselUpgraded).toBe(true);
+
+  const initialSlide = await page.locator(".elf-mobile-champion-carousel").evaluate((element) => element.activeSlide);
+  await page.locator(".elf-mobile-champion-carousel").evaluate((element) => element.next("auto"));
+  await expect.poll(async () => page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
+    element.activeSlide
+  ))).toBeGreaterThan(initialSlide);
+});
+
+test("mobile carousel keeps its active rank after asynchronous community refresh", async ({ page }) => {
+  let releaseCommunityResponse;
+  const communityResponseGate = new Promise((resolve) => {
+    releaseCommunityResponse = resolve;
+  });
+
+  await page.route("**/rest/v1/rpc/sync_skin_gallery_state", async (route) => {
+    await communityResponseGate;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        visitorCount: 1284,
+        wishlistLeaders: [
+          { skinId: "genesis-pioneer", wishCount: 6 },
+          { skinId: "flame-runner", wishCount: 5 },
+          { skinId: "bubble-beast", wishCount: 4 }
+        ]
+      })
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?v=playwright-preserve-carousel#home", { waitUntil: "domcontentloaded" });
+
+  const carousel = page.locator(".elf-mobile-champion-carousel");
+  await expect(carousel).toBeVisible();
+  await expect.poll(async () => carousel.evaluate((element) => Boolean(element.shadowRoot))).toBe(true);
+  await page.waitForTimeout(1_200);
+  await expect(carousel).toBeVisible();
+  await carousel.evaluate((element) => {
+    element.dataset.continuityMarker = "same-carousel-node";
+  });
+  await carousel.evaluate((element) => element.next("auto"));
+  await expect.poll(async () => carousel.evaluate((element) => element.activeSlide)).toBe(1);
+
+  releaseCommunityResponse();
+  await expect.poll(async () => carousel.evaluate((element) => element.activeSlide), {
+    timeout: 5_000
+  }).toBe(1);
+  await expect(carousel).toHaveAttribute("data-continuity-marker", "same-carousel-node");
 });
 
 test("mobile market uses a sticky horizontal section navigation", async ({ page }) => {
@@ -97,6 +154,8 @@ test("desktop keeps the full header and does not render mobile navigation", asyn
   await desktopSupplyTab.click();
   await expect(page).toHaveURL(/#home&tab=supply$/);
   await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
+  await expect(page.locator('[data-view="desktop"]')).toBeVisible();
+  await expect(page.locator('[data-view="mobile"]')).toBeHidden();
 
   const desktopGalleryTab = page.locator(".elf-home-tabs-desktop [data-skin-home-tab='gallery']");
   await desktopGalleryTab.click();
@@ -106,4 +165,23 @@ test("desktop keeps the full header and does not render mobile navigation", asyn
   await page.goto("/?v=playwright-desktop-navigation#market", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".mobile-primary-nav")).toBeHidden();
   await expect(page.locator(".app-header .route-tabs")).toBeVisible();
+});
+
+test("responsive view boundary switches exactly between 920 and 921 pixels", async ({ page }) => {
+  await page.setViewportSize({ width: 920, height: 900 });
+  await page.goto("/?v=playwright-breakpoint-boundary#home", { waitUntil: "domcontentloaded" });
+
+  await expect(page.locator('[data-view="mobile"]')).toBeVisible();
+  await expect(page.locator('[data-view="desktop"]')).toBeHidden();
+
+  await page.setViewportSize({ width: 921, height: 900 });
+
+  await expect(page.locator('[data-view="mobile"]')).toBeHidden();
+  await expect(page.locator('[data-view="desktop"]')).toBeVisible();
+
+  await page.setViewportSize({ width: 620, height: 900 });
+  await expect(page.locator(".mobile-primary-nav")).toBeVisible();
+
+  await page.setViewportSize({ width: 621, height: 900 });
+  await expect(page.locator(".mobile-primary-nav")).toBeHidden();
 });

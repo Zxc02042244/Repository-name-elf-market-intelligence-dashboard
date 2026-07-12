@@ -6,12 +6,19 @@
     <title>Market Intelligence Dashboard</title>
     <meta name="elf-community-supabase-url" content="https://hsvemaakgjxydocwqbmq.supabase.co" />
     <meta name="elf-community-supabase-publishable-key" content="sb_publishable_JJnKtiabxzltgv4Yalxzvg_HtNl4_XJ" />
-    <link rel="stylesheet" href="./src/styles.css?v=20260712-mobile-navigation-1" />
+    <link rel="stylesheet" href="./src/styles/tokens.css?v=20260713-design-tokens-1" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260713-design-tokens-1" />
+    <link rel="stylesheet" href="./src/styles/mobile-ranking-card.css?v=20260713-mobile-card-module-1" />
+    <link rel="stylesheet" href="./src/styles/mobile-navigation.css?v=20260713-mobile-navigation-module-1" />
     <link rel="stylesheet" href="./src/themes/elf-theme.css?v=20260709-community" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <div id="app"></div>
-    <script type="module" src="./src/app/main.js?v=20260712-mobile-navigation-1"></script>
+    <script type="module">
+      import "https://ka-f.webawesome.com/webawesome@3.10.0/components/carousel/carousel.js";
+      import "https://ka-f.webawesome.com/webawesome@3.10.0/components/carousel-item/carousel-item.js";
+    </script>
+    <script type="module" src="./src/app/main.js?v=20260712-webawesome-carousel-3"></script>
   </body>
 </html>

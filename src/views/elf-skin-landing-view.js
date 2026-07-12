@@ -16,7 +16,8 @@ const unifiedChampionFrames = new Set([
   "elf-champion-frame-cosmic-sovereign",
   "elf-champion-frame-toy-sheriff",
   "elf-champion-frame-arale",
-  "elf-champion-frame-shark-hoodie"
+  "elf-champion-frame-shark-hoodie",
+  "elf-champion-frame-genesis-pioneer"
 ]);
 const layeredChampionFrames = new Set([
   "elf-champion-frame-flame-runner",
@@ -31,7 +32,8 @@ const layeredChampionFrames = new Set([
   "elf-champion-frame-cosmic-sovereign",
   "elf-champion-frame-toy-sheriff",
   "elf-champion-frame-arale",
-  "elf-champion-frame-shark-hoodie"
+  "elf-champion-frame-shark-hoodie",
+  "elf-champion-frame-genesis-pioneer"
 ]);
 
 export function renderElfSkinLandingView(
@@ -109,7 +111,8 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
           ${t("elfLanding.wishlistLimitReached", locale, { limit: formatNumber(wishlistLimit) })}
         </p>
       ` : ""}
-      ${wishlistChampion ? renderChampionCard({
+      ${renderWishlistChampionCarousel(wishlistSlots, wishlist, locale)}
+      ${wishlistChampion ? `<div class="elf-desktop-champion" data-view="desktop">${renderChampionCard({
         skin: wishlistChampion,
         title: championRank,
         eyebrow: skinLandingText("homeTabWishlist", locale),
@@ -122,7 +125,7 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
         kind: "wishlist",
         action: wishlistChampion.isLocalSelection ? "cancel" : "",
         compact: true
-      }) : ""}
+      })}</div>` : ""}
       ${wishlistLeaders.length > 0 ? `
         <div class="elf-rank-actions">
           <button class="elf-clear-wishlist" type="button" data-wishlist-clear>
@@ -156,7 +159,8 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
         <h2 id="elf-supply-title">${t("elfLanding.supplyRankingTitle", locale)}</h2>
         <span>${t("elfLanding.supplyRankingScope", locale)}</span>
       </div>
-      ${supplyLeaders.length > 0 ? renderChampionCard({
+      ${renderSupplyChampionCarousel(supplyLeaders, locale)}
+      ${supplyLeaders.length > 0 ? `<div class="elf-desktop-champion" data-view="desktop">${renderChampionCard({
         skin: supplyChampion,
         title: championRank,
         eyebrow: skinLandingText("homeTabSupply", locale),
@@ -169,7 +173,7 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
         kind: "supply",
         eager: true,
         compact: true
-      }) : ""}
+      })}</div>` : ""}
       <div class="elf-rank-list">
         ${supplySlots.map((skin, index) => skin
           ? renderSupplyLeader(skin, index, topSupply, locale, supplyChampion.id)
@@ -178,6 +182,71 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
       </div>
       ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
     </section>
+  `;
+}
+
+function renderWishlistChampionCarousel(wishlistSlots, wishlist, locale) {
+  const slides = wishlistSlots.filter(Boolean).slice(0, 3);
+
+  if (slides.length === 0) {
+    return "";
+  }
+
+  return renderMobileChampionCarousel(slides.map((skin, index) => ({
+    skin,
+    title: `TOP ${index + 1}`,
+    eyebrow: skinLandingText("homeTabWishlist", locale),
+    meta: t("elfLanding.wishlistScope", locale),
+    statLabel: getWishCountLabel(locale, skin.wishCount ?? 1, wishlist.community.status === "remote"),
+    statValue: skin.isLocalSelection
+      ? t("elfLanding.cancelWish", locale)
+      : formatNumber(skin.wishCount ?? 1),
+    rankLabel: `TOP ${index + 1}`,
+    kind: "wishlist",
+    action: skin.isLocalSelection ? "cancel" : ""
+  })));
+}
+
+function renderSupplyChampionCarousel(supplyLeaders, locale) {
+  const slides = supplyLeaders.slice(0, 3);
+
+  if (slides.length === 0) {
+    return "";
+  }
+
+  return renderMobileChampionCarousel(slides.map((skin, index) => ({
+    skin,
+    title: `TOP ${index + 1}`,
+    eyebrow: skinLandingText("homeTabSupply", locale),
+    meta: t("elfLanding.supplyRankingScope", locale),
+    statLabel: t("elfLanding.supply", locale),
+    statValue: skin.quantity === null
+      ? t("elfLanding.supplyPending", locale)
+      : formatNumber(skin.quantity),
+    rankLabel: `TOP ${index + 1}`,
+    kind: "supply",
+    eager: index === 0
+  })));
+}
+
+function renderMobileChampionCarousel(slides) {
+  return `
+    <wa-carousel
+      class="elf-mobile-champion-carousel"
+      data-view="mobile"
+      pagination
+      navigation
+      mouse-dragging
+      slides-per-page="1"
+      slides-per-move="1"
+      aria-label="Top ranked ELF skins"
+    >
+      ${slides.map((options, index) => `
+        <wa-carousel-item aria-label="${escapeHtml(`${options.rankLabel}, ${options.skin.name}`)}" data-rank="${index + 1}">
+          ${renderChampionCard({ ...options, compact: true })}
+        </wa-carousel-item>
+      `).join("")}
+    </wa-carousel>
   `;
 }
 
@@ -365,7 +434,8 @@ function getChampionFrameClass(skin, kind) {
     "cosmic-sovereign",
     "toy-sheriff",
     "arale",
-    "shark-hoodie"
+    "shark-hoodie",
+    "genesis-pioneer"
   ]);
 
   if (supportedFrames.has(normalizedName)) {

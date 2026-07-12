@@ -22,7 +22,7 @@ test("Shark Hoodie three-piece frame stays aligned", async ({ page }) => {
   await page.waitForTimeout(1_200);
   await page.locator("[data-skin-home-tab='supply']").first().click();
 
-  const card = page.locator(".elf-champion-frame-shark-hoodie");
+  const card = page.locator('[data-view="desktop"] .elf-champion-frame-shark-hoodie');
   const rank = card.locator(".elf-champion-rank");
   const name = card.locator(".elf-champion-body > strong");
   await expect(card).toHaveClass(/elf-champion-layered-frame/);

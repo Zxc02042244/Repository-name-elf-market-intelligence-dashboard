@@ -33,7 +33,7 @@ import { renderSignalsView } from "../views/signals-view.js";
 import {
   renderElfSkinHomeTabs,
   renderElfSkinLandingView
-} from "../views/elf-skin-landing-view.js?v=20260712-mobile-navigation-1";
+} from "../views/elf-skin-landing-view.js?v=20260712-webawesome-carousel-3";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();
@@ -46,6 +46,7 @@ let skinCatalogLoadStarted = false;
 let skinCommunitySyncStarted = false;
 let skinSupplySyncStarted = false;
 let dashboardSectionObserver = null;
+let pendingUiSnapshot = null;
 
 appState.locale = readStoredLocale();
 appState.skinWishlist = createSkinWishlistState();
@@ -59,11 +60,20 @@ appState.skinCatalog = {
   error: null
 };
 
-function renderApp() {
+if (appRoot) {
+  appRoot.addEventListener("click", handleAppClick);
+  appRoot.addEventListener("change", handleAppChange);
+  appRoot.addEventListener("submit", handleAppSubmit);
+  appRoot.addEventListener("keydown", handleAppKeydown);
+  appRoot.addEventListener("wa-slide-change", handleCarouselSlideChange);
+}
+
+function renderApp({ preserveUi = false } = {}) {
   if (!appRoot) {
     return;
   }
 
+  const uiSnapshot = preserveUi ? captureUiSnapshot() : null;
   const route = getCurrentRoute();
   const isHome = route.name === "home";
   appState.skinHomeTab = route.tab;
@@ -131,116 +141,7 @@ function renderApp() {
   `;
 
   setupDashboardSectionObserver();
-
-  const localeSelect = appRoot.querySelector("[data-locale-switch]");
-  localeSelect?.addEventListener("change", () => {
-    appState.locale = normalizeLocale(localeSelect.value);
-    writeStoredLocale(appState.locale);
-    renderApp();
-  });
-
-  for (const refreshButton of appRoot.querySelectorAll("[data-action='refresh']")) {
-    refreshButton.addEventListener("click", () => {
-      if (refreshButton.hasAttribute("disabled")) {
-        return;
-      }
-
-      void loadDashboard();
-    });
-  }
-
-  for (const wishlistButton of appRoot.querySelectorAll("[data-wishlist-toggle]")) {
-    wishlistButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      appState.skinWishlist = toggleSkinWishlistSelection(
-        appState.skinWishlist,
-        wishlistButton.dataset.wishlistToggle
-      );
-      renderApp();
-      void syncSkinCommunity();
-    });
-  }
-
-  for (const skinHomeTab of appRoot.querySelectorAll("[data-skin-home-tab]")) {
-    skinHomeTab.addEventListener("click", () => {
-      const nextTab = skinHomeTab.dataset.skinHomeTab;
-
-      if (!skinHomeTabs.has(nextTab)) {
-        return;
-      }
-
-      appState.skinHomeTab = nextTab;
-      const nextHash = buildRouteHash(route, {
-        name: "home",
-        tab: nextTab,
-        search: "",
-        sort: "value",
-        assetId: "",
-        actorId: ""
-      });
-
-      if (window.location.hash === nextHash) {
-        renderApp();
-      } else {
-        window.location.hash = nextHash;
-      }
-    });
-  }
-
-  for (const skinPreview of appRoot.querySelectorAll("[data-skin-preview]")) {
-    const selectPreview = () => {
-      const skinId = skinPreview.dataset.skinPreview;
-
-      if (!skinId || !["wishlist", "supply"].includes(appState.skinHomeTab)) {
-        return;
-      }
-
-      appState.skinPreviewIds = {
-        ...appState.skinPreviewIds,
-        [appState.skinHomeTab]: skinId
-      };
-      renderApp();
-    };
-
-    skinPreview.addEventListener("click", selectPreview);
-    skinPreview.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") {
-        return;
-      }
-
-      event.preventDefault();
-      selectPreview();
-    });
-  }
-
-  const wishlistClearButton = appRoot.querySelector("[data-wishlist-clear]");
-  wishlistClearButton?.addEventListener("click", () => {
-    appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
-    renderApp();
-    void syncSkinCommunity();
-  });
-
-  for (const tab of appRoot.querySelectorAll("[data-category]")) {
-    tab.addEventListener("click", () => {
-      appState.selectedCategory = tab.dataset.category ?? "all";
-      rebuildVisibleModel();
-      renderApp();
-    });
-  }
-
-  const explorerForm = appRoot.querySelector("[data-explorer-search]");
-  explorerForm?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const formData = new FormData(explorerForm);
-    const search = String(formData.get("q") ?? "").trim();
-    const sort = String(formData.get("sort") ?? "value");
-    window.location.hash = buildRouteHash(route, {
-      search,
-      sort,
-      assetId: "",
-      actorId: ""
-    });
-  });
+  restoreUiSnapshot(uiSnapshot);
 
   if (isHome) {
     ensureSkinCatalogLoaded();
@@ -249,6 +150,302 @@ function renderApp() {
   } else {
     ensureDashboardLoaded();
   }
+}
+
+function captureUiSnapshot() {
+  const activeElement = document.activeElement;
+  const carousel = [...appRoot.querySelectorAll(".elf-mobile-champion-carousel")]
+    .find((element) => !element.closest('[data-view="mobile"]') || isElementVisible(element));
+
+  return {
+    carouselSlide: pendingUiSnapshot?.carouselSlide ?? (Number.isFinite(Number(carousel?.activeSlide))
+      ? Number(carousel.activeSlide)
+      : 0),
+    focus: getElementIdentity(activeElement) ?? pendingUiSnapshot?.focus ?? null,
+    scrollX: pendingUiSnapshot?.scrollX ?? window.scrollX,
+    scrollY: pendingUiSnapshot?.scrollY ?? window.scrollY
+  };
+}
+
+function restoreUiSnapshot(snapshot) {
+  if (!snapshot) {
+    return;
+  }
+
+  pendingUiSnapshot = snapshot;
+  const restore = () => {
+    const carousel = [...appRoot.querySelectorAll(".elf-mobile-champion-carousel")]
+      .find((element) => isElementVisible(element));
+    carousel?.goToSlide?.(snapshot.carouselSlide, "auto");
+
+    const focusTarget = findElementByIdentity(snapshot.focus);
+    focusTarget?.focus?.({ preventScroll: true });
+    window.scrollTo(snapshot.scrollX, snapshot.scrollY);
+    if (pendingUiSnapshot === snapshot) {
+      pendingUiSnapshot = null;
+    }
+  };
+
+  if (window.customElements?.whenDefined) {
+    void window.customElements.whenDefined("wa-carousel").then(async () => {
+      const carousel = [...appRoot.querySelectorAll(".elf-mobile-champion-carousel")]
+        .find((element) => isElementVisible(element));
+      await carousel?.updateComplete;
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(restore);
+      });
+    });
+  } else {
+    window.requestAnimationFrame(restore);
+  }
+}
+
+function refreshHomeDataView() {
+  if (!appRoot || getCurrentRoute().name !== "home") {
+    return;
+  }
+
+  const snapshot = captureUiSnapshot();
+  const currentWorkspace = appRoot.querySelector(".elf-home-workspace");
+  const currentFooter = appRoot.querySelector(".elf-home-footer");
+  const currentHeaderDetails = appRoot.querySelector(".home-header-details");
+  const template = document.createElement("template");
+  const catalog = applySkinSupplyStatsToCatalog(appState.skinCatalog, appState.skinSupply);
+  const wishlist = withCommunityWishlist(appState.skinWishlist, appState.skinCommunity);
+
+  template.innerHTML = `
+    ${renderHomeHeaderDetails(appState.skinWishlist, appState.skinCommunity)}
+    ${renderElfSkinLandingView(
+      catalog,
+      wishlist,
+      appState.locale,
+      appState.skinHomeTab,
+      appState.skinPreviewIds?.[appState.skinHomeTab] ?? "",
+      true
+    )}
+  `;
+
+  const nextWorkspace = template.content.querySelector(".elf-home-workspace");
+  const nextFooter = template.content.querySelector(".elf-home-footer");
+  const nextHeaderDetails = template.content.querySelector(".home-header-details");
+  const currentCarousel = currentWorkspace?.querySelector(".elf-mobile-champion-carousel");
+  const nextCarousel = nextWorkspace?.querySelector(".elf-mobile-champion-carousel");
+
+  if (currentCarousel && nextCarousel) {
+    currentCarousel.replaceChildren(...nextCarousel.childNodes);
+    nextCarousel.replaceWith(currentCarousel);
+  }
+
+  if (currentWorkspace && nextWorkspace) {
+    currentWorkspace.replaceWith(nextWorkspace);
+  }
+
+  if (currentFooter && nextFooter) {
+    currentFooter.replaceWith(nextFooter);
+  }
+
+  if (currentHeaderDetails && nextHeaderDetails) {
+    currentHeaderDetails.replaceWith(nextHeaderDetails);
+  }
+
+  restoreUiSnapshot(snapshot);
+}
+
+function getElementIdentity(element) {
+  if (!(element instanceof Element) || element === document.body) {
+    return null;
+  }
+
+  const attributes = [
+    "id",
+    "data-action",
+    "data-locale-switch",
+    "data-wishlist-toggle",
+    "data-wishlist-clear",
+    "data-skin-home-tab",
+    "data-skin-preview",
+    "data-category",
+    "name",
+    "href"
+  ];
+
+  for (const attribute of attributes) {
+    if (element.hasAttribute(attribute)) {
+      return {
+        attribute,
+        tagName: element.tagName,
+        value: element.getAttribute(attribute)
+      };
+    }
+  }
+
+  return null;
+}
+
+function findElementByIdentity(identity) {
+  if (!identity) {
+    return null;
+  }
+
+  return [...appRoot.querySelectorAll(identity.tagName.toLowerCase())]
+    .find((element) => element.getAttribute(identity.attribute) === identity.value && isElementVisible(element))
+    ?? null;
+}
+
+function isElementVisible(element) {
+  return element instanceof Element && element.getClientRects().length > 0;
+}
+
+function handleAppClick(event) {
+  const target = getEventElement(event);
+
+  if (!target) {
+    return;
+  }
+
+  const wishlistButton = target.closest("[data-wishlist-toggle]");
+  if (wishlistButton) {
+    event.stopPropagation();
+    appState.skinWishlist = toggleSkinWishlistSelection(
+      appState.skinWishlist,
+      wishlistButton.dataset.wishlistToggle
+    );
+    renderApp({ preserveUi: true });
+    void syncSkinCommunity();
+    return;
+  }
+
+  const refreshButton = target.closest("[data-action='refresh']");
+  if (refreshButton) {
+    if (!refreshButton.hasAttribute("disabled")) {
+      void loadDashboard();
+    }
+    return;
+  }
+
+  const skinHomeTab = target.closest("[data-skin-home-tab]");
+  if (skinHomeTab) {
+    event.preventDefault();
+    selectSkinHomeTab(skinHomeTab.dataset.skinHomeTab);
+    return;
+  }
+
+  const skinPreview = target.closest("[data-skin-preview]");
+  if (skinPreview) {
+    selectSkinPreview(skinPreview.dataset.skinPreview);
+    return;
+  }
+
+  if (target.closest("[data-wishlist-clear]")) {
+    appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
+    renderApp();
+    void syncSkinCommunity();
+    return;
+  }
+
+  const categoryTab = target.closest("[data-category]");
+  if (categoryTab) {
+    appState.selectedCategory = categoryTab.dataset.category ?? "all";
+    rebuildVisibleModel();
+    renderApp();
+  }
+}
+
+function handleAppChange(event) {
+  const localeSelect = getEventElement(event)?.closest("[data-locale-switch]");
+
+  if (!localeSelect) {
+    return;
+  }
+
+  appState.locale = normalizeLocale(localeSelect.value);
+  writeStoredLocale(appState.locale);
+  renderApp({ preserveUi: true });
+}
+
+function handleAppSubmit(event) {
+  const explorerForm = getEventElement(event)?.closest("[data-explorer-search]");
+
+  if (!explorerForm) {
+    return;
+  }
+
+  event.preventDefault();
+  const route = getCurrentRoute();
+  const formData = new FormData(explorerForm);
+  window.location.hash = buildRouteHash(route, {
+    search: String(formData.get("q") ?? "").trim(),
+    sort: String(formData.get("sort") ?? "value"),
+    assetId: "",
+    actorId: ""
+  });
+}
+
+function handleAppKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const skinPreview = getEventElement(event)?.closest("[data-skin-preview]");
+  if (!skinPreview) {
+    return;
+  }
+
+  event.preventDefault();
+  selectSkinPreview(skinPreview.dataset.skinPreview);
+}
+
+function handleCarouselSlideChange(event) {
+  const carousel = getEventElement(event)?.closest(".elf-mobile-champion-carousel");
+  const activeSlide = Number(carousel?.activeSlide);
+
+  if (!carousel || !Number.isFinite(activeSlide) || !pendingUiSnapshot) {
+    return;
+  }
+
+  pendingUiSnapshot = {
+    ...pendingUiSnapshot,
+    carouselSlide: activeSlide
+  };
+}
+
+function selectSkinHomeTab(nextTab) {
+  if (!skinHomeTabs.has(nextTab)) {
+    return;
+  }
+
+  const route = getCurrentRoute();
+  const nextHash = buildRouteHash(route, {
+    name: "home",
+    tab: nextTab,
+    search: "",
+    sort: "value",
+    assetId: "",
+    actorId: ""
+  });
+
+  appState.skinHomeTab = nextTab;
+  if (window.location.hash === nextHash) {
+    renderApp();
+  } else {
+    window.location.hash = nextHash;
+  }
+}
+
+function selectSkinPreview(skinId) {
+  if (!skinId || !["wishlist", "supply"].includes(appState.skinHomeTab)) {
+    return;
+  }
+
+  appState.skinPreviewIds = {
+    ...appState.skinPreviewIds,
+    [appState.skinHomeTab]: skinId
+  };
+  renderApp();
+}
+
+function getEventElement(event) {
+  return event.target instanceof Element ? event.target : null;
 }
 
 function renderDashboardNavigation() {
@@ -524,7 +721,7 @@ async function loadDashboard() {
       translate("status.loadingLiveMarketTransactions"),
       translate("status.requestingCoverageItems", { count: ELF_MARKET_COVERAGE_ITEMS.length })
     );
-    renderApp();
+    renderApp({ preserveUi: true });
 
     const sourceSnapshot = await loadElfLiveTransactions(ELF_MARKET_COVERAGE_ITEMS);
     appState.sourceSnapshot = sourceSnapshot;
@@ -550,7 +747,7 @@ async function loadDashboard() {
     }
   }
 
-  renderApp();
+  renderApp({ preserveUi: true });
 }
 
 async function loadDemoFallback(liveError) {
@@ -709,7 +906,7 @@ function ensureSkinCatalogLoaded() {
     .finally(() => {
       skinCatalogLoadStarted = false;
       if (getCurrentRoute().name === "home") {
-        renderApp();
+        refreshHomeDataView();
       }
     });
 }
@@ -759,7 +956,7 @@ async function syncSkinCommunity() {
   } finally {
     skinCommunitySyncStarted = false;
     if (getCurrentRoute().name === "home") {
-      renderApp();
+      refreshHomeDataView();
     }
   }
 }
@@ -783,7 +980,7 @@ async function loadSkinSupply() {
   } finally {
     skinSupplySyncStarted = false;
     if (getCurrentRoute().name === "home") {
-      renderApp();
+      refreshHomeDataView();
     }
   }
 }

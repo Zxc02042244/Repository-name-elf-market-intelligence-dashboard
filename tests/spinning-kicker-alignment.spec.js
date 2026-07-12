@@ -12,7 +12,7 @@ test("Spinning Kicker three-piece frame stays aligned", async ({ page }, testInf
   await expect(skinButton).toHaveCount(1);
   await skinButton.click();
 
-  const card = page.locator(".elf-champion-frame-spinning-kicker");
+  const card = page.locator('[data-view="desktop"] .elf-champion-frame-spinning-kicker');
   const rank = card.locator(".elf-champion-rank");
   const name = card.locator(".elf-champion-body > strong");
   await expect(card).toHaveClass(/elf-champion-layered-frame/);
