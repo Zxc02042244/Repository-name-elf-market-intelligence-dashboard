@@ -30,7 +30,10 @@ import { renderTransactionsView } from "../views/transactions-view.js";
 import { renderAnalyticsView } from "../views/analytics-view.js";
 import { renderSnapshotExplorerView } from "../views/snapshot-explorer-view.js";
 import { renderSignalsView } from "../views/signals-view.js";
-import { renderElfSkinLandingView } from "../views/elf-skin-landing-view.js?v=20260710-source-disclosure";
+import {
+  renderElfSkinHomeTabs,
+  renderElfSkinLandingView
+} from "../views/elf-skin-landing-view.js?v=20260712-layered-frames-12";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 
 const appState = createAppState();
@@ -94,23 +97,32 @@ function renderApp() {
             </button>
           ` : ""}
         </div>
+        ${isHome ? renderElfSkinHomeTabs(appState.skinHomeTab, appState.locale, "desktop") : ""}
       </section>
 
       ${isHome ? renderElfSkinLandingView(
         applySkinSupplyStatsToCatalog(appState.skinCatalog, appState.skinSupply),
         withCommunityWishlist(appState.skinWishlist, appState.skinCommunity),
         appState.locale,
-        appState.skinHomeTab
+        appState.skinHomeTab,
+        appState.skinPreviewIds?.[appState.skinHomeTab] ?? "",
+        true
       ) : `
         ${renderDashboardNavigation()}
-        ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
-        ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
-          ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
-          ${renderAnalyticsView(appState.model, appState.locale)}
-          ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
-          ${renderSignalsView(appState.model, appState.locale)}
-          ${renderTransactionsView(appState.model, route, appState.locale)}
-        `}
+        <div class="market-dashboard-workspace">
+          ${renderDashboardView(appState.model, appState.status, route, appState.locale)}
+          ${isEmptyError ? renderUnavailableWorkspace(appState.locale) : `
+            ${renderCategoryFilterView(appState.coverageModel ?? appState.model, appState.selectedCategory, appState.locale)}
+            <div class="market-analytics-grid">
+              ${renderAnalyticsView(appState.model, appState.locale)}
+            </div>
+            ${renderSnapshotExplorerView(appState.model, route, snapshotExplorer, appState.locale)}
+            <div class="market-lower-grid">
+              ${renderSignalsView(appState.model, appState.locale)}
+              ${renderTransactionsView(appState.model, route, appState.locale)}
+            </div>
+          `}
+        </div>
       `}
     </main>
   `;
@@ -133,7 +145,8 @@ function renderApp() {
   }
 
   for (const wishlistButton of appRoot.querySelectorAll("[data-wishlist-toggle]")) {
-    wishlistButton.addEventListener("click", () => {
+    wishlistButton.addEventListener("click", (event) => {
+      event.stopPropagation();
       appState.skinWishlist = toggleSkinWishlistSelection(
         appState.skinWishlist,
         wishlistButton.dataset.wishlistToggle
@@ -153,6 +166,32 @@ function renderApp() {
 
       appState.skinHomeTab = nextTab;
       renderApp();
+    });
+  }
+
+  for (const skinPreview of appRoot.querySelectorAll("[data-skin-preview]")) {
+    const selectPreview = () => {
+      const skinId = skinPreview.dataset.skinPreview;
+
+      if (!skinId || !["wishlist", "supply"].includes(appState.skinHomeTab)) {
+        return;
+      }
+
+      appState.skinPreviewIds = {
+        ...appState.skinPreviewIds,
+        [appState.skinHomeTab]: skinId
+      };
+      renderApp();
+    };
+
+    skinPreview.addEventListener("click", selectPreview);
+    skinPreview.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      selectPreview();
     });
   }
 

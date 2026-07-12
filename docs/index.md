@@ -36,6 +36,7 @@ Paused lines:
 - `CODEX_MARKET_INTELLIGENCE_DASHBOARD_BRIEF.md`
 - `CHECKLIST.md`
 - `README.md`
+- `docs/elf-skin-self-edit-guide.md`
 
 ## Current Safe-work Closeouts
 

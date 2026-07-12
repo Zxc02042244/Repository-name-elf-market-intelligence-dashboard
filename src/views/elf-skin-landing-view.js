@@ -3,12 +3,42 @@ import { defaultLocale, t } from "../i18n/i18n.js";
 
 const wishlistLimit = 3;
 const rankingLimit = 10;
+const unifiedChampionFrames = new Set([
+  "elf-champion-frame-flame-runner",
+  "elf-champion-frame-flame-brawler",
+  "elf-champion-frame-alien-hunter",
+  "elf-champion-frame-bio-warrior",
+  "elf-champion-frame-frost-enchantress",
+  "elf-champion-frame-bubble-beast",
+  "elf-champion-frame-starborn-warrior",
+  "elf-champion-frame-spinning-kicker",
+  "elf-champion-frame-zombie-walker",
+  "elf-champion-frame-cosmic-sovereign",
+  "elf-champion-frame-toy-sheriff",
+  "elf-champion-frame-arale"
+]);
+const layeredChampionFrames = new Set([
+  "elf-champion-frame-flame-runner",
+  "elf-champion-frame-flame-brawler",
+  "elf-champion-frame-alien-hunter",
+  "elf-champion-frame-bio-warrior",
+  "elf-champion-frame-frost-enchantress",
+  "elf-champion-frame-spinning-kicker",
+  "elf-champion-frame-zombie-walker",
+  "elf-champion-frame-bubble-beast",
+  "elf-champion-frame-starborn-warrior",
+  "elf-champion-frame-cosmic-sovereign",
+  "elf-champion-frame-toy-sheriff",
+  "elf-champion-frame-arale"
+]);
 
 export function renderElfSkinLandingView(
   skinCatalog,
   wishlistState,
   locale = defaultLocale,
-  activeTab = "wishlist"
+  activeTab = "wishlist",
+  selectedPreviewId = "",
+  includeTabs = true
 ) {
   const catalog = normalizeCatalog(skinCatalog);
   const wishlist = normalizeWishlist(wishlistState);
@@ -16,16 +46,14 @@ export function renderElfSkinLandingView(
   const supplyLeaders = catalog.skins.slice(0, rankingLimit);
   const wishlistLeaders = getWishlistLeaders(catalog.skins, wishlist);
   const todayAddedLeaders = getTodayAddedLeaders(catalog.skins);
-  const supplyChampion = supplyLeaders[0] ?? getEmptySkin();
-  const wishlistChampion = wishlistLeaders[0] ?? null;
   const topSupply = supplyLeaders[0]?.quantity ?? 0;
   const topTodayAdded = todayAddedLeaders[0]?.todayAdded ?? 0;
 
   return `
     <section class="elf-home-workspace" aria-label="${t("elfLanding.rankingShowcase", locale)}">
-      ${renderHomeTabs(currentTab, locale)}
-      ${currentTab === "wishlist" ? renderWishlistTab(catalog.skins, wishlistLeaders, wishlist, locale) : ""}
-      ${currentTab === "supply" ? renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLeaders, topTodayAdded, locale) : ""}
+      ${includeTabs ? renderElfSkinHomeTabs(currentTab, locale) : ""}
+      ${currentTab === "wishlist" ? renderWishlistTab(catalog.skins, wishlistLeaders, wishlist, locale, selectedPreviewId) : ""}
+      ${currentTab === "supply" ? renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAdded, locale, selectedPreviewId) : ""}
       ${currentTab === "gallery" ? renderOfficialSkinTab(catalog, wishlist, locale) : ""}
     </section>
 
@@ -33,7 +61,7 @@ export function renderElfSkinLandingView(
   `;
 }
 
-function renderHomeTabs(activeTab, locale) {
+export function renderElfSkinHomeTabs(activeTab, locale = defaultLocale, placement = "content") {
   const tabs = [
     ["wishlist", skinLandingText("homeTabWishlist", locale)],
     ["supply", skinLandingText("homeTabSupply", locale)],
@@ -41,7 +69,7 @@ function renderHomeTabs(activeTab, locale) {
   ];
 
   return `
-    <nav class="elf-home-tabs" aria-label="${t("elfLanding.skinGallery", locale)}">
+    <nav class="elf-home-tabs elf-home-tabs-${placement === "desktop" ? "desktop" : "content"}" aria-label="${t("elfLanding.skinGallery", locale)}">
       ${tabs.map(([tab, label]) => `
         <button
           class="elf-home-tab ${tab === activeTab ? "elf-home-tab-active" : ""}"
@@ -56,9 +84,13 @@ function renderHomeTabs(activeTab, locale) {
   `;
 }
 
-function renderWishlistTab(skins, wishlistLeaders, wishlist, locale) {
-  const wishlistChampion = wishlistLeaders[0] ?? null;
+function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPreviewId) {
   const wishlistSlots = getWishlistSlots(skins, wishlistLeaders, wishlist);
+  const wishlistChampion = wishlistSlots.find((skin) => skin?.id === selectedPreviewId)
+    ?? wishlistLeaders[0]
+    ?? null;
+  const championIndex = Math.max(0, wishlistSlots.findIndex((skin) => skin?.id === wishlistChampion?.id));
+  const championRank = `TOP ${championIndex + 1}`;
 
   return `
     <section class="elf-tab-panel elf-tab-panel-wishlist" aria-labelledby="elf-wishlist-title">
@@ -73,14 +105,14 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale) {
       ` : ""}
       ${wishlistChampion ? renderChampionCard({
         skin: wishlistChampion,
-        title: "TOP 1",
+        title: championRank,
         eyebrow: skinLandingText("homeTabWishlist", locale),
         meta: t("elfLanding.wishlistScope", locale),
         statLabel: getWishCountLabel(locale, wishlistChampion.wishCount ?? 1, wishlist.community.status === "remote"),
         statValue: wishlistChampion.isLocalSelection
           ? t("elfLanding.cancelWish", locale)
           : formatNumber(wishlistChampion.wishCount ?? 1),
-        rankLabel: "TOP 1",
+        rankLabel: championRank,
         kind: "wishlist",
         action: wishlistChampion.isLocalSelection ? "cancel" : "",
         compact: true
@@ -93,7 +125,7 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale) {
         </div>
         <div class="elf-rank-list elf-wishlist-rank-list">
           ${wishlistSlots.map((skin, index) => skin
-            ? renderWishlistLeader(skin, index, locale)
+            ? renderWishlistLeader(skin, index, locale, wishlistChampion?.id)
             : renderWishlistPlaceholder(index, locale)
           ).join("")}
         </div>
@@ -104,8 +136,13 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale) {
   `;
 }
 
-function renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLeaders, topTodayAdded, locale) {
+function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAdded, locale, selectedPreviewId) {
   const supplySlots = Array.from({ length: rankingLimit }, (_, index) => supplyLeaders[index] ?? null);
+  const supplyChampion = supplyLeaders.find((skin) => skin.id === selectedPreviewId)
+    ?? supplyLeaders[0]
+    ?? getEmptySkin();
+  const championIndex = Math.max(0, supplyLeaders.findIndex((skin) => skin.id === supplyChampion.id));
+  const championRank = `TOP ${championIndex + 1}`;
 
   return `
     <section class="elf-tab-panel elf-tab-panel-supply" aria-labelledby="elf-supply-title">
@@ -115,21 +152,21 @@ function renderSupplyTab(supplyLeaders, supplyChampion, topSupply, todayAddedLea
       </div>
       ${supplyLeaders.length > 0 ? renderChampionCard({
         skin: supplyChampion,
-        title: "TOP 1",
+        title: championRank,
         eyebrow: skinLandingText("homeTabSupply", locale),
         meta: t("elfLanding.supplyRankingScope", locale),
         statLabel: t("elfLanding.supply", locale),
         statValue: supplyChampion.quantity === null
           ? t("elfLanding.supplyPending", locale)
           : formatNumber(supplyChampion.quantity),
-        rankLabel: "TOP 1",
+        rankLabel: championRank,
         kind: "supply",
         eager: true,
         compact: true
       }) : ""}
       <div class="elf-rank-list">
         ${supplySlots.map((skin, index) => skin
-          ? renderSupplyLeader(skin, index, topSupply, locale)
+          ? renderSupplyLeader(skin, index, topSupply, locale, supplyChampion.id)
           : renderSupplyPlaceholder(index, locale)
         ).join("")}
       </div>
@@ -268,7 +305,7 @@ function renderChampionCard({
   const frameClass = getChampionFrameClass(skin, kind);
 
   return `
-    <article class="elf-champion-card ${compact ? "elf-champion-card-compact" : ""} elf-champion-${escapeHtml(kind)} elf-skin-card-${escapeHtml(skin.tone)} ${frameClass}">
+    <article class="elf-champion-card ${compact ? "elf-champion-card-compact" : ""} elf-champion-${escapeHtml(kind)} ${getSkinClassNames(skin)} ${unifiedChampionFrames.has(frameClass) ? "elf-champion-has-custom-frame" : ""} ${layeredChampionFrames.has(frameClass) ? "elf-champion-layered-frame" : ""} ${frameClass}">
       <div class="elf-champion-heading">
         <div>
           <p class="eyebrow">${eyebrow}</p>
@@ -309,67 +346,40 @@ function getChampionFrameClass(skin, kind) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  if (kind === "supply" && normalizedName === "spinning-kicker") {
-    return "elf-champion-frame-spinning-kicker";
-  }
+  const supportedFrames = new Set([
+    "flame-runner",
+    "flame-brawler",
+    "alien-hunter",
+    "bio-warrior",
+    "frost-enchantress",
+    "bubble-beast",
+    "starborn-warrior",
+    "spinning-kicker",
+    "zombie-walker",
+    "cosmic-sovereign",
+    "toy-sheriff",
+    "arale"
+  ]);
 
-  if (kind === "wishlist" && normalizedName === "flame-runner") {
-    return "elf-champion-frame-flame-runner";
+  if (supportedFrames.has(normalizedName)) {
+    return `elf-champion-frame-${normalizedName}`;
   }
 
   return "";
 }
 
-function renderEmptyWishlistChampion(locale) {
-  const championCopy = getChampionCopy(locale);
-
-  return `
-    <article class="elf-champion-card elf-champion-wishlist elf-champion-empty">
-      <div class="elf-champion-heading">
-        <div>
-          <p class="eyebrow">${t("elfLanding.selectedWishes", locale)}</p>
-          <h2>${championCopy.wishlistTitle}</h2>
-        </div>
-        <span class="elf-champion-rank">#01</span>
-      </div>
-      <div class="elf-champion-art elf-champion-empty-art" aria-hidden="true">
-        <span>?</span>
-      </div>
-      <div class="elf-champion-body">
-        <span>${t("elfLanding.wishlistScope", locale)}</span>
-        <strong>${t("elfLanding.emptyWishlist", locale)}</strong>
-        <div class="elf-champion-stat">
-          <span>${t("elfLanding.wishlistCount", locale, {
-            selected: formatNumber(0),
-            limit: formatNumber(wishlistLimit)
-          })}</span>
-          <strong>${t("elfLanding.addWish", locale)}</strong>
-        </div>
-      </div>
-    </article>
-  `;
-}
-
-function getChampionCopy(locale) {
-  if (locale === "zh-Hant") {
-    return {
-      supplyTitle: "靘策???洵銝",
-      wishlistTitle: "憿?皜蝚砌?"
-    };
-  }
-
-  return {
-    supplyTitle: "Supply Rank #1",
-    wishlistTitle: "Wish List #1"
-  };
-}
-
-function renderSupplyLeader(skin, index, topSupply, locale) {
+function renderSupplyLeader(skin, index, topSupply, locale, selectedPreviewId) {
   const supply = skin.quantity ?? 0;
   const share = topSupply > 0 ? Math.max(6, Math.min(100, (supply / topSupply) * 100)) : 0;
 
   return `
-    <div class="elf-rank-row ${getSkinClassNames(skin)}">
+    <div
+      class="elf-rank-row elf-rank-row-selectable ${skin.id === selectedPreviewId ? "is-preview-selected" : ""} ${getSkinClassNames(skin)}"
+      role="button"
+      tabindex="0"
+      aria-pressed="${skin.id === selectedPreviewId ? "true" : "false"}"
+      data-skin-preview="${escapeHtml(skin.id)}"
+    >
       <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
@@ -395,14 +405,20 @@ function renderSupplyPlaceholder(index, locale) {
   `;
 }
 
-function renderWishlistLeader(skin, index, locale) {
+function renderWishlistLeader(skin, index, locale, selectedPreviewId) {
   const wishCount = skin.wishCount ?? 1;
   const supply = skin.quantity === null
     ? t("elfLanding.supplyPending", locale)
     : formatNumber(skin.quantity);
 
   return `
-    <div class="elf-rank-row ${getSkinClassNames(skin)}">
+    <div
+      class="elf-rank-row elf-rank-row-selectable ${skin.id === selectedPreviewId ? "is-preview-selected" : ""} ${getSkinClassNames(skin)}"
+      role="button"
+      tabindex="0"
+      aria-pressed="${skin.id === selectedPreviewId ? "true" : "false"}"
+      data-skin-preview="${escapeHtml(skin.id)}"
+    >
       <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
       <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
       <div class="elf-rank-body">
