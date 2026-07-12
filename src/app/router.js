@@ -1,12 +1,14 @@
 export function getCurrentRoute() {
   const rawHash = window.location.hash.replace(/^#/, "");
   const params = new URLSearchParams(rawHash);
+  const routeToken = rawHash.split("&", 1)[0];
   const mode = params.get("mode");
   const sort = params.get("sort");
-  const isHome = rawHash === "" || rawHash === "home";
+  const isHome = rawHash === "" || routeToken === "home";
 
   return {
     name: isHome ? "home" : "dashboard",
+    tab: isSupportedHomeTab(params.get("tab")) ? params.get("tab") : "wishlist",
     mode: mode === "actors" ? "actors" : "assets",
     search: params.get("q") ?? "",
     sort: isSupportedSort(sort) ? sort : "value",
@@ -18,6 +20,7 @@ export function getCurrentRoute() {
 export function buildRouteHash(route, overrides = {}) {
   const nextRoute = {
     name: route.name,
+    tab: route.tab,
     mode: route.mode,
     search: route.search,
     sort: route.sort,
@@ -26,6 +29,10 @@ export function buildRouteHash(route, overrides = {}) {
     ...overrides
   };
   const params = new URLSearchParams();
+
+  if (nextRoute.name === "home" && nextRoute.tab && nextRoute.tab !== "wishlist") {
+    params.set("tab", nextRoute.tab);
+  }
 
   if (nextRoute.mode && nextRoute.mode !== "assets") {
     params.set("mode", nextRoute.mode);
@@ -48,13 +55,14 @@ export function buildRouteHash(route, overrides = {}) {
   }
 
   const hash = params.toString();
-  if (hash) {
-    return `#${hash}`;
-  }
-
-  return nextRoute.name === "dashboard" ? "#market" : "#home";
+  const routeName = nextRoute.name === "dashboard" ? "market" : "home";
+  return hash ? `#${routeName}&${hash}` : `#${routeName}`;
 }
 
 function isSupportedSort(sort) {
   return ["value", "activity", "latest", "name"].includes(sort);
+}
+
+function isSupportedHomeTab(tab) {
+  return ["wishlist", "supply", "gallery"].includes(tab);
 }

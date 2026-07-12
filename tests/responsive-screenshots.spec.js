@@ -36,3 +36,41 @@ test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
     }
   }
 });
+
+test("mobile home tabs are deep linked and primary navigation stays reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?v=playwright-mobile-navigation#home", { waitUntil: "domcontentloaded" });
+
+  const supplyTab = page.locator(".elf-home-tabs-content [data-skin-home-tab='supply']");
+  await supplyTab.click();
+
+  await expect(page).toHaveURL(/#home&tab=supply$/);
+  await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
+  await expect(page.locator(".mobile-primary-nav")).toBeVisible();
+  await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#home");
+});
+
+test("mobile market uses a sticky horizontal section navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?v=playwright-mobile-navigation#market", { waitUntil: "domcontentloaded" });
+
+  const sectionNavigation = page.locator("[data-dashboard-nav]");
+  await expect(sectionNavigation).toBeVisible();
+  await expect(sectionNavigation.locator("a")).toHaveCount(5);
+  await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#market");
+
+  const navigationStyle = await sectionNavigation.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      display: style.display,
+      overflowX: style.overflowX,
+      position: style.position
+    };
+  });
+
+  expect(navigationStyle).toEqual({
+    display: "flex",
+    overflowX: "auto",
+    position: "sticky"
+  });
+});

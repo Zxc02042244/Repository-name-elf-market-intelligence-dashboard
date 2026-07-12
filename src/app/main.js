@@ -45,6 +45,7 @@ let dashboardLoadStarted = false;
 let skinCatalogLoadStarted = false;
 let skinCommunitySyncStarted = false;
 let skinSupplySyncStarted = false;
+let dashboardSectionObserver = null;
 
 appState.locale = readStoredLocale();
 appState.skinWishlist = createSkinWishlistState();
@@ -65,6 +66,7 @@ function renderApp() {
 
   const route = getCurrentRoute();
   const isHome = route.name === "home";
+  appState.skinHomeTab = route.tab;
   const headerCopy = getHeaderCopy(isHome);
   const isLoading = appState.status.kind === "loading";
   const isEmptyError = appState.status.kind === "error"
@@ -124,8 +126,11 @@ function renderApp() {
           `}
         </div>
       `}
+      ${renderMobilePrimaryNavigation(isHome)}
     </main>
   `;
+
+  setupDashboardSectionObserver();
 
   const localeSelect = appRoot.querySelector("[data-locale-switch]");
   localeSelect?.addEventListener("change", () => {
@@ -165,7 +170,20 @@ function renderApp() {
       }
 
       appState.skinHomeTab = nextTab;
-      renderApp();
+      const nextHash = buildRouteHash(route, {
+        name: "home",
+        tab: nextTab,
+        search: "",
+        sort: "value",
+        assetId: "",
+        actorId: ""
+      });
+
+      if (window.location.hash === nextHash) {
+        renderApp();
+      } else {
+        window.location.hash = nextHash;
+      }
     });
   }
 
@@ -243,9 +261,42 @@ function renderDashboardNavigation() {
   ];
 
   return `
-    <nav class="dashboard-nav" aria-label="Dashboard sections">
-      ${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join("")}
+    <nav class="dashboard-nav" aria-label="Dashboard sections" data-dashboard-nav>
+      ${links.map(([href, label], index) => `
+        <a href="${href}" ${index === 0 ? 'aria-current="location"' : ""}>${label}</a>
+      `).join("")}
     </nav>
+  `;
+}
+
+function renderMobilePrimaryNavigation(isHome) {
+  return `
+    <nav class="mobile-primary-nav" aria-label="${translate("elfLanding.primaryNavigation")}">
+      <a href="#home" ${isHome ? 'aria-current="page"' : ""}>
+        ${renderMobileNavigationIcon("skins")}
+        ${translate("elfLanding.siteShortTitle")}
+      </a>
+      <a href="#market" ${!isHome ? 'aria-current="page"' : ""}>
+        ${renderMobileNavigationIcon("market")}
+        ${translate("elfLanding.analyzeMarket")}
+      </a>
+    </nav>
+  `;
+}
+
+function renderMobileNavigationIcon(kind) {
+  if (kind === "market") {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 19V9m6 10V5m6 14v-7m4 7H2" />
+      </svg>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m12 3 2.4 4.9L20 9l-4 3.9.9 5.6L12 16l-4.9 2.5.9-5.6L4 9l5.6-1.1L12 3Z" />
+    </svg>
   `;
 }
 
@@ -287,9 +338,9 @@ function renderHomeHeaderDetails(wishlistState, communityState) {
           selected: formatNumber(wishlist.selectedIds.length),
           limit: formatNumber(skinWishlistLimit)
         }))}
-        ${renderHomeHeaderMetric(getSkinHomeUiText("visitors", appState.locale), formatNumber(visitorCount))}
+        ${renderHomeHeaderMetric(translate("elfLanding.localVisitors"), formatNumber(visitorCount))}
         <button class="home-header-edit-wishes" type="button" data-skin-home-tab="gallery">
-          ${getSkinHomeUiText("editWishes", appState.locale)}
+          ${translate("elfLanding.editWishes")}
         </button>
         ${renderLanguageSwitch(appState.locale)}
       </div>
@@ -423,6 +474,47 @@ function renderLanguageSwitch(locale) {
       </select>
     </label>
   `;
+}
+
+function setupDashboardSectionObserver() {
+  dashboardSectionObserver?.disconnect();
+  dashboardSectionObserver = null;
+
+  const navigation = appRoot?.querySelector("[data-dashboard-nav]");
+  if (!navigation || typeof IntersectionObserver === "undefined") {
+    return;
+  }
+
+  const links = [...navigation.querySelectorAll("a")];
+  dashboardSectionObserver = new IntersectionObserver((entries) => {
+    const visibleEntry = entries
+      .filter((entry) => entry.isIntersecting)
+      .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top)[0];
+
+    if (!visibleEntry) {
+      return;
+    }
+
+    for (const link of links) {
+      const isCurrent = link.getAttribute("href") === `#${visibleEntry.target.id}`;
+      if (isCurrent) {
+        link.setAttribute("aria-current", "location");
+        link.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+  }, {
+    rootMargin: "-18% 0px -68%",
+    threshold: 0
+  });
+
+  for (const link of links) {
+    const target = appRoot.querySelector(link.getAttribute("href"));
+    if (target) {
+      dashboardSectionObserver.observe(target);
+    }
+  }
 }
 
 async function loadDashboard() {
@@ -564,33 +656,6 @@ function writeStoredLocale(locale) {
 
 function translate(key, params) {
   return t(key, appState.locale, params);
-}
-
-function getSkinHomeUiText(key, locale) {
-  const copy = {
-    en: {
-      editWishes: "Edit wishes",
-      visitors: "Views"
-    },
-    "zh-Hant": {
-      editWishes: "編輯願望",
-      visitors: "瀏覽次數"
-    },
-    ja: {
-      editWishes: "願いを編集",
-      visitors: "閲覧数"
-    },
-    ko: {
-      editWishes: "위시 편집",
-      visitors: "조회수"
-    },
-    vi: {
-      editWishes: "Chỉnh ước chọn",
-      visitors: "Lượt xem"
-    }
-  };
-
-  return copy[locale]?.[key] ?? copy.en[key] ?? key;
 }
 
 function ensureDashboardLoaded() {
