@@ -78,7 +78,8 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeHidden();
   await expect(page.locator(".elf-mobile-champion-carousel wa-carousel-item")).toHaveCount(3);
   await expect(page.locator(".elf-mobile-champion-carousel")).not.toHaveAttribute("navigation", "");
-  await expect(page.locator(".elf-mobile-carousel-progress")).toHaveText("1 / 3");
+  await expect(page.locator(".elf-mobile-carousel-progress")).toBeHidden();
+  await expect(page.locator(".elf-tab-panel-supply > .section-heading")).toBeHidden();
   await expect(page.locator(".mobile-primary-nav")).toBeVisible();
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#home");
   await expect(page.locator(".app-header .route-market-link")).toBeHidden();
@@ -100,7 +101,6 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect.poll(async () => page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
     element.activeSlide
   ))).toBe(1);
-  await expect(page.locator(".elf-mobile-carousel-progress")).toHaveText("2 / 3");
 
   const mobileChampionLayout = await page.locator(".elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card").first().evaluate((card) => ({
     artHeight: card.querySelector(".elf-champion-art")?.getBoundingClientRect().height ?? 0,

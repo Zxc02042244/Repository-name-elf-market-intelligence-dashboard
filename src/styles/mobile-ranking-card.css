@@ -3,7 +3,12 @@
   .elf-mobile-carousel-shell {
     display: grid;
     min-width: 0;
-    padding-bottom: 6px;
+    padding-bottom: 0;
+  }
+
+  .elf-tab-panel.elf-tab-panel-wishlist > .section-heading,
+  .elf-tab-panel.elf-tab-panel-supply > .section-heading {
+    display: none;
   }
 
   .elf-mobile-champion-carousel {
@@ -16,7 +21,7 @@
   }
 
   .elf-mobile-champion-carousel wa-carousel-item {
-    padding-block: 4px 52px;
+    padding-block: 4px;
   }
 
   .elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card {
@@ -196,36 +201,11 @@
   }
 
   .elf-mobile-champion-carousel::part(pagination) {
-    gap: 0;
-  }
-
-  .elf-mobile-champion-carousel::part(pagination-item) {
-    width: 44px;
-    height: 44px;
-    border-radius: 0;
-    background:
-      linear-gradient(180deg, transparent 20px, #536070 20px 24px, transparent 24px);
-    opacity: 0.78;
-  }
-
-  .elf-mobile-champion-carousel::part(pagination-item-active) {
-    width: 44px;
-    background:
-      linear-gradient(180deg, transparent 20px, var(--color-card-gold) 20px 24px, transparent 24px);
-    opacity: 1;
+    display: none;
   }
 
   .elf-mobile-carousel-progress {
-    position: relative;
-    z-index: calc(var(--layer-content) + 1);
-    justify-self: center;
-    min-width: 52px;
-    margin: -14px 0 6px;
-    color: var(--color-card-muted);
-    font-size: 0.78rem;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.06em;
-    text-align: center;
+    display: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
