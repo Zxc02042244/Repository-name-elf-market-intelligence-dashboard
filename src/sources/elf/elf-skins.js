@@ -68,8 +68,8 @@ export function getFallbackElfSkins() {
   return fallbackElfSkins.map((skin) => ({ ...skin }));
 }
 
-export async function loadElfSkinCatalog({ signal } = {}) {
-  const { skinApiUrl } = readPublicServiceConfig();
+export async function loadElfSkinCatalog({ signal, runtimeConfig } = {}) {
+  const { skinApiUrl } = readPublicServiceConfig(runtimeConfig);
 
   if (!skinApiUrl) {
     throw new Error("ELF skin API public runtime configuration is missing.");
