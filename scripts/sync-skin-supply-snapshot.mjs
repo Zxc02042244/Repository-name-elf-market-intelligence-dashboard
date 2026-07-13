@@ -2,6 +2,7 @@ import { loadElfSkinCatalog } from "../src/sources/elf/elf-skins.js";
 
 const defaultSupabaseUrl = "https://hsvemaakgjxydocwqbmq.supabase.co";
 const defaultSupabasePublishableKey = "sb_publishable_JJnKtiabxzltgv4Yalxzvg_HtNl4_XJ";
+const defaultSkinApiUrl = "https://api-prd.cidi.games/api/v1/elf/skins";
 
 const dryRun = process.argv.includes("--dry-run");
 
@@ -13,14 +14,18 @@ main().catch((error) => {
 async function main() {
   const envSupabaseUrl = String(process.env.ELF_SUPABASE_URL ?? "").trim();
   const envSupabasePublishableKey = String(process.env.ELF_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
+  const envSkinApiUrl = String(process.env.ELF_SKIN_API_URL ?? "").trim();
   const supabaseUrl = normalizeUrl(envSupabaseUrl || defaultSupabaseUrl);
   const supabasePublishableKey = envSupabasePublishableKey || defaultSupabasePublishableKey;
+  const skinApiUrl = normalizeUrl(envSkinApiUrl || defaultSkinApiUrl);
 
-  if (!supabaseUrl || !supabasePublishableKey) {
-    throw new Error("Missing ELF_SUPABASE_URL or ELF_SUPABASE_PUBLISHABLE_KEY.");
+  if (!supabaseUrl || !supabasePublishableKey || !skinApiUrl) {
+    throw new Error("Missing ELF skin snapshot runtime configuration.");
   }
 
-  const catalog = await loadElfSkinCatalog();
+  const catalog = await loadElfSkinCatalog({
+    runtimeConfig: { skinApiUrl }
+  });
   const skins = normalizeSupplySkins(catalog.skins);
 
   if (skins.length === 0) {
