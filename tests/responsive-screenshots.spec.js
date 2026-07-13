@@ -26,6 +26,33 @@ test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
       });
       await expect(page.locator("main")).toBeVisible();
       await page.waitForTimeout(1_200);
+
+      if (viewport.width >= 921) {
+        await expect(page.locator(".elf-mobile-carousel-shell")).toBeHidden();
+        await expect(page.locator(".elf-desktop-champion .elf-champion-card")).toBeVisible();
+
+        const desktopFrameLayers = await page.locator(".elf-desktop-champion .elf-champion-card").evaluate((card) => ({
+          base: getComputedStyle(card).backgroundImage,
+          rank: getComputedStyle(card.querySelector(".elf-champion-rank")).backgroundImage,
+          name: getComputedStyle(card.querySelector(".elf-champion-body")).backgroundImage
+        }));
+        expect(desktopFrameLayers.base).not.toBe("none");
+        expect(desktopFrameLayers.rank).not.toBe("none");
+        expect(desktopFrameLayers.name).not.toBe("none");
+
+        const desktopFrameAssetsLoaded = await page.locator(".elf-desktop-champion .elf-champion-card").evaluate(async (card) => {
+          const extractUrl = (backgroundImage) => backgroundImage.match(/url\(["']?([^"')]+)["']?\)/)?.[1] ?? "";
+          const urls = [
+            extractUrl(getComputedStyle(card).backgroundImage),
+            extractUrl(getComputedStyle(card.querySelector(".elf-champion-rank")).backgroundImage),
+            extractUrl(getComputedStyle(card.querySelector(".elf-champion-body")).backgroundImage)
+          ];
+
+          return Promise.all(urls.map(async (url) => url !== "" && (await fetch(url)).ok));
+        });
+        expect(desktopFrameAssetsLoaded).toEqual([true, true, true]);
+      }
+
       await page.screenshot({
         path: testInfo.outputPath(`${viewport.name}.png`),
         animations: "disabled",
@@ -47,9 +74,11 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect(page).toHaveURL(/#home&tab=supply$/);
   await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
   await expect(page.locator(".elf-mobile-champion-carousel")).toBeVisible();
-  await expect(page.locator('[data-view="mobile"]')).toBeVisible();
-  await expect(page.locator('[data-view="desktop"]')).toBeHidden();
+  await expect(page.locator('[data-skin-champion-view="mobile"]')).toBeVisible();
+  await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeHidden();
   await expect(page.locator(".elf-mobile-champion-carousel wa-carousel-item")).toHaveCount(3);
+  await expect(page.locator(".elf-mobile-champion-carousel")).not.toHaveAttribute("navigation", "");
+  await expect(page.locator(".elf-mobile-carousel-progress")).toHaveText("1 / 3");
   await expect(page.locator(".mobile-primary-nav")).toBeVisible();
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#home");
   await expect(page.locator(".app-header .route-market-link")).toBeHidden();
@@ -71,6 +100,14 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect.poll(async () => page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
     element.activeSlide
   ))).toBe(1);
+  await expect(page.locator(".elf-mobile-carousel-progress")).toHaveText("2 / 3");
+
+  const mobileChampionLayout = await page.locator(".elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card").first().evaluate((card) => ({
+    artHeight: card.querySelector(".elf-champion-art")?.getBoundingClientRect().height ?? 0,
+    nameFontSize: Number.parseFloat(getComputedStyle(card.querySelector(".elf-champion-body > strong")).fontSize)
+  }));
+  expect(mobileChampionLayout.artHeight).toBeGreaterThanOrEqual(170);
+  expect(mobileChampionLayout.nameFontSize).toBeLessThanOrEqual(30);
 
   await page.locator(".elf-home-tabs-content [data-skin-home-tab='gallery']").click();
   await expect(page).toHaveURL(/#home&tab=gallery$/);
@@ -182,8 +219,8 @@ test("desktop keeps the full header and does not render mobile navigation", asyn
   await desktopSupplyTab.click();
   await expect(page).toHaveURL(/#home&tab=supply$/);
   await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
-  await expect(page.locator('[data-view="desktop"]')).toBeVisible();
-  await expect(page.locator('[data-view="mobile"]')).toBeHidden();
+  await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeVisible();
+  await expect(page.locator('[data-skin-champion-view="mobile"]')).toBeHidden();
 
   const desktopGalleryTab = page.locator(".elf-home-tabs-desktop [data-skin-home-tab='gallery']");
   await desktopGalleryTab.click();
@@ -224,13 +261,13 @@ test("responsive view boundary switches exactly between 920 and 921 pixels", asy
   await page.setViewportSize({ width: 920, height: 900 });
   await page.goto("/?v=playwright-breakpoint-boundary#home", { waitUntil: "domcontentloaded" });
 
-  await expect(page.locator('[data-view="mobile"]')).toBeVisible();
-  await expect(page.locator('[data-view="desktop"]')).toBeHidden();
+  await expect(page.locator('[data-skin-champion-view="mobile"]')).toBeVisible();
+  await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeHidden();
 
   await page.setViewportSize({ width: 921, height: 900 });
 
-  await expect(page.locator('[data-view="mobile"]')).toBeHidden();
-  await expect(page.locator('[data-view="desktop"]')).toBeVisible();
+  await expect(page.locator('[data-skin-champion-view="mobile"]')).toBeHidden();
+  await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeVisible();
 
   await page.setViewportSize({ width: 620, height: 900 });
   await expect(page.locator(".mobile-primary-nav")).toBeVisible();
