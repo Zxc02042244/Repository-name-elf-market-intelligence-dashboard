@@ -150,6 +150,16 @@
     --custom-name-plaque-image: url("../../assets/skin-frames/trailblazer-name-plaque-v1.png");
   }
 
+  .elf-champion-card.elf-champion-frame-pumpkin-whisper {
+    --custom-frame-image: url("../../assets/skin-frames/pumpkin-whisper-card-frame-base-v1.png");
+    --custom-frame-title: #ffe3a2;
+    --custom-frame-outline: #6a2b45;
+    --custom-frame-shadow: #170813;
+    --custom-frame-glow: rgb(255 136 34 / 76%);
+    --custom-rank-plaque-image: url("../../assets/skin-frames/pumpkin-whisper-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/pumpkin-whisper-name-plaque-v1.png");
+  }
+
   .elf-tab-panel
     .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply) {
     border: 0;

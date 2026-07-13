@@ -1,5 +1,8 @@
 marketplace-resources-site/
 node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
 playwright-report/
 test-results/
 blob-report/

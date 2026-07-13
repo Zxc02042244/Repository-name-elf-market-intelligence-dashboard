@@ -13,7 +13,8 @@ const unifiedChampionFrames = new Set([
   "elf-champion-frame-arale",
   "elf-champion-frame-shark-hoodie",
   "elf-champion-frame-genesis-pioneer",
-  "elf-champion-frame-trailblazer"
+  "elf-champion-frame-trailblazer",
+  "elf-champion-frame-pumpkin-whisper"
 ]);
 
 const layeredChampionFrames = new Set(unifiedChampionFrames);
@@ -96,7 +97,8 @@ function getChampionFrameClass(skin) {
     "arale",
     "shark-hoodie",
     "genesis-pioneer",
-    "trailblazer"
+    "trailblazer",
+    "pumpkin-whisper"
   ]);
 
   return supportedFrames.has(normalizedName)

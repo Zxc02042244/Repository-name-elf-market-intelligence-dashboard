@@ -102,12 +102,34 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
     element.activeSlide
   ))).toBe(1);
 
-  const mobileChampionLayout = await page.locator(".elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card").first().evaluate((card) => ({
+  const mobileChampionLayout = await page.locator(".elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card:visible").first().evaluate((card) => ({
     artHeight: card.querySelector(".elf-champion-art")?.getBoundingClientRect().height ?? 0,
-    nameFontSize: Number.parseFloat(getComputedStyle(card.querySelector(".elf-champion-body > strong")).fontSize)
+    nameFontSize: Number.parseFloat(getComputedStyle(card.querySelector(".elf-champion-body > strong")).fontSize),
+    outerBorderWidth: Number.parseFloat(getComputedStyle(card).borderTopWidth),
+    innerFrameDisplay: getComputedStyle(card, "::before").display,
+    artBorderWidth: Number.parseFloat(getComputedStyle(card.querySelector(".elf-champion-art")).borderTopWidth),
+    rankBorderWidth: Number.parseFloat(getComputedStyle(card.querySelector(".elf-champion-rank")).borderTopWidth),
+    statBorderWidth: Number.parseFloat(getComputedStyle(card.querySelector(".elf-champion-stat")).borderTopWidth),
+    statLabelDisplay: getComputedStyle(card.querySelector(".elf-champion-stat span")).display,
+    statValueBeforeContent: getComputedStyle(card.querySelector(".elf-champion-stat > :is(strong, .elf-rank-cancel)"), "::before").content,
+    rankBottom: card.querySelector(".elf-champion-rank")?.getBoundingClientRect().bottom ?? 0,
+    artImageTop: card.querySelector(".elf-champion-art img")?.getBoundingClientRect().top ?? 0,
+    rankCenter: card.querySelector(".elf-champion-rank")?.getBoundingClientRect().x
+      + (card.querySelector(".elf-champion-rank")?.getBoundingClientRect().width ?? 0) / 2,
+    artImageCenter: card.querySelector(".elf-champion-art img")?.getBoundingClientRect().x
+      + (card.querySelector(".elf-champion-art img")?.getBoundingClientRect().width ?? 0) / 2
   }));
   expect(mobileChampionLayout.artHeight).toBeGreaterThanOrEqual(170);
   expect(mobileChampionLayout.nameFontSize).toBeLessThanOrEqual(30);
+  expect(mobileChampionLayout.outerBorderWidth).toBeGreaterThan(0);
+  expect(mobileChampionLayout.innerFrameDisplay).toBe("none");
+  expect(mobileChampionLayout.artBorderWidth).toBe(0);
+  expect(mobileChampionLayout.rankBorderWidth).toBe(0);
+  expect(mobileChampionLayout.statBorderWidth).toBe(0);
+  expect(mobileChampionLayout.statLabelDisplay).toBe("none");
+  expect(mobileChampionLayout.statValueBeforeContent).toContain("☆");
+  expect(mobileChampionLayout.artImageTop - mobileChampionLayout.rankBottom).toBeLessThanOrEqual(24);
+  expect(Math.abs(mobileChampionLayout.rankCenter - mobileChampionLayout.artImageCenter)).toBeLessThanOrEqual(4);
 
   await page.locator(".elf-home-tabs-content [data-skin-home-tab='gallery']").click();
   await expect(page).toHaveURL(/#home&tab=gallery$/);
