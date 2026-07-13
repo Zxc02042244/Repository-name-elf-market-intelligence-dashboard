@@ -1,0 +1,23 @@
+{
+  "skinId": "pumpkin-whisper",
+  "canvas": {
+    "width": 1041,
+    "height": 1511
+  },
+  "rankPlaque": {
+    "file": "pumpkin-whisper-rank-plaque-v1.png",
+    "width": 601,
+    "height": 168,
+    "x": 220,
+    "y": 78
+  },
+  "namePlaque": {
+    "file": "pumpkin-whisper-name-plaque-v1.png",
+    "width": 801,
+    "height": 180,
+    "x": 120,
+    "y": 1264
+  },
+  "baseFrame": "pumpkin-whisper-card-frame-base-v1.png",
+  "preview": "pumpkin-whisper-card-frame-preview-v1.png"
+}

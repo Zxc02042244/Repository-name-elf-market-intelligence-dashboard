@@ -1,7 +1,7 @@
 import { formatNumber } from "../../../core/utils/numbers.js";
 import { defaultLocale, t } from "../../../i18n/i18n.js";
 import { PRODUCT_RULES } from "../../../config/product-config.js";
-import { getSkinClassNames } from "./champion-card-view.js";
+import { getSkinClassNames } from "./champion-card-view.js?v=20260713-pumpkin-whisper-1";
 import { renderDesktopChampionView } from "./desktop-champion-view.js";
 import { renderMobileChampionView } from "./mobile-champion-view.js";
 
