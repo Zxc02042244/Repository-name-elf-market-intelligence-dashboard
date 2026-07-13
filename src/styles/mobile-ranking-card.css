@@ -3,6 +3,7 @@
   .elf-mobile-carousel-shell {
     display: grid;
     min-width: 0;
+    padding-bottom: 6px;
   }
 
   .elf-mobile-champion-carousel {
@@ -15,7 +16,7 @@
   }
 
   .elf-mobile-champion-carousel wa-carousel-item {
-    padding-block: 4px 42px;
+    padding-block: 4px 52px;
   }
 
   .elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card {
@@ -75,10 +76,10 @@
   .elf-mobile-champion-carousel .elf-champion-heading {
     position: absolute;
     z-index: calc(var(--layer-content) + 3);
-    top: 20px;
+    top: 18px;
     left: 50%;
     display: grid;
-    width: min(64%, 220px);
+    width: min(72%, 250px);
     align-items: center;
     min-height: 42px;
     margin: 0;
@@ -96,7 +97,7 @@
   .elf-mobile-champion-carousel .elf-champion-rank {
     display: grid;
     width: 100%;
-    min-height: 40px;
+    min-height: 42px;
     place-items: center;
     border: 1px solid rgb(231 199 125 / 50%);
     border-radius: 0 0 13px 13px;
@@ -115,8 +116,8 @@
     display: grid;
     min-height: 0;
     margin: 0;
-    padding: 46px 4px 0;
-    place-items: end center;
+    padding: 60px 10px 4px;
+    place-items: center;
     overflow: hidden;
     border: 1px solid rgb(151 123 208 / 42%);
     border-radius: var(--radius-lg);
@@ -128,18 +129,20 @@
   }
 
   .elf-mobile-champion-carousel .elf-champion-art img {
-    width: min(100%, 310px);
-    height: min(100%, 310px);
+    width: min(82%, 280px);
+    height: auto;
     max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: auto;
     object-fit: contain;
-    object-position: center bottom;
+    object-position: center;
     filter: drop-shadow(0 12px 13px rgb(0 0 0 / 48%));
   }
 
   .elf-mobile-champion-carousel .elf-champion-body {
     display: grid;
     gap: 8px;
-    min-height: 96px;
+    min-height: 100px;
     padding: 0 4px 6px;
   }
 
@@ -148,7 +151,7 @@
     overflow: hidden;
     min-height: 1.08em;
     color: var(--color-card-text);
-    font-size: clamp(1.35rem, 7vw, 1.65rem);
+    font-size: clamp(1.28rem, 6.4vw, 1.58rem);
     font-weight: 900;
     line-height: 1.08;
     text-align: center;
@@ -217,7 +220,7 @@
     z-index: calc(var(--layer-content) + 1);
     justify-self: center;
     min-width: 52px;
-    margin: -19px 0 4px;
+    margin: -14px 0 6px;
     color: var(--color-card-muted);
     font-size: 0.78rem;
     font-variant-numeric: tabular-nums;
