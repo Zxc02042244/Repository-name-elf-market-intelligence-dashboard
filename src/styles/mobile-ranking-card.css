@@ -1,27 +1,34 @@
-/* Mobile ranking deck: a compact collectible-card frame inside Web Awesome Carousel. */
+/* Mobile ranking deck: an image-first collectible card inside Web Awesome Carousel. */
 @media (max-width: 920px) {
+  .elf-mobile-carousel-shell {
+    display: grid;
+    min-width: 0;
+  }
+
   .elf-mobile-champion-carousel {
-    --aspect-ratio: 17 / 21;
-    --scroll-hint: 9%;
-    --slide-gap: var(--space-3);
-    margin: -2px 0 2px;
+    --aspect-ratio: 4 / 5;
+    --scroll-hint: 5%;
+    --slide-gap: 12px;
+    min-width: 0;
+    margin: -2px 0 0;
+    touch-action: pan-y;
   }
 
   .elf-mobile-champion-carousel wa-carousel-item {
-    padding-block: 4px 20px;
+    padding-block: 4px 42px;
   }
 
   .elf-mobile-champion-carousel wa-carousel-item > .elf-champion-card {
     position: relative;
     display: grid;
     min-height: 0;
-    aspect-ratio: 17 / 21;
-    grid-template-rows: 48px minmax(0, 1fr) auto;
-    gap: var(--space-2);
+    aspect-ratio: 4 / 5;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
     overflow: hidden;
     border: 1px solid rgb(231 199 125 / 58%);
-    border-radius: var(--radius-card) var(--radius-card) 26px 26px;
-    padding: var(--radius-lg);
+    border-radius: 26px;
+    padding: 12px;
     background:
       linear-gradient(135deg, transparent 0 47%, rgb(231 199 125 / 5%) 47% 48%, transparent 48% 100%),
       radial-gradient(circle at 50% 43%, rgb(119 82 184 / 22%), transparent 42%),
@@ -66,11 +73,17 @@
   }
 
   .elf-mobile-champion-carousel .elf-champion-heading {
-    display: flex;
+    position: absolute;
+    z-index: calc(var(--layer-content) + 3);
+    top: 20px;
+    left: 50%;
+    display: grid;
+    width: min(64%, 220px);
     align-items: center;
-    min-height: 48px;
+    min-height: 42px;
     margin: 0;
     padding: 0;
+    transform: translateX(-50%);
   }
 
   .elf-mobile-champion-carousel .elf-champion-heading > div,
@@ -83,16 +96,16 @@
   .elf-mobile-champion-carousel .elf-champion-rank {
     display: grid;
     width: 100%;
-    min-height: 44px;
+    min-height: 40px;
     place-items: center;
     border: 1px solid rgb(231 199 125 / 50%);
-    border-radius: 9px 9px 14px 14px;
+    border-radius: 0 0 13px 13px;
     background:
       linear-gradient(180deg, rgb(231 199 125 / 20%), rgb(231 199 125 / 4%)),
       #13151a;
     color: #fff0bc;
     font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace;
-    font-size: 1.22rem;
+    font-size: clamp(1rem, 4.8vw, 1.2rem);
     font-weight: 900;
     letter-spacing: 0.08em;
     text-shadow: 0 2px 0 #49300f, 0 0 12px rgb(231 199 125 / 34%);
@@ -102,7 +115,8 @@
     display: grid;
     min-height: 0;
     margin: 0;
-    place-items: center;
+    padding: 46px 4px 0;
+    place-items: end center;
     overflow: hidden;
     border: 1px solid rgb(151 123 208 / 42%);
     border-radius: var(--radius-lg);
@@ -114,29 +128,34 @@
   }
 
   .elf-mobile-champion-carousel .elf-champion-art img {
-    width: min(78%, 236px);
-    height: min(88%, 236px);
+    width: min(100%, 310px);
+    height: min(100%, 310px);
+    max-width: 100%;
     object-fit: contain;
+    object-position: center bottom;
     filter: drop-shadow(0 12px 13px rgb(0 0 0 / 48%));
   }
 
   .elf-mobile-champion-carousel .elf-champion-body {
     display: grid;
-    gap: 6px;
-    min-height: 92px;
-    padding: 2px 4px 6px;
+    gap: 8px;
+    min-height: 96px;
+    padding: 0 4px 6px;
   }
 
-  .elf-mobile-champion-carousel .elf-champion-body > strong {
+  .elf-mobile-champion-carousel .elf-champion-card-compact .elf-champion-body > strong {
+    display: -webkit-box;
     overflow: hidden;
+    min-height: 1.08em;
     color: var(--color-card-text);
-    font-size: clamp(1.18rem, 6.4vw, 1.55rem);
+    font-size: clamp(1.35rem, 7vw, 1.65rem);
     font-weight: 900;
     line-height: 1.08;
     text-align: center;
-    text-overflow: ellipsis;
     text-shadow: 0 2px 8px rgb(0 0 0 / 72%);
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .elf-mobile-champion-carousel .elf-champion-stat {
@@ -152,35 +171,63 @@
 
   .elf-mobile-champion-carousel .elf-champion-stat span {
     color: var(--color-card-muted);
-    font-size: 0.78rem;
+    font-size: clamp(0.78rem, 3.4vw, 0.9rem);
+  }
+
+  .elf-mobile-champion-carousel .elf-champion-stat span::before {
+    margin-right: 7px;
+    color: var(--color-card-gold);
+    content: "☆";
+    font-size: 1.1rem;
   }
 
   .elf-mobile-champion-carousel .elf-champion-stat strong,
   .elf-mobile-champion-carousel .elf-rank-cancel {
     color: var(--color-card-text-strong);
-    font-size: 1.08rem;
+    font-size: clamp(1.08rem, 5.6vw, 1.45rem);
     font-weight: 900;
   }
 
   .elf-mobile-champion-carousel::part(navigation-button) {
-    border-color: rgb(231 199 125 / 54%);
-    border-radius: 50%;
-    background: rgb(6 11 17 / 92%);
-    box-shadow: 0 5px 16px rgb(0 0 0 / 42%);
+    display: none;
   }
 
   .elf-mobile-champion-carousel::part(pagination) {
-    gap: 7px;
+    gap: 0;
   }
 
   .elf-mobile-champion-carousel::part(pagination-item) {
-    width: 18px;
-    height: 4px;
-    border-radius: var(--radius-pill);
+    width: 44px;
+    height: 44px;
+    border-radius: 0;
+    background:
+      linear-gradient(180deg, transparent 20px, #536070 20px 24px, transparent 24px);
+    opacity: 0.78;
   }
 
   .elf-mobile-champion-carousel::part(pagination-item-active) {
-    width: 32px;
-    background: var(--color-card-gold);
+    width: 44px;
+    background:
+      linear-gradient(180deg, transparent 20px, var(--color-card-gold) 20px 24px, transparent 24px);
+    opacity: 1;
+  }
+
+  .elf-mobile-carousel-progress {
+    position: relative;
+    z-index: calc(var(--layer-content) + 1);
+    justify-self: center;
+    min-width: 52px;
+    margin: -19px 0 4px;
+    color: var(--color-card-muted);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .elf-mobile-champion-carousel {
+      scroll-behavior: auto;
+    }
   }
 }

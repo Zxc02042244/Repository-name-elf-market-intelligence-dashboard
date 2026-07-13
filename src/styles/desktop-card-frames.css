@@ -1,153 +1,153 @@
 @media (min-width: 921px) {
   .elf-champion-card.elf-champion-frame-flame-runner {
-    --custom-frame-image: url("../assets/skin-frames/flame-runner-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/flame-runner-card-frame-base-v1.png");
     --custom-frame-title: #ffd878;
     --custom-frame-outline: #6e1c08;
     --custom-frame-shadow: #1a0502;
     --custom-frame-glow: rgb(255 82 18 / 70%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/flame-runner-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/flame-runner-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/flame-runner-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/flame-runner-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-flame-brawler {
-    --custom-frame-image: url("../assets/skin-frames/flame-brawler-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/flame-brawler-card-frame-base-v1.png");
     --custom-frame-title: #ffd27a;
     --custom-frame-outline: #791b08;
     --custom-frame-shadow: #1b0501;
     --custom-frame-glow: rgb(255 85 20 / 76%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/flame-brawler-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/flame-brawler-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/flame-brawler-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/flame-brawler-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-alien-hunter {
-    --custom-frame-image: url("../assets/skin-frames/alien-hunter-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/alien-hunter-card-frame-base-v1.png");
     --custom-frame-title: #dfff9f;
     --custom-frame-outline: #315c20;
     --custom-frame-shadow: #071407;
     --custom-frame-glow: rgb(126 255 58 / 68%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/alien-hunter-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/alien-hunter-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/alien-hunter-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/alien-hunter-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-bio-warrior {
-    --custom-frame-image: url("../assets/skin-frames/bio-warrior-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/bio-warrior-card-frame-base-v1.png");
     --custom-frame-title: #e1ff9f;
     --custom-frame-outline: #315a1b;
     --custom-frame-shadow: #071306;
     --custom-frame-glow: rgb(157 255 44 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/bio-warrior-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/bio-warrior-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/bio-warrior-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/bio-warrior-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-frost-enchantress {
-    --custom-frame-image: url("../assets/skin-frames/frost-enchantress-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/frost-enchantress-card-frame-base-v1.png");
     --custom-frame-title: #f4e9ff;
     --custom-frame-outline: #5c238f;
     --custom-frame-shadow: #150524;
     --custom-frame-glow: rgb(168 91 255 / 78%);
     --custom-rank-text-padding-top: 8px;
-    --custom-rank-plaque-image: url("../assets/skin-frames/frost-enchantress-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/frost-enchantress-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/frost-enchantress-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/frost-enchantress-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-spinning-kicker {
-    --custom-frame-image: url("../assets/skin-frames/spinning-kicker-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/spinning-kicker-card-frame-base-v1.png");
     --custom-frame-title: #e9fbff;
     --custom-frame-outline: #145ca5;
     --custom-frame-shadow: #03162f;
     --custom-frame-glow: rgb(65 190 255 / 78%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/spinning-kicker-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/spinning-kicker-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/spinning-kicker-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/spinning-kicker-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-zombie-walker {
-    --custom-frame-image: url("../assets/skin-frames/zombie-walker-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/zombie-walker-card-frame-base-v1.png");
     --custom-frame-title: #d9f3df;
     --custom-frame-outline: #315f50;
     --custom-frame-shadow: #031411;
     --custom-frame-glow: rgb(63 206 174 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/zombie-walker-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/zombie-walker-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/zombie-walker-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/zombie-walker-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-bubble-beast {
-    --custom-frame-image: url("../assets/skin-frames/bubble-beast-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/bubble-beast-card-frame-base-v1.png");
     --custom-frame-title: #ffe0fa;
     --custom-frame-outline: #71135e;
     --custom-frame-shadow: #21051c;
     --custom-frame-glow: rgb(255 72 220 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/bubble-beast-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/bubble-beast-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/bubble-beast-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/bubble-beast-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-starborn-warrior {
-    --custom-frame-image: url("../assets/skin-frames/starborn-warrior-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/starborn-warrior-card-frame-base-v1.png");
     --custom-frame-title: #ffe28a;
     --custom-frame-outline: #7a3a00;
     --custom-frame-shadow: #1b0900;
     --custom-frame-glow: rgb(255 179 24 / 78%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/starborn-warrior-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/starborn-warrior-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/starborn-warrior-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/starborn-warrior-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-cosmic-sovereign {
-    --custom-frame-image: url("../assets/skin-frames/cosmic-sovereign-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/cosmic-sovereign-card-frame-base-v1.png");
     --custom-frame-title: #fff2c7;
     --custom-frame-outline: #8d3a82;
     --custom-frame-shadow: #05091d;
     --custom-frame-glow: rgb(222 62 255 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/cosmic-sovereign-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/cosmic-sovereign-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/cosmic-sovereign-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/cosmic-sovereign-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-toy-sheriff {
-    --custom-frame-image: url("../assets/skin-frames/toy-sheriff-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/toy-sheriff-card-frame-base-v1.png");
     --custom-frame-title: #ffe7ac;
     --custom-frame-outline: #8b4d1e;
     --custom-frame-shadow: #1f0c03;
     --custom-frame-glow: rgb(255 174 72 / 70%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/toy-sheriff-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/toy-sheriff-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/toy-sheriff-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/toy-sheriff-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-arale {
-    --custom-frame-image: url("../assets/skin-frames/arale-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/arale-card-frame-base-v1.png");
     --custom-frame-title: #fff6d9;
     --custom-frame-outline: #a53b59;
     --custom-frame-shadow: #06283a;
     --custom-frame-glow: rgb(103 236 255 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/arale-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/arale-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/arale-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/arale-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-shark-hoodie {
-    --custom-frame-image: url("../assets/skin-frames/shark-hoodie-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/shark-hoodie-card-frame-base-v1.png");
     --custom-frame-title: #e6fbff;
     --custom-frame-outline: #07557f;
     --custom-frame-shadow: #010d19;
     --custom-frame-glow: rgb(45 225 255 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/shark-hoodie-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/shark-hoodie-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/shark-hoodie-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/shark-hoodie-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-genesis-pioneer {
-    --custom-frame-image: url("../assets/skin-frames/genesis-pioneer-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/genesis-pioneer-card-frame-base-v1.png");
     --custom-frame-title: #fff0b2;
     --custom-frame-outline: #59308d;
     --custom-frame-shadow: #08051c;
     --custom-frame-glow: rgb(176 89 255 / 72%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/genesis-pioneer-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/genesis-pioneer-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/genesis-pioneer-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/genesis-pioneer-name-plaque-v1.png");
   }
 
   .elf-champion-card.elf-champion-frame-trailblazer {
-    --custom-frame-image: url("../assets/skin-frames/trailblazer-card-frame-base-v1.png");
+    --custom-frame-image: url("../../assets/skin-frames/trailblazer-card-frame-base-v1.png");
     --custom-frame-title: #fff0b5;
     --custom-frame-outline: #8d3904;
     --custom-frame-shadow: #100602;
     --custom-frame-glow: rgb(255 133 24 / 76%);
-    --custom-rank-plaque-image: url("../assets/skin-frames/trailblazer-rank-plaque-v1.png");
-    --custom-name-plaque-image: url("../assets/skin-frames/trailblazer-name-plaque-v1.png");
+    --custom-rank-plaque-image: url("../../assets/skin-frames/trailblazer-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../../assets/skin-frames/trailblazer-name-plaque-v1.png");
   }
 
   .elf-tab-panel

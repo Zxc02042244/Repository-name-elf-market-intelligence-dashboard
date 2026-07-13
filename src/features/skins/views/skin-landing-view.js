@@ -1,41 +1,9 @@
 import { formatNumber } from "../../../core/utils/numbers.js";
 import { defaultLocale, t } from "../../../i18n/i18n.js";
 import { PRODUCT_RULES } from "../../../config/product-config.js";
-
-const unifiedChampionFrames = new Set([
-  "elf-champion-frame-flame-runner",
-  "elf-champion-frame-flame-brawler",
-  "elf-champion-frame-alien-hunter",
-  "elf-champion-frame-bio-warrior",
-  "elf-champion-frame-frost-enchantress",
-  "elf-champion-frame-bubble-beast",
-  "elf-champion-frame-starborn-warrior",
-  "elf-champion-frame-spinning-kicker",
-  "elf-champion-frame-zombie-walker",
-  "elf-champion-frame-cosmic-sovereign",
-  "elf-champion-frame-toy-sheriff",
-  "elf-champion-frame-arale",
-  "elf-champion-frame-shark-hoodie",
-  "elf-champion-frame-genesis-pioneer",
-  "elf-champion-frame-trailblazer"
-]);
-const layeredChampionFrames = new Set([
-  "elf-champion-frame-flame-runner",
-  "elf-champion-frame-flame-brawler",
-  "elf-champion-frame-alien-hunter",
-  "elf-champion-frame-bio-warrior",
-  "elf-champion-frame-frost-enchantress",
-  "elf-champion-frame-spinning-kicker",
-  "elf-champion-frame-zombie-walker",
-  "elf-champion-frame-bubble-beast",
-  "elf-champion-frame-starborn-warrior",
-  "elf-champion-frame-cosmic-sovereign",
-  "elf-champion-frame-toy-sheriff",
-  "elf-champion-frame-arale",
-  "elf-champion-frame-shark-hoodie",
-  "elf-champion-frame-genesis-pioneer",
-  "elf-champion-frame-trailblazer"
-]);
+import { getSkinClassNames } from "./champion-card-view.js";
+import { renderDesktopChampionView } from "./desktop-champion-view.js";
+import { renderMobileChampionView } from "./mobile-champion-view.js";
 
 export function renderElfSkinLandingView(
   skinCatalog,
@@ -113,7 +81,7 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
         </p>
       ` : ""}
       ${renderWishlistChampionCarousel(wishlistSlots, wishlist, locale)}
-      ${wishlistChampion ? `<div class="elf-desktop-champion" data-view="desktop">${renderChampionCard({
+      ${renderDesktopChampionView(wishlistChampion ? {
         skin: wishlistChampion,
         title: championRank,
         eyebrow: skinLandingText("homeTabWishlist", locale),
@@ -125,8 +93,7 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
         rankLabel: championRank,
         kind: "wishlist",
         action: wishlistChampion.isLocalSelection ? "cancel" : "",
-        compact: true
-      })}</div>` : ""}
+      } : null)}
       ${wishlistLeaders.length > 0 ? `
         <div class="elf-rank-actions">
           <button class="elf-clear-wishlist" type="button" data-wishlist-clear>
@@ -161,7 +128,7 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
         <span>${t("elfLanding.supplyRankingScope", locale)}</span>
       </div>
       ${renderSupplyChampionCarousel(supplyLeaders, locale)}
-      ${supplyLeaders.length > 0 ? `<div class="elf-desktop-champion" data-view="desktop">${renderChampionCard({
+      ${renderDesktopChampionView(supplyLeaders.length > 0 ? {
         skin: supplyChampion,
         title: championRank,
         eyebrow: skinLandingText("homeTabSupply", locale),
@@ -172,9 +139,8 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
           : formatLocalizedNumber(supplyChampion.quantity, locale),
         rankLabel: championRank,
         kind: "supply",
-        eager: true,
-        compact: true
-      })}</div>` : ""}
+        eager: true
+      } : null)}
       <div class="elf-rank-list">
         ${supplySlots.map((skin, index) => skin
           ? renderSupplyLeader(skin, index, topSupply, locale, supplyChampion.id)
@@ -193,7 +159,7 @@ function renderWishlistChampionCarousel(wishlistSlots, wishlist, locale) {
     return "";
   }
 
-  return renderMobileChampionCarousel(slides.map((skin, index) => ({
+  return renderMobileChampionView(slides.map((skin, index) => ({
     skin,
     title: `TOP ${index + 1}`,
     eyebrow: skinLandingText("homeTabWishlist", locale),
@@ -215,7 +181,7 @@ function renderSupplyChampionCarousel(supplyLeaders, locale) {
     return "";
   }
 
-  return renderMobileChampionCarousel(slides.map((skin, index) => ({
+  return renderMobileChampionView(slides.map((skin, index) => ({
     skin,
     title: `TOP ${index + 1}`,
     eyebrow: skinLandingText("homeTabSupply", locale),
@@ -228,27 +194,6 @@ function renderSupplyChampionCarousel(supplyLeaders, locale) {
     kind: "supply",
     eager: index === 0
   })));
-}
-
-function renderMobileChampionCarousel(slides) {
-  return `
-    <wa-carousel
-      class="elf-mobile-champion-carousel"
-      data-view="mobile"
-      pagination
-      navigation
-      mouse-dragging
-      slides-per-page="1"
-      slides-per-move="1"
-      aria-label="Top ranked ELF skins"
-    >
-      ${slides.map((options, index) => `
-        <wa-carousel-item aria-label="${escapeHtml(`${options.rankLabel}, ${options.skin.name}`)}" data-rank="${index + 1}">
-          ${renderChampionCard({ ...options, compact: true })}
-        </wa-carousel-item>
-      `).join("")}
-    </wa-carousel>
-  `;
 }
 
 function renderOfficialSkinTab(catalog, wishlist, locale) {
@@ -362,89 +307,6 @@ function renderTodayAddedRanking(leaders, topTodayAdded, locale) {
       </div>
     </section>
   `;
-}
-
-function renderChampionCard({
-  skin,
-  title,
-  eyebrow,
-  meta,
-  statLabel,
-  statValue,
-  statDetail = "",
-  rankLabel,
-  kind,
-  eager = false,
-  action = "",
-  compact = false
-}) {
-  const frameClass = getChampionFrameClass(skin, kind);
-
-  return `
-    <article class="elf-champion-card ${compact ? "elf-champion-card-compact" : ""} elf-champion-${escapeHtml(kind)} ${getSkinClassNames(skin)} ${unifiedChampionFrames.has(frameClass) ? "elf-champion-has-custom-frame" : ""} ${layeredChampionFrames.has(frameClass) ? "elf-champion-layered-frame" : ""} ${frameClass}">
-      <div class="elf-champion-heading">
-        <div>
-          <p class="eyebrow">${eyebrow}</p>
-          <h2>${title}</h2>
-        </div>
-        <span class="elf-champion-rank">${escapeHtml(rankLabel)}</span>
-      </div>
-      <div class="elf-champion-art" aria-hidden="true">
-        <img
-          src="${escapeHtml(skin.image)}"
-          alt=""
-          width="240"
-          height="240"
-          loading="${eager ? "eager" : "lazy"}"
-          decoding="async"
-        >
-      </div>
-      <div class="elf-champion-body">
-        <span>${meta}</span>
-        <strong>${escapeHtml(skin.name)}</strong>
-        <div class="elf-champion-stat">
-          <span>${statLabel}${statDetail ? `<small>${statDetail}</small>` : ""}</span>
-          ${action === "cancel" ? `
-            <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
-              ${statValue}
-            </button>
-          ` : `<strong>${statValue}</strong>`}
-        </div>
-      </div>
-    </article>
-  `;
-}
-
-function getChampionFrameClass(skin, kind) {
-  const normalizedName = String(skin?.name ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  const supportedFrames = new Set([
-    "flame-runner",
-    "flame-brawler",
-    "alien-hunter",
-    "bio-warrior",
-    "frost-enchantress",
-    "bubble-beast",
-    "starborn-warrior",
-    "spinning-kicker",
-    "zombie-walker",
-    "cosmic-sovereign",
-    "toy-sheriff",
-    "arale",
-    "shark-hoodie",
-    "genesis-pioneer",
-    "trailblazer"
-  ]);
-
-  if (supportedFrames.has(normalizedName)) {
-    return `elf-champion-frame-${normalizedName}`;
-  }
-
-  return "";
 }
 
 function renderSupplyLeader(skin, index, topSupply, locale, selectedPreviewId) {
@@ -650,20 +512,6 @@ function renderSkinSupply(skin, locale) {
       ${supplyDelta ? `<small>${supplyDelta}</small>` : ""}
     </p>
   `;
-}
-
-function getSkinClassNames(skin) {
-  const normalizedName = String(skin?.name ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return [
-    `elf-skin-card-${escapeHtml(skin.tone)}`,
-    `elf-skin-id-${escapeHtml(skin.id)}`,
-    normalizedName ? `elf-skin-name-${escapeHtml(normalizedName)}` : ""
-  ].filter(Boolean).join(" ");
 }
 
 function renderInlineSupplyDelta(skin, locale) {

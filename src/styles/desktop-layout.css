@@ -1,4 +1,5 @@
 @media (min-width: 921px) {
+  .elf-mobile-carousel-shell,
   .elf-mobile-champion-carousel {
     display: none;
   }

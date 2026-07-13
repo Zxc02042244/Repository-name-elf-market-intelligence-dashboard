@@ -27,7 +27,7 @@ import {
 import {
   renderElfSkinHomeTabs,
   renderElfSkinLandingView
-} from "../features/skins/views/skin-landing-view.js?v=20260713-skins-feature-1";
+} from "../features/skins/views/skin-landing-view.js?v=20260713-skins-feature-2";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
 import { HOME_TABS, PRODUCT_RULES, STORAGE_KEYS } from "../config/product-config.js";
 
@@ -122,7 +122,7 @@ function renderApp({ preserveUi = false } = {}) {
 function captureUiSnapshot() {
   const activeElement = document.activeElement;
   const carousel = [...appRoot.querySelectorAll(".elf-mobile-champion-carousel")]
-    .find((element) => !element.closest('[data-view="mobile"]') || isElementVisible(element));
+    .find((element) => !element.closest('[data-skin-champion-view="mobile"]') || isElementVisible(element));
 
   return {
     carouselSlide: pendingUiSnapshot?.carouselSlide ?? (Number.isFinite(Number(carousel?.activeSlide))
@@ -334,7 +334,18 @@ function handleCarouselSlideChange(event) {
   const carousel = getEventElement(event)?.closest(".elf-mobile-champion-carousel");
   const activeSlide = Number(carousel?.activeSlide);
 
-  if (!carousel || !Number.isFinite(activeSlide) || !pendingUiSnapshot) {
+  if (!carousel || !Number.isFinite(activeSlide)) {
+    return;
+  }
+
+  const currentSlide = carousel
+    .closest(".elf-mobile-carousel-shell")
+    ?.querySelector("[data-carousel-current]");
+  if (currentSlide) {
+    currentSlide.textContent = String(activeSlide + 1);
+  }
+
+  if (!pendingUiSnapshot) {
     return;
   }
 
