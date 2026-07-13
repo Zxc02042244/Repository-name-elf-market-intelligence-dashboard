@@ -1,0 +1,149 @@
+.elf-delta-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #26384d;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 12% 18%, rgb(112 199 216 / 16%), transparent 28%),
+    linear-gradient(110deg, rgb(8 12 18 / 92%), rgb(17 20 18 / 82%)),
+    repeating-linear-gradient(90deg, rgb(231 199 125 / 5%) 0 1px, transparent 1px 22px);
+  box-shadow:
+    0 18px 44px rgb(0 0 0 / 26%),
+    inset 0 1px 0 rgb(255 226 142 / 10%);
+}
+
+.elf-delta-panel::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, #70c7d8, #f2b84b, #88d17c);
+  content: "";
+}
+
+.elf-delta-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.elf-delta-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.elf-delta-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 112px;
+  border: 1px solid color-mix(in srgb, var(--skin-accent, #70c7d8) 46%, transparent);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--skin-accent, #70c7d8) 18%, transparent), transparent 54%),
+    rgb(7 11 13 / 74%);
+  color: var(--skin-accent, #70c7d8);
+}
+
+.elf-delta-rank {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 56%, transparent);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: rgb(0 0 0 / 32%);
+  color: #fff7da;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.elf-delta-card img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 12px rgb(0 0 0 / 42%));
+}
+
+.elf-delta-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px dashed rgb(231 199 125 / 28%);
+  border-radius: 8px;
+  background: rgb(8 12 10 / 48%);
+  color: rgb(255 244 210 / 54%);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.elf-delta-card-empty {
+  border-color: rgb(231 199 125 / 18%);
+  background:
+    linear-gradient(135deg, rgb(255 244 210 / 6%), transparent 54%),
+    rgb(7 11 13 / 58%);
+  color: #9db3c4;
+}
+
+.elf-delta-card-empty .elf-delta-rank {
+  color: rgb(255 244 210 / 62%);
+}
+
+.elf-delta-card-empty .elf-delta-body strong,
+.elf-delta-card-empty .elf-delta-body p {
+  color: rgb(255 244 210 / 58%);
+}
+
+.elf-delta-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.elf-delta-body strong {
+  overflow-wrap: anywhere;
+  color: #fff4d2;
+  font-size: 0.92rem;
+  line-height: 1.12;
+}
+
+.elf-delta-body small {
+  color: #a9b9c7;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.elf-delta-body p {
+  margin: 0;
+  color: #fff7da;
+  font-size: 1.35rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.elf-delta-meter {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 8%);
+}
+
+.elf-delta-meter span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, currentColor, #fff4d2);
+}
+
+.elf-delta-empty {
+  margin: 0;
+}

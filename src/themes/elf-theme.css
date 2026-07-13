@@ -72,15 +72,6 @@ body {
   color: var(--theme-text-strong);
 }
 
-.elf-landing {
-  border-color: rgb(231 199 125 / 36%);
-  background: var(--theme-surface);
-  box-shadow:
-    0 22px 60px rgb(0 0 0 / 30%),
-    inset 0 1px 0 rgb(255 226 142 / 12%);
-}
-
-.elf-feature-card,
 .elf-wishlist-panel,
 .elf-wishlist-leader,
 .elf-skin-card {
@@ -91,11 +82,6 @@ body {
   box-shadow: 0 18px 44px var(--theme-shadow);
 }
 
-.elf-feature-card {
-  backdrop-filter: blur(6px);
-}
-
-.elf-feature-card strong,
 .elf-skin-card strong {
   color: var(--theme-text-strong);
 }

@@ -1,0 +1,116 @@
+.elf-wishlist-panel {
+  border: 1px solid #26384d;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: rgb(13 18 14 / 72%);
+}
+
+.elf-rank-cancel,
+.elf-clear-wishlist {
+  min-height: 38px;
+  border: 1px solid rgb(231 199 125 / 30%);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: rgb(8 12 10 / 64%);
+  color: #fff4d2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.elf-rank-cancel:hover,
+.elf-rank-cancel:focus-visible,
+.elf-clear-wishlist:hover,
+.elf-clear-wishlist:focus-visible {
+  border-color: currentColor;
+  background: rgb(255 244 210 / 10%);
+}
+
+.elf-wishlist-notice {
+  margin: 0 0 12px;
+  border: 1px solid rgb(242 184 75 / 42%);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgb(242 184 75 / 10%);
+  color: #ffe2a1;
+}
+
+.elf-wishlist-leaders {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.elf-wishlist-leader {
+  display: grid;
+  grid-template-columns: auto 64px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 92px;
+  border: 1px solid #26384d;
+  border-radius: 8px;
+  padding: 12px;
+  background: rgb(13 18 14 / 78%);
+  color: var(--skin-accent, #f2b84b);
+}
+
+.elf-wishlist-leader > span {
+  color: currentColor;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.elf-wishlist-leader img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 12px rgb(0 0 0 / 38%));
+}
+
+.elf-wishlist-leader strong,
+.elf-wishlist-leader small {
+  display: block;
+}
+
+.elf-wishlist-leader strong {
+  color: #fff4d2;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.elf-wishlist-leader small {
+  margin-top: 4px;
+  color: #9db3c4;
+  font-size: 0.76rem;
+}
+
+.elf-wishlist-button {
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--skin-accent, #f2b84b) 62%, transparent);
+  border-radius: 8px;
+  margin-top: 8px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--skin-accent, #f2b84b) 18%, rgb(8 12 10));
+  color: #fff7da;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast),
+    opacity var(--motion-fast);
+}
+
+.elf-wishlist-button:hover,
+.elf-wishlist-button:focus-visible {
+  background: color-mix(in srgb, var(--skin-accent, #f2b84b) 28%, rgb(8 12 10));
+}
+
+.elf-wishlist-button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}

@@ -1,0 +1,435 @@
+@media (max-width: 920px) {
+  .data-source-grid,
+  .elf-skin-grid,
+  .elf-wishlist-leaders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .elf-rank-showcase {
+    grid-template-columns: 1fr;
+  }
+
+  .elf-footer-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .elf-champion-card {
+    min-height: 460px;
+  }
+
+  .elf-delta-track {
+    grid-auto-columns: minmax(220px, 44%);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: var(--space-1);
+    scroll-snap-type: x proximity;
+  }
+
+  .elf-delta-card {
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .data-source-grid,
+  .elf-wishlist-leaders {
+    grid-template-columns: 1fr;
+  }
+
+  .elf-tab-panel {
+    padding: 10px;
+  }
+
+  .elf-champion-card {
+    min-height: 420px;
+  }
+
+  .elf-champion-card-compact {
+    min-height: 360px;
+    padding: var(--space-3);
+  }
+
+  .elf-champion-card-compact .elf-champion-body > strong {
+    font-size: clamp(1.45rem, 8vw, 2.05rem);
+  }
+
+  .elf-champion-card-compact .elf-champion-stat {
+    min-height: 46px;
+  }
+
+  .elf-footer-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .elf-delta-panel {
+    padding: var(--space-3);
+  }
+
+  .elf-delta-track {
+    grid-auto-columns: minmax(210px, 82%);
+  }
+
+  .elf-champion-heading {
+    display: grid;
+  }
+
+  .elf-skin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .elf-skin-card {
+    gap: var(--space-2);
+    min-height: 0;
+    border-radius: 7px;
+    padding: var(--space-2);
+  }
+
+  .elf-skin-card::before {
+    height: 4px;
+  }
+
+  .elf-skin-image-frame {
+    min-height: 84px;
+    border-radius: var(--radius-sm);
+  }
+
+  .elf-skin-image-frame img {
+    width: min(100%, 72px);
+    filter: drop-shadow(0 9px 10px rgb(0 0 0 / 38%));
+  }
+
+  .elf-skin-card-body {
+    gap: 3px;
+  }
+
+  .elf-skin-card span {
+    font-size: 0.56rem;
+    letter-spacing: 0;
+  }
+
+  .elf-skin-card strong {
+    min-height: 2.25em;
+    font-size: 0.72rem;
+    line-height: 1.12;
+  }
+
+  .elf-skin-card small {
+    font-size: 0.62rem;
+    line-height: 1.15;
+  }
+
+  .elf-skin-stat {
+    display: grid;
+    gap: 2px;
+    margin-top: 5px;
+    border-radius: var(--radius-sm);
+    padding: 5px 6px;
+  }
+
+  .elf-skin-stat span {
+    font-size: 0.52rem;
+  }
+
+  .elf-skin-stat strong {
+    font-size: 0.7rem;
+  }
+
+  .elf-wishlist-button {
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    margin-top: 5px;
+    padding: 0 var(--space-1);
+    font-size: 0.62rem;
+    line-height: 1.1;
+  }
+}
+
+@media (max-width: 430px) {
+  .elf-wishlist-panel,
+  .elf-champion-card {
+    padding: var(--space-3);
+  }
+
+  .elf-home-workspace {
+    gap: 10px;
+  }
+
+  .elf-champion-card-compact {
+    min-height: 342px;
+  }
+
+  .elf-rank-row,
+  .elf-rank-panel-supply .elf-rank-row,
+  .elf-tab-panel-supply .elf-rank-row,
+  .elf-tab-panel-wishlist .elf-rank-row {
+    grid-template-columns: 30px 56px minmax(0, 1fr);
+    min-height: 76px;
+    padding: var(--space-2);
+  }
+
+  .elf-delta-track {
+    grid-auto-columns: minmax(206px, 88%);
+  }
+
+  .elf-delta-card {
+    grid-template-columns: 62px minmax(0, 1fr);
+    min-height: 104px;
+    padding: 10px;
+  }
+
+  .elf-delta-card img {
+    width: 62px;
+    height: 62px;
+  }
+
+  .elf-delta-body p {
+    font-size: 1.18rem;
+  }
+
+  .elf-rank-cancel {
+    grid-column: 2 / -1;
+    width: 100%;
+  }
+
+  .elf-rank-row img {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (max-width: 620px) {
+  .elf-tab-panel {
+    border-radius: 10px;
+    padding: 14px;
+    background:
+      linear-gradient(180deg, rgb(255 244 210 / 4%), transparent 24%),
+      repeating-linear-gradient(90deg, rgb(231 199 125 / 4%) 0 1px, transparent 1px 18px),
+      rgb(4 8 10 / 82%);
+  }
+
+  .elf-tab-panel > .section-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 10px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .elf-tab-panel > .section-heading::before {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgb(231 199 125 / 34%);
+    border-radius: 8px;
+    background: rgb(231 199 125 / 10%);
+    color: #ffd36e;
+    font-size: 1rem;
+    content: "◆";
+  }
+
+  .elf-tab-panel > .section-heading h2 {
+    margin: 0;
+    color: #fff2cf;
+    font-family:
+      "Yu Mincho", "Noto Serif TC", "Microsoft JhengHei", "Aptos Display", serif;
+    font-size: 1.52rem;
+  }
+
+  .elf-tab-panel > .section-heading span {
+    grid-column: 2;
+    color: #aeb8c2;
+    font-size: 0.78rem;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card,
+  .elf-tab-panel-supply > .elf-champion-card {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    min-height: 0;
+    margin-bottom: 12px;
+    padding: 10px;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card .elf-champion-heading,
+  .elf-tab-panel-supply > .elf-champion-card .elf-champion-heading {
+    grid-column: 1 / -1;
+    min-height: 0;
+    margin: 0 0 6px;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card .elf-champion-art,
+  .elf-tab-panel-supply > .elf-champion-card .elf-champion-art {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 104px;
+    margin: 0;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card .elf-champion-art img,
+  .elf-tab-panel-supply > .elf-champion-card .elf-champion-art img {
+    width: 82px;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card .elf-champion-body,
+  .elf-tab-panel-supply > .elf-champion-card .elf-champion-body {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    justify-items: start;
+    min-width: 0;
+    padding: 0 0 0 10px;
+    text-align: left;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card .elf-champion-body > strong,
+  .elf-tab-panel-supply > .elf-champion-card .elf-champion-body > strong {
+    min-width: 0;
+    font-size: 1.2rem;
+  }
+
+  .elf-tab-panel-wishlist > .elf-champion-card .elf-champion-stat,
+  .elf-tab-panel-supply > .elf-champion-card .elf-champion-stat {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .elf-rank-actions {
+    justify-content: stretch;
+    margin: 0 0 10px;
+  }
+
+  .elf-clear-wishlist {
+    width: 100%;
+  }
+
+  .elf-rank-list {
+    gap: 12px;
+  }
+
+  .elf-rank-row,
+  .elf-rank-panel-supply .elf-rank-row,
+  .elf-tab-panel-supply .elf-rank-row,
+  .elf-tab-panel-wishlist .elf-rank-row {
+    position: relative;
+    overflow: hidden;
+    grid-template-columns: 30px 56px minmax(0, 1fr);
+    gap: 8px;
+    min-height: 76px;
+    border-color: color-mix(in srgb, var(--skin-accent, #f2b84b) 45%, transparent);
+    border-radius: 8px;
+    padding: 8px;
+    background:
+      radial-gradient(circle at 32% 55%, color-mix(in srgb, var(--skin-accent, #f2b84b) 22%, transparent) 0 14%, transparent 38%),
+      linear-gradient(90deg, color-mix(in srgb, var(--skin-accent, #f2b84b) 14%, transparent), transparent 58%),
+      rgb(5 9 11 / 86%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 244 210 / 10%),
+      0 18px 38px rgb(0 0 0 / 22%);
+  }
+
+  .elf-rank-row::before {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 82%, color-mix(in srgb, var(--skin-accent, #f2b84b) 18%, transparent), transparent 26%),
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 4%) 0 1px, transparent 1px 18px);
+    content: "";
+    pointer-events: none;
+  }
+
+  .elf-rank-index,
+  .elf-rank-row img,
+  .elf-rank-empty-mark,
+  .elf-rank-body,
+  .elf-rank-cancel {
+    position: relative;
+    z-index: 1;
+  }
+
+  .elf-rank-index {
+    align-self: center;
+    width: 28px;
+    height: 44px;
+    min-height: 44px;
+    border: 0;
+    border-right: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+    border-radius: 0;
+    background: transparent;
+    color: #fff2cf;
+    font-family:
+      "Aptos Display", "Segoe UI Semibold", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1;
+    text-shadow: 0 0 16px color-mix(in srgb, currentColor 42%, transparent);
+  }
+
+  .elf-rank-row img,
+  .elf-rank-empty-mark {
+    align-self: center;
+    width: 56px;
+    height: 56px;
+    filter:
+      drop-shadow(0 20px 16px rgb(0 0 0 / 48%))
+      drop-shadow(0 0 14px color-mix(in srgb, currentColor 30%, transparent));
+  }
+
+  .elf-rank-body {
+    align-self: center;
+    gap: 3px;
+  }
+
+  .elf-rank-body strong {
+    color: #fff2cf;
+    font-family:
+      "Yu Mincho", "Noto Serif TC", "Microsoft JhengHei", "Aptos Display", serif;
+    font-size: 0.94rem;
+    line-height: 1.05;
+  }
+
+  .elf-rank-body small {
+    color: #b8c1c7;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .elf-rank-body small strong {
+    display: inline;
+    color: currentColor;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .elf-rank-meter {
+    height: 1px;
+    margin-block: 4px 0;
+    background: color-mix(in srgb, currentColor 22%, transparent);
+  }
+
+  .elf-rank-meter span {
+    min-width: 12px;
+    box-shadow: 0 0 16px currentColor;
+  }
+
+  .elf-tab-panel-wishlist .elf-rank-cancel {
+    grid-column: 3;
+    justify-self: stretch;
+    min-height: 44px;
+    border-color: color-mix(in srgb, currentColor 36%, transparent);
+    background: rgb(0 0 0 / 36%);
+  }
+
+  .elf-rank-row-empty {
+    min-height: 68px;
+    opacity: 0.72;
+  }
+
+  .elf-delta-panel {
+    margin-top: 14px;
+    border-radius: 10px;
+  }
+}

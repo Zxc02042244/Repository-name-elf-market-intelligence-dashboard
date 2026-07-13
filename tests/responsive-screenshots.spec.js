@@ -63,11 +63,25 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   ));
   expect(carouselUpgraded).toBe(true);
 
-  const initialSlide = await page.locator(".elf-mobile-champion-carousel").evaluate((element) => element.activeSlide);
+  await page.locator(".elf-mobile-champion-carousel").evaluate((element) => element.goToSlide(0, "auto"));
+  await expect.poll(async () => page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
+    element.activeSlide
+  ))).toBe(0);
   await page.locator(".elf-mobile-champion-carousel").evaluate((element) => element.next("auto"));
   await expect.poll(async () => page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
     element.activeSlide
-  ))).toBeGreaterThan(initialSlide);
+  ))).toBe(1);
+
+  await page.locator(".elf-home-tabs-content [data-skin-home-tab='gallery']").click();
+  await expect(page).toHaveURL(/#home&tab=gallery$/);
+  await expect(page.locator(".elf-skin-grid")).toBeVisible();
+
+  const mobileGalleryLayout = await page.locator(".elf-skin-grid").evaluate((element) => ({
+    columns: getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
+    wishlistButtonHeight: element.querySelector(".elf-wishlist-button")?.getBoundingClientRect().height ?? 0
+  }));
+  expect(mobileGalleryLayout.columns).toBe(2);
+  expect(mobileGalleryLayout.wishlistButtonHeight).toBeGreaterThanOrEqual(44);
 });
 
 test("mobile carousel keeps its active rank after asynchronous community refresh", async ({ page }) => {
@@ -140,6 +154,16 @@ test("mobile market uses a sticky horizontal section navigation", async ({ page 
     overflowX: "auto",
     position: "sticky"
   });
+
+  await expect(page.locator(".category-tabs")).toBeVisible();
+  const mobileMarketLayout = await page.locator(".category-tabs").evaluate((element) => ({
+    categoryColumns: getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
+    summaryColumns: getComputedStyle(document.querySelector(".summary-panel")).gridTemplateColumns
+      .split(" ")
+      .filter(Boolean).length
+  }));
+  expect(mobileMarketLayout.categoryColumns).toBe(2);
+  expect(mobileMarketLayout.summaryColumns).toBe(1);
 });
 
 test("desktop keeps the full header and does not render mobile navigation", async ({ page }) => {

@@ -6,12 +6,32 @@
     <title>Market Intelligence Dashboard</title>
     <meta name="elf-community-supabase-url" content="https://hsvemaakgjxydocwqbmq.supabase.co" />
     <meta name="elf-community-supabase-publishable-key" content="sb_publishable_JJnKtiabxzltgv4Yalxzvg_HtNl4_XJ" />
+    <!-- CSS layer order: tokens -> base/chrome -> features -> responsive -> theme. -->
     <link rel="stylesheet" href="./src/styles/tokens.css?v=20260713-design-tokens-1" />
-    <link rel="stylesheet" href="./src/styles.css?v=20260713-design-tokens-1" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260713-trailblazer-frame-1" />
+    <link rel="stylesheet" href="./src/styles/app-chrome.css?v=20260713-app-chrome-1" />
+    <link rel="stylesheet" href="./src/styles/shared-feedback.css?v=20260713-shared-feedback-1" />
+    <!-- Feature modules share data/DOM but own their visual responsibilities. -->
+    <link rel="stylesheet" href="./src/styles/market-cards.css?v=20260713-market-cards-1" />
+    <link rel="stylesheet" href="./src/styles/market-explorer.css?v=20260713-market-explorer-1" />
+    <link rel="stylesheet" href="./src/styles/market-details.css?v=20260713-market-details-1" />
+    <link rel="stylesheet" href="./src/styles/home-ranking.css?v=20260713-home-ranking-1" />
+    <link rel="stylesheet" href="./src/styles/home-wishlist.css?v=20260713-home-wishlist-1" />
+    <link rel="stylesheet" href="./src/styles/home-supply.css?v=20260713-home-supply-1" />
+    <link rel="stylesheet" href="./src/styles/home-champion-card.css?v=20260713-home-champion-card-1" />
+    <link rel="stylesheet" href="./src/styles/home-skin-gallery.css?v=20260713-home-skin-gallery-1" />
+    <link rel="stylesheet" href="./src/styles/home-footer.css?v=20260713-home-footer-1" />
+    <!-- Responsive overrides must remain after feature modules. -->
+    <link rel="stylesheet" href="./src/styles/mobile-layout.css?v=20260713-mobile-layout-1" />
     <link rel="stylesheet" href="./src/styles/mobile-ranking-card.css?v=20260713-mobile-card-module-1" />
     <link rel="stylesheet" href="./src/styles/mobile-navigation.css?v=20260713-mobile-navigation-module-1" />
     <link rel="stylesheet" href="./src/styles/home-tabs.css?v=20260713-home-tabs-module-1" />
     <link rel="stylesheet" href="./src/styles/mobile-header.css?v=20260713-mobile-header-module-1" />
+    <link rel="stylesheet" href="./src/styles/mobile-content-grid.css?v=20260713-mobile-content-grid-1" />
+    <link rel="stylesheet" href="./src/styles/mobile-market.css?v=20260713-mobile-market-1" />
+    <link rel="stylesheet" href="./src/styles/desktop-layout.css?v=20260713-desktop-layout-1" />
+    <link rel="stylesheet" href="./src/styles/desktop-card-frames.css?v=20260713-desktop-card-frames-1" />
+    <!-- Theme is the final visual override layer. -->
     <link rel="stylesheet" href="./src/themes/elf-theme.css?v=20260709-community" />
   </head>
   <body>
@@ -21,6 +41,6 @@
       import "https://ka-f.webawesome.com/webawesome@3.10.0/components/carousel/carousel.js";
       import "https://ka-f.webawesome.com/webawesome@3.10.0/components/carousel-item/carousel-item.js";
     </script>
-    <script type="module" src="./src/app/main.js?v=20260712-webawesome-carousel-3"></script>
+    <script type="module" src="./src/app/main.js?v=20260713-trailblazer-frame-1"></script>
   </body>
 </html>

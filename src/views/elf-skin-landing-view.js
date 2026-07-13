@@ -17,7 +17,8 @@ const unifiedChampionFrames = new Set([
   "elf-champion-frame-toy-sheriff",
   "elf-champion-frame-arale",
   "elf-champion-frame-shark-hoodie",
-  "elf-champion-frame-genesis-pioneer"
+  "elf-champion-frame-genesis-pioneer",
+  "elf-champion-frame-trailblazer"
 ]);
 const layeredChampionFrames = new Set([
   "elf-champion-frame-flame-runner",
@@ -33,7 +34,8 @@ const layeredChampionFrames = new Set([
   "elf-champion-frame-toy-sheriff",
   "elf-champion-frame-arale",
   "elf-champion-frame-shark-hoodie",
-  "elf-champion-frame-genesis-pioneer"
+  "elf-champion-frame-genesis-pioneer",
+  "elf-champion-frame-trailblazer"
 ]);
 
 export function renderElfSkinLandingView(
@@ -435,7 +437,8 @@ function getChampionFrameClass(skin, kind) {
     "toy-sheriff",
     "arale",
     "shark-hoodie",
-    "genesis-pioneer"
+    "genesis-pioneer",
+    "trailblazer"
   ]);
 
   if (supportedFrames.has(normalizedName)) {

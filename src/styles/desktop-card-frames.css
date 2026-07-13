@@ -1,0 +1,367 @@
+@media (min-width: 921px) {
+  .elf-champion-card.elf-champion-frame-flame-runner {
+    --custom-frame-image: url("../assets/skin-frames/flame-runner-card-frame-base-v1.png");
+    --custom-frame-title: #ffd878;
+    --custom-frame-outline: #6e1c08;
+    --custom-frame-shadow: #1a0502;
+    --custom-frame-glow: rgb(255 82 18 / 70%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/flame-runner-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/flame-runner-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-flame-brawler {
+    --custom-frame-image: url("../assets/skin-frames/flame-brawler-card-frame-base-v1.png");
+    --custom-frame-title: #ffd27a;
+    --custom-frame-outline: #791b08;
+    --custom-frame-shadow: #1b0501;
+    --custom-frame-glow: rgb(255 85 20 / 76%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/flame-brawler-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/flame-brawler-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-alien-hunter {
+    --custom-frame-image: url("../assets/skin-frames/alien-hunter-card-frame-base-v1.png");
+    --custom-frame-title: #dfff9f;
+    --custom-frame-outline: #315c20;
+    --custom-frame-shadow: #071407;
+    --custom-frame-glow: rgb(126 255 58 / 68%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/alien-hunter-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/alien-hunter-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-bio-warrior {
+    --custom-frame-image: url("../assets/skin-frames/bio-warrior-card-frame-base-v1.png");
+    --custom-frame-title: #e1ff9f;
+    --custom-frame-outline: #315a1b;
+    --custom-frame-shadow: #071306;
+    --custom-frame-glow: rgb(157 255 44 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/bio-warrior-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/bio-warrior-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-frost-enchantress {
+    --custom-frame-image: url("../assets/skin-frames/frost-enchantress-card-frame-base-v1.png");
+    --custom-frame-title: #f4e9ff;
+    --custom-frame-outline: #5c238f;
+    --custom-frame-shadow: #150524;
+    --custom-frame-glow: rgb(168 91 255 / 78%);
+    --custom-rank-text-padding-top: 8px;
+    --custom-rank-plaque-image: url("../assets/skin-frames/frost-enchantress-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/frost-enchantress-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-spinning-kicker {
+    --custom-frame-image: url("../assets/skin-frames/spinning-kicker-card-frame-base-v1.png");
+    --custom-frame-title: #e9fbff;
+    --custom-frame-outline: #145ca5;
+    --custom-frame-shadow: #03162f;
+    --custom-frame-glow: rgb(65 190 255 / 78%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/spinning-kicker-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/spinning-kicker-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-zombie-walker {
+    --custom-frame-image: url("../assets/skin-frames/zombie-walker-card-frame-base-v1.png");
+    --custom-frame-title: #d9f3df;
+    --custom-frame-outline: #315f50;
+    --custom-frame-shadow: #031411;
+    --custom-frame-glow: rgb(63 206 174 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/zombie-walker-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/zombie-walker-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-bubble-beast {
+    --custom-frame-image: url("../assets/skin-frames/bubble-beast-card-frame-base-v1.png");
+    --custom-frame-title: #ffe0fa;
+    --custom-frame-outline: #71135e;
+    --custom-frame-shadow: #21051c;
+    --custom-frame-glow: rgb(255 72 220 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/bubble-beast-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/bubble-beast-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-starborn-warrior {
+    --custom-frame-image: url("../assets/skin-frames/starborn-warrior-card-frame-base-v1.png");
+    --custom-frame-title: #ffe28a;
+    --custom-frame-outline: #7a3a00;
+    --custom-frame-shadow: #1b0900;
+    --custom-frame-glow: rgb(255 179 24 / 78%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/starborn-warrior-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/starborn-warrior-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-cosmic-sovereign {
+    --custom-frame-image: url("../assets/skin-frames/cosmic-sovereign-card-frame-base-v1.png");
+    --custom-frame-title: #fff2c7;
+    --custom-frame-outline: #8d3a82;
+    --custom-frame-shadow: #05091d;
+    --custom-frame-glow: rgb(222 62 255 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/cosmic-sovereign-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/cosmic-sovereign-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-toy-sheriff {
+    --custom-frame-image: url("../assets/skin-frames/toy-sheriff-card-frame-base-v1.png");
+    --custom-frame-title: #ffe7ac;
+    --custom-frame-outline: #8b4d1e;
+    --custom-frame-shadow: #1f0c03;
+    --custom-frame-glow: rgb(255 174 72 / 70%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/toy-sheriff-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/toy-sheriff-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-arale {
+    --custom-frame-image: url("../assets/skin-frames/arale-card-frame-base-v1.png");
+    --custom-frame-title: #fff6d9;
+    --custom-frame-outline: #a53b59;
+    --custom-frame-shadow: #06283a;
+    --custom-frame-glow: rgb(103 236 255 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/arale-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/arale-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-shark-hoodie {
+    --custom-frame-image: url("../assets/skin-frames/shark-hoodie-card-frame-base-v1.png");
+    --custom-frame-title: #e6fbff;
+    --custom-frame-outline: #07557f;
+    --custom-frame-shadow: #010d19;
+    --custom-frame-glow: rgb(45 225 255 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/shark-hoodie-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/shark-hoodie-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-genesis-pioneer {
+    --custom-frame-image: url("../assets/skin-frames/genesis-pioneer-card-frame-base-v1.png");
+    --custom-frame-title: #fff0b2;
+    --custom-frame-outline: #59308d;
+    --custom-frame-shadow: #08051c;
+    --custom-frame-glow: rgb(176 89 255 / 72%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/genesis-pioneer-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/genesis-pioneer-name-plaque-v1.png");
+  }
+
+  .elf-champion-card.elf-champion-frame-trailblazer {
+    --custom-frame-image: url("../assets/skin-frames/trailblazer-card-frame-base-v1.png");
+    --custom-frame-title: #fff0b5;
+    --custom-frame-outline: #8d3904;
+    --custom-frame-shadow: #100602;
+    --custom-frame-glow: rgb(255 133 24 / 76%);
+    --custom-rank-plaque-image: url("../assets/skin-frames/trailblazer-rank-plaque-v1.png");
+    --custom-name-plaque-image: url("../assets/skin-frames/trailblazer-name-plaque-v1.png");
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply) {
+    border: 0;
+    border-radius: 0;
+    padding: 30px;
+    background: var(--custom-frame-image) center / calc(100% + 12px) calc(100% + 12px) no-repeat;
+    box-shadow: none;
+  }
+
+  .elf-tab-panel-supply
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame {
+    align-self: start;
+    justify-self: center;
+    width: min(100%, 389px);
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1041 / 1511;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)::before {
+    content: "";
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)::after {
+    display: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-heading {
+    position: absolute;
+    z-index: 2;
+    top: 7.2%;
+    right: 30px;
+    left: 30px;
+    min-height: 46px;
+    margin-top: 0;
+    padding: 0;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-heading > div {
+    display: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-rank {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 132px;
+    min-height: 46px;
+    border: 0;
+    background: radial-gradient(ellipse at center, rgb(15 5 20 / 88%) 0 48%, rgb(15 5 20 / 54%) 62%, transparent 76%);
+    color: var(--custom-frame-title);
+    font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace;
+    font-size: 1.34rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    text-shadow:
+      2px 0 var(--custom-frame-outline),
+      -2px 0 var(--custom-frame-outline),
+      0 2px var(--custom-frame-outline),
+      0 -2px var(--custom-frame-outline),
+      3px 3px 0 var(--custom-frame-shadow),
+      0 0 10px var(--custom-frame-glow);
+    transform: translate(-50%, -50%);
+    -webkit-text-fill-color: var(--custom-frame-title);
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-art {
+    position: absolute;
+    z-index: 1;
+    top: 19%;
+    right: 30px;
+    bottom: 19%;
+    left: 30px;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-art::before,
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-art::after {
+    display: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body {
+    position: absolute;
+    z-index: 2;
+    right: 30px;
+    bottom: 2.75%;
+    left: 30px;
+    align-content: center;
+    min-height: 100px;
+    padding: 0 8px;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body > span,
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-stat {
+    display: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body > strong {
+    min-width: min(100%, 300px);
+    padding: 0 12px;
+    color: var(--custom-frame-title);
+    background: none;
+    background-clip: border-box;
+    font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace;
+    font-size: clamp(1.42rem, 3vw, 1.82rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    text-align: center;
+    text-shadow:
+      2px 0 var(--custom-frame-outline),
+      -2px 0 var(--custom-frame-outline),
+      0 2px var(--custom-frame-outline),
+      0 -2px var(--custom-frame-outline),
+      3px 3px 0 var(--custom-frame-shadow),
+      0 0 10px var(--custom-frame-glow);
+    filter: none;
+    -webkit-background-clip: border-box;
+    -webkit-text-fill-color: var(--custom-frame-title);
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body > strong::before,
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-has-custom-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body > strong::after {
+    display: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-layered-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-heading {
+    top: 5.162%;
+    right: 21.134%;
+    left: 21.134%;
+    display: block;
+    width: auto;
+    height: 11.119%;
+    min-height: 0;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-layered-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-rank {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--custom-rank-text-padding-top, 0) 0 0;
+    place-items: center;
+    box-sizing: border-box;
+    border: 0;
+    background: var(--custom-rank-plaque-image) center / 100% 100% no-repeat;
+    box-shadow: none;
+    clip-path: none;
+    transform: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-layered-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body {
+    right: 11.527%;
+    bottom: 4.434%;
+    left: 11.527%;
+    display: grid;
+    width: auto;
+    height: 11.913%;
+    min-height: 0;
+    padding: 0 8%;
+    place-items: center;
+    border: 0;
+    background: var(--custom-name-plaque-image) center / 100% 100% no-repeat;
+    box-shadow: none;
+    clip-path: none;
+  }
+
+  .elf-tab-panel
+    .elf-champion-card.elf-champion-card-compact.elf-champion-layered-frame:is(.elf-champion-wishlist, .elf-champion-supply)
+    .elf-champion-body > strong {
+    width: 100%;
+    min-width: 0;
+    font-size: 1.58rem;
+    white-space: nowrap;
+  }
+}

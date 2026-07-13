@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 
 CANVAS_SIZE = (1041, 1511)
 RANK_SIZE = (601, 168)
@@ -92,10 +92,23 @@ def prepare_plaque(path: Path, size: tuple[int, int], key: str | None, label: st
     return pad_to_aspect(crop_transparent_bounds(image, label), size)
 
 
-def prepare_base(path: Path) -> Image.Image:
+def sanitize_reserved_zones(image: Image.Image) -> Image.Image:
+    source = image.crop((360, 500, 681, 1020)).resize(CANVAS_SIZE, Image.Resampling.LANCZOS)
+    source = source.filter(ImageFilter.GaussianBlur(radius=5))
+    mask = Image.new("L", CANVAS_SIZE, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rectangle((190, 45, 850, 270), fill=255)
+    draw.rectangle((90, 1200, 950, 1510), fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(radius=8))
+    return Image.composite(source, image, mask)
+
+
+def prepare_base(path: Path, sanitize_zones: bool = False) -> Image.Image:
     image = open_image(path).convert("RGB")
     if image.size != CANVAS_SIZE:
         image = image.resize(CANVAS_SIZE, Image.Resampling.LANCZOS)
+    if sanitize_zones:
+        image = sanitize_reserved_zones(image)
     return image
 
 
@@ -176,7 +189,7 @@ def validate_kit(output_dir: Path, skin_id: str) -> dict[str, object]:
 
 
 def build_command(args: argparse.Namespace) -> None:
-    base = prepare_base(Path(args.base))
+    base = prepare_base(Path(args.base), args.sanitize_reserved_zones)
     rank = prepare_plaque(Path(args.rank), RANK_SIZE, args.rank_key, "rank")
     name = prepare_plaque(Path(args.name), NAME_SIZE, args.name_key, "name")
     output_dir = Path(args.output_dir)
@@ -201,6 +214,7 @@ def main() -> None:
     build.add_argument("--name", required=True)
     build.add_argument("--rank-key", choices=("green", "magenta"))
     build.add_argument("--name-key", choices=("green", "magenta"))
+    build.add_argument("--sanitize-reserved-zones", action="store_true")
     build.add_argument("--output-dir", default="assets/skin-frames")
     build.set_defaults(handler=build_command)
 
