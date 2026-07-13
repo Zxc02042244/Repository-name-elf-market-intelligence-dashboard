@@ -1,14 +1,8 @@
 import { translations } from "./translations.js";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "../config/locale-config.js";
 
-export const defaultLocale = "en";
-
-export const supportedLocales = Object.freeze([
-  "en",
-  "zh-Hant",
-  "ja",
-  "ko",
-  "vi"
-]);
+export const defaultLocale = DEFAULT_LOCALE;
+export const supportedLocales = SUPPORTED_LOCALES;
 
 const localeAliases = Object.freeze({
   en: "en",

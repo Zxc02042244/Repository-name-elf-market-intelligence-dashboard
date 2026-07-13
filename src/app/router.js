@@ -1,3 +1,5 @@
+import { isSupportedHomeTab, isSupportedMarketSort } from "../config/product-config.js";
+
 export function getCurrentRoute() {
   const rawHash = window.location.hash.replace(/^#/, "");
   const params = new URLSearchParams(rawHash);
@@ -11,7 +13,7 @@ export function getCurrentRoute() {
     tab: isSupportedHomeTab(params.get("tab")) ? params.get("tab") : "wishlist",
     mode: mode === "actors" ? "actors" : "assets",
     search: params.get("q") ?? "",
-    sort: isSupportedSort(sort) ? sort : "value",
+    sort: isSupportedMarketSort(sort) ? sort : "value",
     assetId: params.get("asset") ?? "",
     actorId: params.get("actor") ?? ""
   };
@@ -57,12 +59,4 @@ export function buildRouteHash(route, overrides = {}) {
   const hash = params.toString();
   const routeName = nextRoute.name === "dashboard" ? "market" : "home";
   return hash ? `#${routeName}&${hash}` : `#${routeName}`;
-}
-
-function isSupportedSort(sort) {
-  return ["value", "activity", "latest", "name"].includes(sort);
-}
-
-function isSupportedHomeTab(tab) {
-  return ["wishlist", "supply", "gallery"].includes(tab);
 }

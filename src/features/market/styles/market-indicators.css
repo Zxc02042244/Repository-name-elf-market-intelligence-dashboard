@@ -1,0 +1,96 @@
+.market-indicators-module {
+  display: grid;
+  gap: var(--space-4);
+  border: 1px solid var(--theme-border-muted, #26384d);
+  border-radius: var(--radius-panel, 12px);
+  padding: var(--space-4);
+  background: var(--theme-surface-elevated, #0d141d);
+}
+
+.market-indicators-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.market-indicators-heading > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.market-indicators-heading .eyebrow,
+.market-indicators-heading h3,
+.market-indicators-summary,
+.market-indicators-boundary,
+.market-indicator-definition p {
+  margin: 0;
+}
+
+.market-indicators-summary,
+.market-indicators-boundary,
+.market-indicator-definition p {
+  color: var(--theme-text-muted, #9badc0);
+  line-height: 1.6;
+}
+
+.market-indicators-summary,
+.market-indicators-boundary {
+  max-width: 72ch;
+}
+
+.market-indicator-catalog {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.market-indicator-definition {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  border: 1px solid var(--theme-border-muted, #26384d);
+  border-radius: var(--radius-card, 8px);
+  padding: var(--space-4);
+}
+
+.market-indicator-definition > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.market-indicator-definition strong {
+  color: var(--theme-text-strong, #f5f7fa);
+}
+
+.market-indicator-definition span {
+  flex: 0 0 auto;
+  color: var(--theme-accent, #e3c06b);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.market-indicators-boundary {
+  border-inline-start: 3px solid var(--theme-accent, #e3c06b);
+  padding-inline-start: var(--space-3);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 620px) {
+  .market-indicators-heading,
+  .market-indicator-definition > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .market-indicators-heading .market-module-status,
+  .market-indicator-definition span {
+    align-self: flex-start;
+  }
+
+  .market-indicator-catalog {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

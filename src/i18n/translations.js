@@ -71,7 +71,109 @@ const en = {
     marketSourceModel: "Market model",
     marketSourceModelDetail: "Loaded transactions are normalized into asset, actor, category, and signal summaries in the browser.",
     marketSourcePrivacy: "Privacy boundary",
-    marketSourcePrivacyDetail: "This page does not ask for wallet keys or account passwords. Market analysis is read-only display data."
+    marketSourcePrivacyDetail: "This page does not ask for wallet keys or account passwords. Market analysis is read-only display data.",
+    workspaceEyebrow: "Market analysis workspace",
+    workspacePlannedTitle: "Market analysis is being reorganized",
+    workspacePlannedDetail: "Live API calls and bundled snapshots are disabled. No placeholder values are presented as market facts.",
+    apiSlotReserved: "API slot reserved",
+    apiSlotReservedDetail: "A data-source boundary is reserved for a future verified API adapter. The analysis interface can be developed independently until then.",
+    plannedModules: "Planned market modules",
+    indicatorModule: "Market indicators",
+    modulePlanned: "Planned",
+    moduleBuilding: "Building",
+    overviewEyebrow: "First active module",
+    overviewMetrics: "Market overview metrics",
+    overviewUpdatedAt: "Data updated",
+    overviewDataQuality: "Data quality",
+    overviewQualityUnavailable: "Quality report unavailable",
+    overviewTimeUnavailable: "Update time unavailable",
+    overviewQualitySummary: "{accepted}/{received} transactions accepted",
+    overviewStatus: {
+      planned: "Awaiting source",
+      empty: "No data",
+      ready: "Data ready"
+    },
+    overviewDetail: {
+      planned: "The overview structure is ready. Values remain blank until a verified data source is connected.",
+      empty: "The connected source returned no verified market transactions.",
+      ready: "These values are calculated from accepted, deduplicated market transactions."
+    },
+    assetModule: {
+      eyebrow: "Second active module",
+      title: "Asset analysis",
+      metricsLabel: "Asset analysis metrics",
+      assetCount: "Observed assets",
+      categoryCount: "Observed categories",
+      leadingAsset: "Volume leader",
+      leadingShare: "Leader volume share",
+      leadingAssets: "Leading assets by loaded volume",
+      unknownAsset: "Unknown asset",
+      uncategorized: "Uncategorized",
+      scopeTitle: "This module will describe verified asset activity",
+      scopeCoverage: "Observed assets and category coverage",
+      scopeLeaders: "Volume leaders with transaction evidence",
+      scopeQuality: "Source range and data-quality limitations",
+      status: {
+        planned: "Awaiting source",
+        empty: "No assets",
+        ready: "Data ready"
+      },
+      detail: {
+        planned: "The asset contract and responsive empty state are ready. No asset values are inferred while the API slot is reserved.",
+        empty: "The connected source contains no accepted asset activity for this data range.",
+        ready: "Asset summaries are calculated from accepted, deduplicated market transactions."
+      }
+    },
+    actorModule: {
+      eyebrow: "Third active module",
+      title: "Participant activity",
+      metricsLabel: "Participant activity metrics",
+      actorCount: "Observed participants",
+      sellerCount: "Participants selling",
+      buyerCount: "Participants buying",
+      activityLeader: "Most transaction involvements",
+      activityLeaders: "Participants by transaction involvement",
+      unknownActor: "Unknown participant",
+      noObservedAssets: "No observed assets",
+      sold: "Sold",
+      bought: "Bought",
+      counterparties: "Counterparties",
+      scopeTitle: "This module will describe verified participant activity",
+      scopeParticipation: "Buying and selling participation counts",
+      scopeCounterparties: "Observed counterparty and asset coverage",
+      scopeEvidence: "Data range, sample size, and evidence limitations",
+      identityBoundary: "Participant labels come from market records. They do not establish real identity, account ownership, relationships, or intent.",
+      status: {
+        planned: "Awaiting source",
+        empty: "No participants",
+        ready: "Data ready"
+      },
+      detail: {
+        planned: "The participant contract and responsive empty state are ready. No account relationships are inferred while the API slot is reserved.",
+        empty: "The connected source contains no accepted participant activity for this data range.",
+        ready: "Participant summaries are calculated from accepted, deduplicated market transactions."
+      }
+    },
+    indicatorModuleDetail: {
+      eyebrow: "Fourth active module",
+      catalogLabel: "Documented market indicator specifications",
+      documented: "Specification recorded",
+      mpsName: "Market Pattern Score / Index",
+      mpsDetail: "A future explainable composite of market-structure patterns. Its formal name, weights, overlap policy, and thresholds remain unapproved.",
+      ttsName: "Two-Step Transfer Confidence",
+      ttsDetail: "A future description of A → B → C transfer characteristics. Candidate matching, time windows, and scoring policy remain unapproved.",
+      boundary: "These indicators describe observable market patterns. They do not establish cheating, violations, account ownership, relationships, or intent.",
+      status: {
+        planned: "Awaiting source",
+        empty: "No transactions",
+        policyPending: "Policy pending"
+      },
+      detail: {
+        planned: "The indicator boundary is ready, but calculations remain disabled while the market data source is reserved.",
+        empty: "The connected source contains no accepted transactions from which indicator candidates could be built.",
+        policyPending: "Verified transactions are available, but no score is calculated until formulas and review policies are approved."
+      }
+    }
   },
   elfLanding: {
     siteEyebrow: "ELF skin gallery",
@@ -365,7 +467,109 @@ const zhHant = deepMerge(en, {
     marketSourceModel: "市場模型",
     marketSourceModelDetail: "已載入交易會在瀏覽器整理成資產、角色、分類與訊號摘要。",
     marketSourcePrivacy: "安全邊界",
-    marketSourcePrivacyDetail: "此頁不要求錢包私鑰或帳號密碼；市場分析只顯示唯讀資料。"
+    marketSourcePrivacyDetail: "此頁不要求錢包私鑰或帳號密碼；市場分析只顯示唯讀資料。",
+    workspaceEyebrow: "市場分析工作區",
+    workspacePlannedTitle: "市場分析正在重新整理",
+    workspacePlannedDetail: "目前已停用即時 API 與內建快照，不會把示範數值呈現成市場事實。",
+    apiSlotReserved: "已預留 API 位置",
+    apiSlotReservedDetail: "資料來源邊界已預留給未來驗證完成的 API adapter；在此之前，分析介面可以獨立開發。",
+    plannedModules: "預定市場模組",
+    indicatorModule: "市場指標",
+    modulePlanned: "規劃中",
+    moduleBuilding: "建立中",
+    overviewEyebrow: "第一個啟用模組",
+    overviewMetrics: "市場總覽數據",
+    overviewUpdatedAt: "資料更新時間",
+    overviewDataQuality: "資料品質",
+    overviewQualityUnavailable: "尚無資料品質報告",
+    overviewTimeUnavailable: "尚無更新時間",
+    overviewQualitySummary: "採用 {accepted}/{received} 筆交易",
+    overviewStatus: {
+      planned: "等待資料來源",
+      empty: "沒有資料",
+      ready: "資料已就緒"
+    },
+    overviewDetail: {
+      planned: "總覽結構已完成；在接入經過驗證的資料來源前，所有數值保持空白。",
+      empty: "已連接的資料來源沒有回傳可採用的市場交易。",
+      ready: "以下數值由已採用並去除重複的市場交易計算。"
+    },
+    assetModule: {
+      eyebrow: "第二個啟用模組",
+      title: "資產分析",
+      metricsLabel: "資產分析數據",
+      assetCount: "觀察資產",
+      categoryCount: "觀察分類",
+      leadingAsset: "成交量領先資產",
+      leadingShare: "領先資產成交量占比",
+      leadingAssets: "目前載入成交量領先資產",
+      unknownAsset: "未知資產",
+      uncategorized: "尚未分類",
+      scopeTitle: "此模組將說明經過驗證的資產活動",
+      scopeCoverage: "觀察資產與分類覆蓋範圍",
+      scopeLeaders: "附帶交易依據的成交量領先資產",
+      scopeQuality: "資料來源範圍與資料品質限制",
+      status: {
+        planned: "等待資料來源",
+        empty: "沒有資產",
+        ready: "資料已就緒"
+      },
+      detail: {
+        planned: "資產資料契約與響應式空狀態已完成；API 位置預留期間不推測任何資產數值。",
+        empty: "已連接的資料來源在這個資料範圍內沒有可採用的資產活動。",
+        ready: "資產摘要由已採用並去除重複的市場交易計算。"
+      }
+    },
+    actorModule: {
+      eyebrow: "第三個啟用模組",
+      title: "交易參與者活動",
+      metricsLabel: "交易參與者活動數據",
+      actorCount: "觀察參與者",
+      sellerCount: "曾賣出參與者",
+      buyerCount: "曾買入參與者",
+      activityLeader: "交易參與次數最多",
+      activityLeaders: "依交易參與次數排列的參與者",
+      unknownActor: "未知參與者",
+      noObservedAssets: "沒有觀察資產",
+      sold: "賣出",
+      bought: "買入",
+      counterparties: "交易對手",
+      scopeTitle: "此模組將說明經過驗證的參與者活動",
+      scopeParticipation: "買入與賣出參與次數",
+      scopeCounterparties: "觀察到的交易對手與資產範圍",
+      scopeEvidence: "資料範圍、樣本數與證據限制",
+      identityBoundary: "參與者標籤來自市場紀錄，不代表真實身份、帳戶所有權、彼此關係或交易意圖。",
+      status: {
+        planned: "等待資料來源",
+        empty: "沒有參與者",
+        ready: "資料已就緒"
+      },
+      detail: {
+        planned: "參與者資料契約與響應式空狀態已完成；API 位置預留期間不推測任何帳戶關係。",
+        empty: "已連接的資料來源在這個資料範圍內沒有可採用的參與者活動。",
+        ready: "參與者摘要由已採用並去除重複的市場交易計算。"
+      }
+    },
+    indicatorModuleDetail: {
+      eyebrow: "第四個啟用模組",
+      catalogLabel: "已紀錄的市場指標規格",
+      documented: "規格已紀錄",
+      mpsName: "Market Pattern Score / Index",
+      mpsDetail: "未來用來整合市場結構模式的可解釋綜合指數；正式名稱、權重、重疊政策與門檻尚未核准。",
+      ttsName: "Two-Step Transfer Confidence",
+      ttsDetail: "未來用來描述 A → B → C 轉移特徵；候選配對、時間窗與評分政策尚未核准。",
+      boundary: "這些指標只描述可觀察的市場模式，不代表作弊、違規、帳戶所有權、彼此關係或交易意圖。",
+      status: {
+        planned: "等待資料來源",
+        empty: "沒有交易",
+        policyPending: "政策待確認"
+      },
+      detail: {
+        planned: "指標模組邊界已完成，但市場資料來源仍預留，因此不啟用任何計算。",
+        empty: "已連接的資料來源沒有可採用的交易，無法建立指標候選資料。",
+        policyPending: "已有經過驗證的交易，但在公式與審核政策核准前不會計算任何分數。"
+      }
+    }
   },
   elfLanding: {
     siteEyebrow: "ELF 皮膚圖鑑",

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "preview": "node scripts/serve-static.mjs .",
+    "test:market": "node --test tests/config-formatters.test.js tests/market-model.test.js tests/market-feature.test.js",
     "test:ui": "playwright test tests/responsive-screenshots.spec.js",
     "frames:validate": "C:\\Users\\User\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe scripts/process_kit.py validate"
   },
@@ -20,7 +21,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@awesome.me/webawesome": "^3.10.0",
     "@fontsource/be-vietnam-pro": "^5.2.8",
     "@fontsource/fira-code": "^5.2.7",
     "@fontsource/noto-sans": "^5.2.10",

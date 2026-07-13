@@ -126,44 +126,48 @@ test("mobile carousel keeps its active rank after asynchronous community refresh
   await expect(carousel).toHaveAttribute("data-continuity-marker", "same-carousel-node");
 });
 
-test("mobile market uses a sticky horizontal section navigation", async ({ page }) => {
+test("mobile can enter the reserved market workspace without loading fake data", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/?v=playwright-mobile-navigation#market", { waitUntil: "domcontentloaded" });
+  await page.goto("/?v=playwright-mobile-navigation#home", { waitUntil: "domcontentloaded" });
 
-  const sectionNavigation = page.locator("[data-dashboard-nav]");
-  await expect(sectionNavigation).toBeVisible();
-  await expect(sectionNavigation.locator("a")).toHaveCount(5);
+  await page.locator(".mobile-primary-nav a[href='#market']").click();
+  await expect(page).toHaveURL(/#market$/);
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#market");
   await expect(page.locator(".app-header .route-tabs")).toBeHidden();
   await expect(page.locator(".app-header .page-summary")).toBeHidden();
+  await expect(page.locator(".market-planned-workspace")).toBeVisible();
+  await expect(page.locator("[data-market-source-kind='reserved']")).toBeVisible();
+  await expect(page.locator("[data-market-module]")).toHaveCount(4);
+  await expect(page.locator("[data-market-overview-status='planned']")).toBeVisible();
+  await expect(page.locator("[data-market-overview-metric]")).toHaveCount(4);
+  await expect(page.locator("[data-market-assets-status='planned']")).toBeVisible();
+  await expect(page.locator(".market-assets-empty")).toBeVisible();
+  await expect(page.locator(".market-assets-metrics")).toHaveCount(0);
+  await expect(page.locator("[data-market-actors-status='planned']")).toBeVisible();
+  await expect(page.locator(".market-actors-empty")).toBeVisible();
+  await expect(page.locator(".market-actors-metrics")).toHaveCount(0);
+  await expect(page.locator(".market-actors-boundary")).toContainText(/real identity|真實身份/);
+  await expect(page.locator("[data-market-indicators-status='planned']")).toBeVisible();
+  await expect(page.locator("[data-market-indicator]")).toHaveCount(2);
+  await expect(page.locator("[data-market-indicator-score]")).toHaveCount(0);
+  await expect(page.locator("[data-dashboard-nav]")).toHaveCount(0);
+  await expect(page.locator("[data-action='refresh']")).toHaveCount(0);
+  await expect(page.locator(".metric-card")).toHaveCount(0);
 
   const marketHeaderHeight = await page.locator(".app-header").evaluate((element) => element.getBoundingClientRect().height);
   expect(marketHeaderHeight).toBeLessThanOrEqual(150);
 
-  const navigationStyle = await sectionNavigation.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      display: style.display,
-      overflowX: style.overflowX,
-      position: style.position
-    };
-  });
-
-  expect(navigationStyle).toEqual({
-    display: "flex",
-    overflowX: "auto",
-    position: "sticky"
-  });
-
-  await expect(page.locator(".category-tabs")).toBeVisible();
-  const mobileMarketLayout = await page.locator(".category-tabs").evaluate((element) => ({
-    categoryColumns: getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
-    summaryColumns: getComputedStyle(document.querySelector(".summary-panel")).gridTemplateColumns
-      .split(" ")
-      .filter(Boolean).length
+  const mobileOverview = await page.locator(".market-overview-metrics").evaluate((element) => ({
+    columns: getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
+    values: [...element.querySelectorAll("strong")].map((value) => value.textContent.trim())
   }));
-  expect(mobileMarketLayout.categoryColumns).toBe(2);
-  expect(mobileMarketLayout.summaryColumns).toBe(1);
+  expect(mobileOverview.columns).toBe(2);
+  expect(mobileOverview.values).toEqual(["—", "—", "—", "—"]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.locator(".mobile-primary-nav a[href='#home']").click();
+  await expect(page).toHaveURL(/#home$/);
+  await expect(page.locator(".elf-home-workspace")).toBeVisible();
 });
 
 test("desktop keeps the full header and does not render mobile navigation", async ({ page }) => {
@@ -186,9 +190,34 @@ test("desktop keeps the full header and does not render mobile navigation", asyn
   await expect(page).toHaveURL(/#home&tab=gallery$/);
   await expect(page.locator(".elf-tab-panel-gallery")).toBeVisible();
 
-  await page.goto("/?v=playwright-desktop-navigation#market", { waitUntil: "domcontentloaded" });
+  await page.locator(".app-header-skins .route-market-link").click();
+  await expect(page).toHaveURL(/#market$/);
   await expect(page.locator(".mobile-primary-nav")).toBeHidden();
   await expect(page.locator(".app-header .route-tabs")).toBeVisible();
+  await expect(page.locator(".market-planned-workspace")).toBeVisible();
+  await expect(page.locator("[data-market-module]")).toHaveCount(4);
+  await expect(page.locator("[data-market-overview-status='planned']")).toBeVisible();
+  await expect(page.locator("[data-market-overview-metric]")).toHaveCount(4);
+  await expect(page.locator("[data-market-assets-status='planned']")).toBeVisible();
+  await expect(page.locator(".market-assets-empty")).toBeVisible();
+  await expect(page.locator(".market-assets-metrics")).toHaveCount(0);
+  await expect(page.locator("[data-market-actors-status='planned']")).toBeVisible();
+  await expect(page.locator(".market-actors-empty")).toBeVisible();
+  await expect(page.locator(".market-actors-metrics")).toHaveCount(0);
+  await expect(page.locator(".market-actors-boundary")).toBeVisible();
+  await expect(page.locator("[data-market-indicators-status='planned']")).toBeVisible();
+  await expect(page.locator("[data-market-indicator]")).toHaveCount(2);
+  await expect(page.locator("[data-market-indicator-score]")).toHaveCount(0);
+  await expect(page.locator("[data-action='refresh']")).toHaveCount(0);
+
+  const desktopOverviewColumns = await page.locator(".market-overview-metrics").evaluate((element) => (
+    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length
+  ));
+  expect(desktopOverviewColumns).toBe(4);
+
+  await page.locator(".app-header .route-tabs a[href='#home']").click();
+  await expect(page).toHaveURL(/#home$/);
+  await expect(page.locator(".elf-home-workspace")).toBeVisible();
 });
 
 test("responsive view boundary switches exactly between 920 and 921 pixels", async ({ page }) => {

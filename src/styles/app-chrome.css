@@ -322,6 +322,20 @@
   line-height: 1.25;
 }
 
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+  margin-bottom: var(--space-4);
+}
+
+.section-heading > span {
+  color: var(--theme-text-muted, #92a5bb);
+  font-size: 0.84rem;
+}
+
 .route-tabs {
   display: inline-flex;
   min-height: 44px;

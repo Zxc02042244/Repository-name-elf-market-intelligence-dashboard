@@ -1,3 +1,5 @@
+import { MARKET_DISPLAY_LIMITS } from "../../config/product-config.js";
+
 export function calculateActorStats(transactions) {
   const statsByActor = new Map();
 
@@ -73,6 +75,6 @@ function recordActorAsset(stat, transaction) {
 function getTopAssets(assetCounts) {
   return [...assetCounts.values()]
     .sort((left, right) => right.count - left.count)
-    .slice(0, 3)
+    .slice(0, MARKET_DISPLAY_LIMITS.actorMainAssets)
     .map((entry) => entry.asset);
 }

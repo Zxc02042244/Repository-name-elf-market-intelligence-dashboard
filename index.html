@@ -4,17 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Market Intelligence Dashboard</title>
-    <meta name="elf-community-supabase-url" content="https://hsvemaakgjxydocwqbmq.supabase.co" />
-    <meta name="elf-community-supabase-publishable-key" content="sb_publishable_JJnKtiabxzltgv4Yalxzvg_HtNl4_XJ" />
+    <script src="./src/config/public-runtime-config.js?v=20260713-public-config-1"></script>
     <!-- CSS layer order: tokens -> base/chrome -> features -> responsive -> theme. -->
     <link rel="stylesheet" href="./src/styles/tokens.css?v=20260713-design-tokens-1" />
     <link rel="stylesheet" href="./src/styles.css?v=20260713-trailblazer-frame-1" />
     <link rel="stylesheet" href="./src/styles/app-chrome.css?v=20260713-app-chrome-1" />
     <link rel="stylesheet" href="./src/styles/shared-feedback.css?v=20260713-shared-feedback-1" />
     <!-- Feature modules share data/DOM but own their visual responsibilities. -->
-    <link rel="stylesheet" href="./src/styles/market-cards.css?v=20260713-market-cards-1" />
-    <link rel="stylesheet" href="./src/styles/market-explorer.css?v=20260713-market-explorer-1" />
-    <link rel="stylesheet" href="./src/styles/market-details.css?v=20260713-market-details-1" />
+    <link rel="stylesheet" href="./src/features/market/styles/market-feature.css?v=20260713-market-feature-1" />
+    <link rel="stylesheet" href="./src/features/market/styles/market-overview.css?v=20260713-market-overview-1" />
+    <link rel="stylesheet" href="./src/features/market/styles/market-assets.css?v=20260713-market-assets-1" />
+    <link rel="stylesheet" href="./src/features/market/styles/market-actors.css?v=20260713-market-actors-1" />
+    <link rel="stylesheet" href="./src/features/market/styles/market-indicators.css?v=20260713-market-indicators-1" />
     <link rel="stylesheet" href="./src/styles/home-ranking.css?v=20260713-home-ranking-1" />
     <link rel="stylesheet" href="./src/styles/home-wishlist.css?v=20260713-home-wishlist-1" />
     <link rel="stylesheet" href="./src/styles/home-supply.css?v=20260713-home-supply-1" />
@@ -28,7 +29,6 @@
     <link rel="stylesheet" href="./src/styles/home-tabs.css?v=20260713-home-tabs-module-1" />
     <link rel="stylesheet" href="./src/styles/mobile-header.css?v=20260713-mobile-header-module-1" />
     <link rel="stylesheet" href="./src/styles/mobile-content-grid.css?v=20260713-mobile-content-grid-1" />
-    <link rel="stylesheet" href="./src/styles/mobile-market.css?v=20260713-mobile-market-1" />
     <link rel="stylesheet" href="./src/styles/desktop-layout.css?v=20260713-desktop-layout-1" />
     <link rel="stylesheet" href="./src/styles/desktop-card-frames.css?v=20260713-desktop-card-frames-1" />
     <!-- Theme is the final visual override layer. -->
@@ -37,10 +37,7 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <div id="app"></div>
-    <script type="module">
-      import "https://ka-f.webawesome.com/webawesome@3.10.0/components/carousel/carousel.js";
-      import "https://ka-f.webawesome.com/webawesome@3.10.0/components/carousel-item/carousel-item.js";
-    </script>
+    <script type="module" src="./src/config/webawesome-loader.js?v=20260713-webawesome-loader-1"></script>
     <script type="module" src="./src/app/main.js?v=20260713-trailblazer-frame-1"></script>
   </body>
 </html>

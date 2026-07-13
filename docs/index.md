@@ -18,7 +18,7 @@ Current product mode:
 
 - GitHub Pages frontend
 - plain HTML, CSS, and JavaScript ES modules
-- loaded MarketModel snapshot UI
+- skin gallery runtime plus a modular market feature with a reserved data-source boundary
 - local static i18n dictionaries
 - Elf-inspired CSS theme
 - text-first asset UI with generic CSS-only asset badges
@@ -35,7 +35,9 @@ Paused lines:
 - `AGENTS.md`
 - `CODEX_MARKET_INTELLIGENCE_DASHBOARD_BRIEF.md`
 - `CHECKLIST.md`
-- `README.md`
+- `src/config/README.md`
+- `src/features/skins/README.md`
+- `src/features/market/README.md`
 - `docs/elf-skin-self-edit-guide.md`
 
 ## Current Safe-work Closeouts
@@ -50,6 +52,16 @@ Paused lines:
 - `docs/local-static-preview-workflow.md`
 
 Use these first when deciding the next no-secret UI or documentation task.
+
+## Market Indicator Specifications
+
+- docs/tts-two-step-transfer-spec.md
+  - Two-Step Transfer Confidence（TTS）的已找回概念與安全語言規範
+  - 目前僅完成紀錄，尚未啟用計算或畫面
+- docs/mps-market-pattern-score-spec.md
+  - Market Pattern Score（MPS）的六個構面、可解釋性及安全語言規範
+  - Market Pattern Index（MPI）為待確認的改名提案
+  - 目前僅完成紀錄，尚未啟用計算或畫面
 
 ## I18N Track
 

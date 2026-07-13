@@ -1,4 +1,4 @@
-const ELF_SKIN_API_URL = "https://api-prd.cidi.games/api/v1/elf/skins";
+import { readPublicServiceConfig } from "../../config/service-config.js";
 
 const toneCycle = Object.freeze(["amber", "cyan", "rose", "violet", "emerald"]);
 
@@ -69,7 +69,13 @@ export function getFallbackElfSkins() {
 }
 
 export async function loadElfSkinCatalog({ signal } = {}) {
-  const response = await fetch(ELF_SKIN_API_URL, { signal });
+  const { skinApiUrl } = readPublicServiceConfig();
+
+  if (!skinApiUrl) {
+    throw new Error("ELF skin API public runtime configuration is missing.");
+  }
+
+  const response = await fetch(skinApiUrl, { signal });
 
   if (!response.ok) {
     const error = new Error(`ELF skin API request failed with HTTP ${response.status}.`);
@@ -153,11 +159,12 @@ function createSkinId(name) {
 }
 
 function createFallbackSkinImageUrl(name) {
+  const { fallbackSkinImageBaseUrl } = readPublicServiceConfig();
   const fileName = String(name ?? "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-  return `https://www.cidi.games/elfs/elf-set_${fileName}-idle.png`;
+  return `${fallbackSkinImageBaseUrl}/elf-set_${fileName}-idle.png`;
 }
