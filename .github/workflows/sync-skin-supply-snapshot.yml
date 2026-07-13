@@ -25,4 +25,5 @@ jobs:
         env:
           ELF_SUPABASE_URL: ${{ secrets.ELF_SUPABASE_URL }}
           ELF_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.ELF_SUPABASE_PUBLISHABLE_KEY }}
+          ELF_SKIN_API_URL: ${{ vars.ELF_SKIN_API_URL }}
         run: node scripts/sync-skin-supply-snapshot.mjs
