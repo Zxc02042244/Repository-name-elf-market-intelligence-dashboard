@@ -232,13 +232,30 @@
 
 }
 
+@media (min-width: 1280px) {
+  .app-shell-home {
+    width: min(1400px, calc(100% - 120px));
+  }
+}
+
 @media (min-width: 1120px) {
-  .elf-tab-panel-wishlist {
-    grid-template-columns: minmax(350px, 450px) minmax(420px, 1fr);
+  .elf-home-workspace {
+    --elf-ranking-board-height: 680px;
+    --elf-champion-card-width: 430px;
+    --elf-champion-card-height: calc(var(--elf-champion-card-width) * 1511 / 1041);
+  }
+
+  .elf-tab-panel-wishlist,
+  .elf-tab-panel-supply {
+    min-height: var(--elf-ranking-board-height);
     grid-template-rows: auto minmax(0, 1fr);
     gap: 8px 12px;
     align-items: stretch;
     padding: 10px 12px 12px;
+  }
+
+  .elf-tab-panel-wishlist {
+    grid-template-columns: minmax(380px, var(--elf-champion-card-width)) minmax(420px, 1fr);
   }
 
   .elf-tab-panel-wishlist > .section-heading {
@@ -271,16 +288,17 @@
   }
 
   .elf-tab-panel-wishlist .elf-champion-card-compact {
-    min-height: 496px;
-    height: 100%;
+    justify-self: center;
+    width: min(100%, var(--elf-champion-card-width));
+    min-height: 0;
+    height: auto;
   }
 
   .elf-tab-panel-supply {
     grid-template-columns:
-      minmax(380px, 480px)
-      minmax(320px, 1fr)
-      minmax(300px, 0.82fr);
-    align-items: stretch;
+      minmax(380px, var(--elf-champion-card-width))
+      minmax(300px, 1fr)
+      minmax(280px, 0.82fr);
   }
 
   .elf-tab-panel-supply > .section-heading {
@@ -302,8 +320,9 @@
     grid-row: 2;
   }
 
-  .elf-tab-panel-supply .elf-champion-card-compact {
-    min-height: 540px;
+  .elf-tab-panel-wishlist .elf-champion-unified-frame,
+  .elf-tab-panel-supply .elf-champion-unified-frame {
+    width: min(100%, var(--elf-champion-card-width));
   }
 
   .elf-tab-panel-supply .elf-rank-list,
@@ -314,14 +333,17 @@
 
   .elf-tab-panel-supply .elf-rank-list,
   .elf-tab-panel-wishlist .elf-rank-list {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+    height: var(--elf-champion-card-height);
     gap: 4px;
+    align-self: start;
   }
 
   .elf-tab-panel-supply .elf-rank-row,
   .elf-tab-panel-wishlist .elf-rank-row {
     grid-template-columns: 26px 36px minmax(0, 1fr);
-    min-height: 46px;
-    padding: 3px 7px;
+    min-height: 42px;
+    padding: 2px 7px;
   }
 
   .elf-tab-panel-wishlist .elf-rank-row {
@@ -357,11 +379,20 @@
     font-size: 0.72rem;
   }
 
+  .elf-tab-panel-wishlist .elf-rank-body small {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    align-items: baseline;
+  }
+
   .elf-tab-panel-supply .elf-delta-panel {
     display: grid;
     grid-template-rows: auto 1fr;
-    min-height: 540px;
+    height: var(--elf-champion-card-height);
+    min-height: 0;
     margin: 0;
+    align-self: start;
   }
 
   .elf-tab-panel-supply .elf-delta-track {

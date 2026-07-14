@@ -9,10 +9,6 @@
     grid-template-columns: 1fr;
   }
 
-  .elf-footer-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .elf-champion-card {
     min-height: 460px;
   }
@@ -57,10 +53,6 @@
 
   .elf-champion-card-compact .elf-champion-stat {
     min-height: 46px;
-  }
-
-  .elf-footer-metrics {
-    grid-template-columns: 1fr;
   }
 
   .elf-delta-panel {

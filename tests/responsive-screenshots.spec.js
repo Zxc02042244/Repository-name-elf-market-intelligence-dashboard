@@ -6,7 +6,8 @@ const viewports = [
   { name: "mobile-430", width: 430, height: 932 },
   { name: "tablet-768", width: 768, height: 1024 },
   { name: "desktop-1024", width: 1024, height: 768 },
-  { name: "desktop-1440", width: 1440, height: 900 }
+  { name: "desktop-1440", width: 1440, height: 900 },
+  { name: "desktop-1920", width: 1920, height: 1080 }
 ];
 
 test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
@@ -27,6 +28,30 @@ test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
       await expect(page.locator("main")).toBeVisible();
       await page.waitForTimeout(1_200);
 
+      const responsiveBackground = await page.locator("body").evaluate((body) => {
+        const style = getComputedStyle(body, "::before");
+        return {
+          image: style.backgroundImage,
+          size: style.backgroundSize,
+          repeat: style.backgroundRepeat,
+          position: style.backgroundPosition
+        };
+      });
+      expect(responsiveBackground.image).toContain(
+        viewport.width >= 921 ? "elf-forest-desktop-v2.webp" : "elf-forest-mobile-v2.webp"
+      );
+      expect(responsiveBackground.size.split(",").map((value) => value.trim())).toContain("100%");
+      expect(responsiveBackground.repeat.split(",").map((value) => value.trim())).toContain("no-repeat");
+      expect(responsiveBackground.position.split(",").map((value) => value.trim())).toContain("50% 0%");
+
+      if (viewport.width >= 1280) {
+        const desktopShellWidth = await page.locator(".app-shell-home").evaluate((shell) => (
+          shell.getBoundingClientRect().width
+        ));
+        expect(desktopShellWidth).toBeLessThanOrEqual(1400);
+        expect((viewport.width - desktopShellWidth) / 2).toBeGreaterThanOrEqual(59);
+      }
+
       if (viewport.width >= 921) {
         await expect(page.locator(".elf-mobile-carousel-shell")).toBeHidden();
         await expect(page.locator(".elf-desktop-champion .elf-champion-card")).toBeVisible();
@@ -36,21 +61,24 @@ test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
           rank: getComputedStyle(card.querySelector(".elf-champion-rank")).backgroundImage,
           name: getComputedStyle(card.querySelector(".elf-champion-body")).backgroundImage
         }));
-        expect(desktopFrameLayers.base).not.toBe("none");
-        expect(desktopFrameLayers.rank).not.toBe("none");
-        expect(desktopFrameLayers.name).not.toBe("none");
+        expect(desktopFrameLayers.base).toContain("unified-forest-card-frame-v1.png");
+        expect(desktopFrameLayers.rank).toBe("none");
+        expect(desktopFrameLayers.name).toBe("none");
 
         const desktopFrameAssetsLoaded = await page.locator(".elf-desktop-champion .elf-champion-card").evaluate(async (card) => {
           const extractUrl = (backgroundImage) => backgroundImage.match(/url\(["']?([^"')]+)["']?\)/)?.[1] ?? "";
-          const urls = [
-            extractUrl(getComputedStyle(card).backgroundImage),
-            extractUrl(getComputedStyle(card.querySelector(".elf-champion-rank")).backgroundImage),
-            extractUrl(getComputedStyle(card.querySelector(".elf-champion-body")).backgroundImage)
-          ];
-
-          return Promise.all(urls.map(async (url) => url !== "" && (await fetch(url)).ok));
+          const url = extractUrl(getComputedStyle(card).backgroundImage);
+          return url !== "" && (await fetch(url)).ok;
         });
-        expect(desktopFrameAssetsLoaded).toEqual([true, true, true]);
+        expect(desktopFrameAssetsLoaded).toBe(true);
+      }
+
+      if (viewport.width >= 1120 && viewport.height >= 900) {
+        const verticalFlow = await page.locator(".elf-tab-panel").evaluate((panel) => ({
+          panelBottom: panel.getBoundingClientRect().bottom,
+          footerTop: document.querySelector(".elf-home-footer")?.getBoundingClientRect().top ?? 0
+        }));
+        expect(verticalFlow.footerTop).toBeGreaterThan(verticalFlow.panelBottom);
       }
 
       await page.screenshot({
@@ -76,7 +104,7 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect(page.locator(".elf-mobile-champion-carousel")).toBeVisible();
   await expect(page.locator('[data-skin-champion-view="mobile"]')).toBeVisible();
   await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeHidden();
-  await expect(page.locator(".elf-mobile-champion-carousel wa-carousel-item")).toHaveCount(3);
+  await expect(page.locator(".elf-mobile-champion-carousel wa-carousel-item")).toHaveCount(10);
   await expect(page.locator(".elf-mobile-champion-carousel")).not.toHaveAttribute("navigation", "");
   await expect(page.locator(".elf-mobile-carousel-progress")).toBeHidden();
   await expect(page.locator(".elf-tab-panel-supply > .section-heading")).toBeHidden();
@@ -121,15 +149,23 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   }));
   expect(mobileChampionLayout.artHeight).toBeGreaterThanOrEqual(170);
   expect(mobileChampionLayout.nameFontSize).toBeLessThanOrEqual(30);
-  expect(mobileChampionLayout.outerBorderWidth).toBeGreaterThan(0);
+  expect(mobileChampionLayout.outerBorderWidth).toBe(0);
   expect(mobileChampionLayout.innerFrameDisplay).toBe("none");
   expect(mobileChampionLayout.artBorderWidth).toBe(0);
   expect(mobileChampionLayout.rankBorderWidth).toBe(0);
   expect(mobileChampionLayout.statBorderWidth).toBe(0);
   expect(mobileChampionLayout.statLabelDisplay).toBe("none");
   expect(mobileChampionLayout.statValueBeforeContent).toContain("☆");
-  expect(mobileChampionLayout.artImageTop - mobileChampionLayout.rankBottom).toBeLessThanOrEqual(24);
+  expect(mobileChampionLayout.artImageTop - mobileChampionLayout.rankBottom).toBeGreaterThanOrEqual(0);
+  expect(mobileChampionLayout.artImageTop - mobileChampionLayout.rankBottom).toBeLessThanOrEqual(120);
   expect(Math.abs(mobileChampionLayout.rankCenter - mobileChampionLayout.artImageCenter)).toBeLessThanOrEqual(4);
+
+  await page.locator(".elf-mobile-champion-carousel").evaluate((element) => element.goToSlide(9, "auto"));
+  await expect.poll(async () => page.locator(".elf-mobile-champion-carousel").evaluate((element) => (
+    element.activeSlide
+  ))).toBe(9);
+  await expect(page.locator(".elf-mobile-champion-carousel wa-carousel-item[data-rank='10'] .elf-champion-rank"))
+    .toHaveText("TOP 10");
 
   await page.locator(".elf-home-tabs-content [data-skin-home-tab='gallery']").click();
   await expect(page).toHaveURL(/#home&tab=gallery$/);

@@ -1,7 +1,7 @@
 export const PRODUCT_RULES = Object.freeze({
   wishlistLimit: 3,
   rankingLimit: 10,
-  mobileChampionLimit: 3,
+  mobileChampionLimit: 10,
   supplySyncLimit: 100
 });
 
