@@ -46,10 +46,6 @@ export async function createSupabaseClientFromEnv(options = {}) {
   };
 }
 
-export function getSupabaseEnvKeys() {
-  return [...SUPABASE_ENV_KEYS];
-}
-
 function createDisabledClient(status, reason, details = {}) {
   return {
     enabled: false,

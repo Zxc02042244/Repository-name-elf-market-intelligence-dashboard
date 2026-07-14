@@ -1,8 +1,7 @@
 @media (max-width: 920px) {
   .app-header,
   .header-copy,
-  .header-actions,
-  .status-strip {
+  .header-actions {
     display: grid;
   }
 

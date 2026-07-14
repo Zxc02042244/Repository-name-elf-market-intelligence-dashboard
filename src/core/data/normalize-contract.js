@@ -14,10 +14,6 @@ export function isValidMarketTransaction(transaction) {
   );
 }
 
-export function normalizeTransactionList(transactions) {
-  return inspectTransactionList(transactions).transactions;
-}
-
 export function inspectTransactionList(transactions) {
   if (!Array.isArray(transactions)) {
     throw new TypeError("MarketModel requires an array of normalized market transactions.");

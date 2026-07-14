@@ -67,10 +67,6 @@ export function clearSkinWishlistSelection(wishlistState) {
   return nextState;
 }
 
-export function getSkinWishlistLimit() {
-  return PRODUCT_RULES.wishlistLimit;
-}
-
 function readStoredWishlist() {
   try {
     return JSON.parse(window.localStorage?.getItem(STORAGE_KEYS.skinWishlist) ?? "{}") ?? {};

@@ -28,10 +28,6 @@
   content: "";
 }
 
-.elf-rank-panel-wishlist::before {
-  background: linear-gradient(90deg, #a98cf0, #e37f78, #f2b84b);
-}
-
 .elf-rank-actions {
   display: flex;
   justify-content: flex-end;
@@ -173,4 +169,3 @@
   border-radius: inherit;
   background: currentColor;
 }
-
