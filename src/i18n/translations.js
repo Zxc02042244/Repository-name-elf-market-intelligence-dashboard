@@ -233,10 +233,14 @@ const en = {
     skinSourceOfficialDetail: "Skin images, names, and supply values are loaded from the public CiDi ELF skin API.",
     skinSourceFallbackDetail: "Official fallback assets are used while the public skin API is unavailable.",
     skinSourceWishlist: "Wish list records",
-    skinSourceWishlistRemoteDetail: "Your browser stores up to three picks locally, then sends anonymous skin IDs to Supabase for community totals.",
+    skinSourceWishlistRemoteDetail: "Your browser stores up to three picks, a random installation ID, and a private token locally. Supabase receives them, stores only the token hash, and records first/last sync times for community totals.",
     skinSourceWishlistLocalDetail: "Your browser stores up to three picks locally. Community totals are unavailable right now.",
     skinSourceSupplySnapshot: "Daily supply snapshots",
-    skinSourceSupplySnapshotDetail: "Supabase keeps daily supply snapshots from the official skin catalog to calculate today-added rankings."
+    skinSourceSupplySnapshotDetail: "Supabase keeps daily supply snapshots from the official skin catalog to calculate today-added rankings.",
+    skinPrivacyTitle: "Privacy and control",
+    skinPrivacyDetail: "No account, name, email, IP address, or fingerprint is stored in the gallery tables. Hosting providers may keep separate request logs. Aggregates are not identity-verified and may be abused.",
+    skinPrivacyDelete: "Delete my community data",
+    skinPrivacyDeleteConfirm: "Delete this browser's community identifier and wish records? This cannot be undone."
   },
   coverage: {
     assetCategoryFilter: "Asset category filter",
@@ -629,10 +633,14 @@ const zhHant = deepMerge(en, {
     skinSourceOfficialDetail: "皮膚圖片、名稱與供給量來自公開 CiDi ELF 皮膚 API。",
     skinSourceFallbackDetail: "公開皮膚 API 暫時不可用時，改用官方備援素材。",
     skinSourceWishlist: "願望清單紀錄",
-    skinSourceWishlistRemoteDetail: "瀏覽器本地最多保留三個願望，並只把匿名 skin ID 送到 Supabase 統計社群總數。",
+    skinSourceWishlistRemoteDetail: "瀏覽器本地保存最多三個願望、隨機安裝識別碼與私密 token；Supabase 接收後只保存 token 雜湊，並記錄首次與最後同步時間以統計社群總數。",
     skinSourceWishlistLocalDetail: "瀏覽器本地最多保留三個願望；目前未顯示社群總數。",
     skinSourceSupplySnapshot: "每日供給快照",
-    skinSourceSupplySnapshotDetail: "Supabase 依官方皮膚目錄保留每日供給快照，用來計算今日新增排行。"
+    skinSourceSupplySnapshotDetail: "Supabase 依官方皮膚目錄保留每日供給快照，用來計算今日新增排行。",
+    skinPrivacyTitle: "隱私與控制",
+    skinPrivacyDetail: "願望館資料表不保存帳號、姓名、Email、IP 位址或裝置指紋；託管服務商仍可能另存請求日誌。統計未驗證真實身分，可能遭濫用。",
+    skinPrivacyDelete: "刪除我的社群資料",
+    skinPrivacyDeleteConfirm: "要刪除此瀏覽器的社群識別碼與願望紀錄嗎？此操作無法復原。"
   },
   coverage: {
     assetCategoryFilter: "資產分類篩選",
@@ -850,10 +858,14 @@ const ja = deepMerge(en, {
     skinSourceOfficialDetail: "スキン画像、名前、供給量は公開 CiDi ELF スキン API から読み込みます。",
     skinSourceFallbackDetail: "公開スキン API が利用できない場合は、公式の代替アセットを使います。",
     skinSourceWishlist: "願いリスト記録",
-    skinSourceWishlistRemoteDetail: "ブラウザには最大3件の願いを保存し、匿名の skin ID だけを Supabase に送ってコミュニティ合計を集計します。",
+    skinSourceWishlistRemoteDetail: "ブラウザに最大3件の願い、ランダムなインストールID、秘密トークンを保存します。Supabase はトークンのハッシュだけを保存し、初回・最終同期時刻を記録します。",
     skinSourceWishlistLocalDetail: "ブラウザには最大3件の願いを保存します。現在コミュニティ合計は利用できません。",
     skinSourceSupplySnapshot: "毎日の供給スナップショット",
-    skinSourceSupplySnapshotDetail: "Supabase は公式スキンカタログの毎日供給スナップショットを保存し、今日追加ランキングを計算します。"
+    skinSourceSupplySnapshotDetail: "Supabase は公式スキンカタログの毎日供給スナップショットを保存し、今日追加ランキングを計算します。",
+    skinPrivacyTitle: "プライバシーと管理",
+    skinPrivacyDetail: "願いデータにはアカウント、氏名、メール、IP、フィンガープリントを保存しません。ホスティング事業者が別途リクエストログを保持する場合があります。集計は本人確認されません。",
+    skinPrivacyDelete: "コミュニティデータを削除",
+    skinPrivacyDeleteConfirm: "このブラウザのコミュニティIDと願い記録を削除しますか？元に戻せません。"
   },
   app: { title: "市場インテリジェンスダッシュボード", subtitle: "Elf Continent を最初のソース adapter とする再利用可能な市場モデル基盤。", versionEyebrow: "V2-2 市場カバレッジ" },
   language: { label: "言語", nativeName: "日本語" },
@@ -1092,10 +1104,14 @@ const ko = deepMerge(en, {
     skinSourceOfficialDetail: "스킨 이미지, 이름, 공급량은 공개 CiDi ELF 스킨 API에서 로드합니다.",
     skinSourceFallbackDetail: "공개 스킨 API를 사용할 수 없을 때는 공식 대체 에셋을 사용합니다.",
     skinSourceWishlist: "위시 목록 기록",
-    skinSourceWishlistRemoteDetail: "브라우저는 최대 3개의 위시를 로컬에 저장하고, 익명 skin ID만 Supabase로 보내 커뮤니티 합계를 집계합니다.",
+    skinSourceWishlistRemoteDetail: "브라우저는 최대 3개의 위시, 임의 설치 ID와 비밀 토큰을 저장합니다. Supabase는 토큰 해시만 저장하고 최초·최근 동기화 시간을 기록합니다.",
     skinSourceWishlistLocalDetail: "브라우저는 최대 3개의 위시를 로컬에 저장합니다. 현재 커뮤니티 합계는 사용할 수 없습니다.",
     skinSourceSupplySnapshot: "일일 공급 스냅샷",
-    skinSourceSupplySnapshotDetail: "Supabase는 공식 스킨 카탈로그의 일일 공급 스냅샷을 보관해 오늘 증가 순위를 계산합니다."
+    skinSourceSupplySnapshotDetail: "Supabase는 공식 스킨 카탈로그의 일일 공급 스냅샷을 보관해 오늘 증가 순위를 계산합니다.",
+    skinPrivacyTitle: "개인정보와 제어",
+    skinPrivacyDetail: "위시 데이터에는 계정, 이름, 이메일, IP 주소 또는 기기 지문을 저장하지 않습니다. 호스팅 제공자가 별도 요청 로그를 보관할 수 있으며 집계는 신원 확인되지 않습니다.",
+    skinPrivacyDelete: "내 커뮤니티 데이터 삭제",
+    skinPrivacyDeleteConfirm: "이 브라우저의 커뮤니티 ID와 위시 기록을 삭제할까요? 되돌릴 수 없습니다."
   },
   app: { title: "시장 인텔리전스 대시보드", subtitle: "Elf Continent를 첫 소스 adapter로 사용하는 재사용 가능한 시장 모델 기반.", versionEyebrow: "V2-2 시장 커버리지" },
   language: { label: "언어", nativeName: "한국어" },
@@ -1334,10 +1350,14 @@ const vi = deepMerge(en, {
     skinSourceOfficialDetail: "Ảnh, tên và nguồn cung skin được tải từ API skin ELF công khai của CiDi.",
     skinSourceFallbackDetail: "Khi API skin công khai chưa khả dụng, trang dùng tài nguyên dự phòng chính thức.",
     skinSourceWishlist: "Bản ghi ước chọn",
-    skinSourceWishlistRemoteDetail: "Trình duyệt lưu tối đa ba lựa chọn cục bộ, sau đó chỉ gửi skin ID ẩn danh đến Supabase để cộng tổng cộng đồng.",
+    skinSourceWishlistRemoteDetail: "Trình duyệt lưu tối đa ba lựa chọn, một ID cài đặt ngẫu nhiên và token riêng. Supabase chỉ lưu hàm băm token cùng thời điểm đồng bộ đầu/cuối để tính tổng.",
     skinSourceWishlistLocalDetail: "Trình duyệt lưu tối đa ba lựa chọn cục bộ. Hiện chưa có tổng cộng đồng.",
     skinSourceSupplySnapshot: "Ảnh chụp nguồn cung hằng ngày",
-    skinSourceSupplySnapshotDetail: "Supabase lưu ảnh chụp nguồn cung hằng ngày từ danh mục skin chính thức để tính bảng tăng hôm nay."
+    skinSourceSupplySnapshotDetail: "Supabase lưu ảnh chụp nguồn cung hằng ngày từ danh mục skin chính thức để tính bảng tăng hôm nay.",
+    skinPrivacyTitle: "Quyền riêng tư và kiểm soát",
+    skinPrivacyDetail: "Bảng dữ liệu không lưu tài khoản, tên, email, địa chỉ IP hay dấu vân tay thiết bị. Nhà cung cấp hosting có thể giữ nhật ký yêu cầu riêng; số liệu không xác minh danh tính.",
+    skinPrivacyDelete: "Xóa dữ liệu cộng đồng của tôi",
+    skinPrivacyDeleteConfirm: "Xóa ID cộng đồng và các lựa chọn của trình duyệt này? Không thể hoàn tác."
   },
   app: { title: "Bảng Điều Khiển Tình Báo Thị Trường", subtitle: "Nền tảng MarketModel tái sử dụng với Elf Continent là adapter nguồn đầu tiên.", versionEyebrow: "V2-2 Phạm Vi Thị Trường" },
   language: { label: "Ngôn ngữ", nativeName: "Tiếng Việt" },

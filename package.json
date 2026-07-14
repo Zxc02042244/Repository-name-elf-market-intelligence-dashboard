@@ -6,6 +6,7 @@
   "scripts": {
     "preview": "node scripts/serve-static.mjs .",
     "test:market": "node --test tests/config-formatters.test.js tests/market-model.test.js tests/market-feature.test.js",
+    "test:skins": "node --test tests/skin-source.test.js tests/skin-community-security.test.js",
     "test:ui": "playwright test tests/responsive-screenshots.spec.js tests/unified-card-frame.spec.js"
   },
   "keywords": [],

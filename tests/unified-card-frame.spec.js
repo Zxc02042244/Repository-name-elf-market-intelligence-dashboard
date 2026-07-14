@@ -16,8 +16,8 @@ test("every champion reuses the single global frame", async ({ page }) => {
   const firstBackground = await card.evaluate((element) => getComputedStyle(element).backgroundImage);
   expect(firstBackground).toContain("unified-forest-card-frame-v1.png");
 
-  const rows = page.locator(".elf-tab-panel-supply .elf-rank-row-selectable");
-  await expect(rows).toHaveCount(10);
+  const rows = page.locator(".elf-tab-panel-supply .elf-rank-list-desktop .elf-rank-row-selectable");
+  await expect(rows).toHaveCount(30);
   await rows.nth(1).click();
 
   const secondBackground = await card.evaluate((element) => getComputedStyle(element).backgroundImage);
@@ -67,12 +67,13 @@ test("wishlist and supply rankings share the champion card bounds", async ({ pag
   await page.goto("/?v=playwright-shared-ranking-layout#home", {
     waitUntil: "domcontentloaded"
   });
-  await expect(page.locator(".elf-tab-panel-wishlist .elf-rank-meter")).toHaveCount(10);
+  await expect(page.locator(".elf-tab-panel-wishlist .elf-rank-list-desktop .elf-rank-meter")).toHaveCount(30);
   await expect(page.locator('[data-skin-champion-view="desktop"] .elf-champion-card')).toBeVisible();
 
   const readLayout = () => page.locator(".elf-tab-panel:visible").evaluate((panel) => {
     const card = panel.querySelector('[data-skin-champion-view="desktop"] .elf-champion-card');
-    const ranking = panel.querySelector(":scope > .elf-rank-list");
+    const ranking = panel.querySelector(":scope > .elf-rank-list-desktop");
+    const pagination = panel.querySelector(":scope > .elf-ranking-pagination");
     const delta = panel.querySelector(":scope > .elf-delta-panel");
     const rect = (element) => {
       const bounds = element?.getBoundingClientRect();
@@ -87,25 +88,46 @@ test("wishlist and supply rankings share the champion card bounds", async ({ pag
     return {
       card: rect(card),
       ranking: rect(ranking),
+      pagination: rect(pagination),
       delta: rect(delta),
-      meters: panel.querySelectorAll(":scope > .elf-rank-list .elf-rank-meter").length
+      meters: panel.querySelectorAll(":scope > .elf-rank-list-desktop .elf-rank-meter").length
     };
   });
 
   const wishlist = await readLayout();
-  expect(wishlist.meters).toBe(10);
+  expect(wishlist.meters).toBe(30);
   expect(Math.abs(wishlist.ranking.top - wishlist.card.top)).toBeLessThanOrEqual(1);
-  expect(Math.abs(wishlist.ranking.bottom - wishlist.card.bottom)).toBeLessThanOrEqual(1);
+  expect(Math.abs(wishlist.pagination.bottom - wishlist.card.bottom)).toBeLessThanOrEqual(1);
 
   await page.locator(".elf-home-tabs-desktop [data-skin-home-tab='supply']").click();
   await expect(page.locator(".elf-tab-panel-supply")).toBeVisible();
 
   const supply = await readLayout();
-  expect(supply.meters).toBe(10);
+  expect(supply.meters).toBe(30);
   expect(supply.card.width).toBeCloseTo(wishlist.card.width, 0);
   expect(supply.card.height).toBeCloseTo(wishlist.card.height, 0);
   expect(Math.abs(supply.ranking.top - supply.card.top)).toBeLessThanOrEqual(1);
-  expect(Math.abs(supply.ranking.bottom - supply.card.bottom)).toBeLessThanOrEqual(1);
-  expect(Math.abs(supply.delta.top - supply.card.top)).toBeLessThanOrEqual(1);
-  expect(Math.abs(supply.delta.bottom - supply.card.bottom)).toBeLessThanOrEqual(1);
+  expect(Math.abs(supply.pagination.bottom - supply.card.bottom)).toBeLessThanOrEqual(1);
+  expect(supply.delta.height).toBe(0);
+});
+
+test("desktop ranking paginates all 49 skins while mobile stays at top ten", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?v=playwright-ranking-pages#home", { waitUntil: "domcontentloaded" });
+
+  const desktopRows = page.locator(".elf-tab-panel-wishlist .elf-rank-list-desktop .elf-rank-row");
+  await expect(desktopRows).toHaveCount(30);
+  await expect(page.locator(".elf-tab-panel-wishlist .elf-rank-list-desktop")).toHaveAttribute("data-ranking-columns", "3");
+
+  await page.locator("[data-skin-ranking-page='1']").click();
+  await expect(desktopRows).toHaveCount(19);
+  await expect(page.locator(".elf-tab-panel-wishlist .elf-rank-list-desktop")).toHaveAttribute("data-ranking-columns", "2");
+  await expect(desktopRows.nth(0).locator(".elf-rank-index")).toHaveText("31");
+  await expect(desktopRows.nth(18).locator(".elf-rank-index")).toHaveText("49");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".elf-mobile-champion-carousel .elf-champion-card")).toHaveCount(10);
+  await expect(page.locator(".elf-rank-list-mobile .elf-rank-row")).toHaveCount(10);
+  await expect(page.locator(".elf-ranking-pagination")).toBeHidden();
 });

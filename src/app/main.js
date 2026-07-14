@@ -6,6 +6,7 @@ import {
 } from "../features/skins/state/skin-wishlist.js";
 import {
   createSkinCommunityState,
+  forgetSkinCommunityData,
   markSkinCommunityError,
   markSkinCommunityLoading,
   syncSkinCommunityWishlist
@@ -35,6 +36,8 @@ const appState = createAppState();
 const appRoot = document.querySelector("#app");
 let skinCatalogLoadStarted = false;
 let skinCommunitySyncStarted = false;
+let skinCommunitySyncQueued = false;
+let skinCommunityForgetQueued = false;
 let skinSupplySyncStarted = false;
 let pendingUiSnapshot = null;
 
@@ -100,7 +103,8 @@ function renderApp({ preserveUi = false } = {}) {
         appState.locale,
         appState.skinHomeTab,
         appState.skinPreviewIds?.[appState.skinHomeTab] ?? "",
-        true
+        true,
+        appState.skinRankingPages?.[appState.skinHomeTab] ?? 0
       ) : `
         <div class="market-dashboard-workspace">
           ${renderMarketFeatureView(appState.market, appState.locale)}
@@ -188,7 +192,8 @@ function refreshHomeDataView() {
       appState.locale,
       appState.skinHomeTab,
       appState.skinPreviewIds?.[appState.skinHomeTab] ?? "",
-      true
+      true,
+      appState.skinRankingPages?.[appState.skinHomeTab] ?? 0
     )}
   `;
 
@@ -295,10 +300,25 @@ function handleAppClick(event) {
     return;
   }
 
+  const rankingPage = target.closest("[data-skin-ranking-page]");
+  if (rankingPage) {
+    selectSkinRankingPage(Number(rankingPage.dataset.skinRankingPage));
+    return;
+  }
+
   if (target.closest("[data-wishlist-clear]")) {
     appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
     renderApp();
     void syncSkinCommunity();
+    return;
+  }
+
+  if (target.closest("[data-community-data-delete]")) {
+    if (window.confirm(translate("elfLanding.skinPrivacyDeleteConfirm"))) {
+      appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
+      renderApp({ preserveUi: true });
+      void forgetSkinCommunity();
+    }
     return;
   }
 
@@ -388,6 +408,18 @@ function selectSkinPreview(skinId) {
     [appState.skinHomeTab]: skinId
   };
   renderApp();
+}
+
+function selectSkinRankingPage(page) {
+  if (!Number.isInteger(page) || page < 0 || !["wishlist", "supply"].includes(appState.skinHomeTab)) {
+    return;
+  }
+
+  appState.skinRankingPages = {
+    ...appState.skinRankingPages,
+    [appState.skinHomeTab]: page
+  };
+  renderApp({ preserveUi: true });
 }
 
 function getEventElement(event) {
@@ -637,6 +669,7 @@ function ensureSkinCommunityLoaded() {
     skinCommunitySyncStarted
     || appState.skinCommunity?.status === "remote"
     || appState.skinCommunity?.status === "disabled"
+    || appState.skinCommunity?.status === "forgotten"
     || appState.skinCommunity?.status === "error"
   ) {
     return;
@@ -660,10 +693,12 @@ function ensureSkinSupplyLoaded() {
 }
 
 async function syncSkinCommunity() {
-  if (
-    skinCommunitySyncStarted
-    || appState.skinCommunity?.status === "disabled"
-  ) {
+  if (skinCommunitySyncStarted) {
+    skinCommunitySyncQueued = true;
+    return;
+  }
+
+  if (appState.skinCommunity?.status === "disabled") {
     return;
   }
 
@@ -672,6 +707,38 @@ async function syncSkinCommunity() {
 
   try {
     appState.skinCommunity = await syncSkinCommunityWishlist(appState.skinWishlist?.selectedIds);
+  } catch (error) {
+    appState.skinCommunity = markSkinCommunityError(appState.skinCommunity, error);
+  } finally {
+    skinCommunitySyncStarted = false;
+    if (skinCommunityForgetQueued) {
+      skinCommunityForgetQueued = false;
+      void forgetSkinCommunity();
+      return;
+    }
+    if (skinCommunitySyncQueued) {
+      skinCommunitySyncQueued = false;
+      void syncSkinCommunity();
+      return;
+    }
+    if (getCurrentRoute().name === "home") {
+      refreshHomeDataView();
+    }
+  }
+}
+
+async function forgetSkinCommunity() {
+  if (skinCommunitySyncStarted) {
+    skinCommunityForgetQueued = true;
+    skinCommunitySyncQueued = false;
+    return;
+  }
+
+  skinCommunitySyncStarted = true;
+  appState.skinCommunity = markSkinCommunityLoading(appState.skinCommunity);
+
+  try {
+    appState.skinCommunity = await forgetSkinCommunityData();
   } catch (error) {
     appState.skinCommunity = markSkinCommunityError(appState.skinCommunity, error);
   } finally {
