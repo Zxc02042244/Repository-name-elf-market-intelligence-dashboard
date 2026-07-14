@@ -16,6 +16,7 @@ import { formatTime } from "../src/core/utils/time.js";
 test("product rules expose one immutable configuration source", () => {
   assert.equal(PRODUCT_RULES.wishlistLimit, 3);
   assert.equal(PRODUCT_RULES.rankingLimit, 10);
+  assert.equal(PRODUCT_RULES.mobileChampionLimit, 10);
   assert.equal(MARKET_DISPLAY_LIMITS.assetSummaries, 3);
   assert.deepEqual(HOME_TABS, ["wishlist", "supply", "gallery"]);
   assert.equal(Object.isFrozen(PRODUCT_RULES), true);

@@ -27,9 +27,9 @@ import {
 import {
   renderElfSkinHomeTabs,
   renderElfSkinLandingView
-} from "../features/skins/views/skin-landing-view.js?v=20260713-pumpkin-whisper-1";
+} from "../features/skins/views/skin-landing-view.js?v=20260713-galactic-cadet-1";
 import { defaultLocale, normalizeLocale, supportedLocales, t } from "../i18n/i18n.js";
-import { HOME_TABS, PRODUCT_RULES, STORAGE_KEYS } from "../config/product-config.js";
+import { HOME_TABS, PRODUCT_RULES, STORAGE_KEYS } from "../config/product-config.js?v=20260713-mobile-top10-1";
 
 const appState = createAppState();
 const appRoot = document.querySelector("#app");

@@ -1,7 +1,7 @@
 import { formatNumber } from "../../../core/utils/numbers.js";
 import { defaultLocale, t } from "../../../i18n/i18n.js";
-import { PRODUCT_RULES } from "../../../config/product-config.js";
-import { getSkinClassNames } from "./champion-card-view.js?v=20260713-pumpkin-whisper-1";
+import { PRODUCT_RULES } from "../../../config/product-config.js?v=20260713-mobile-top10-1";
+import { getSkinClassNames } from "./champion-card-view.js?v=20260713-galactic-cadet-1";
 import { renderDesktopChampionView } from "./desktop-champion-view.js";
 import { renderMobileChampionView } from "./mobile-champion-view.js";
 
@@ -63,6 +63,7 @@ function buildHomeTabHash(tab) {
 
 function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPreviewId) {
   const wishlistSlots = getWishlistSlots(skins, wishlistLeaders, wishlist);
+  const topWishCount = Math.max(1, ...wishlistSlots.map((skin) => skin?.wishCount ?? 0));
   const wishlistChampion = wishlistSlots.find((skin) => skin?.id === selectedPreviewId)
     ?? wishlistLeaders[0]
     ?? null;
@@ -102,7 +103,7 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
         </div>
         <div class="elf-rank-list elf-wishlist-rank-list">
           ${wishlistSlots.map((skin, index) => skin
-            ? renderWishlistLeader(skin, index, locale, wishlistChampion?.id)
+            ? renderWishlistLeader(skin, index, topWishCount, locale, wishlistChampion?.id)
             : renderWishlistPlaceholder(index, locale)
           ).join("")}
         </div>
@@ -252,32 +253,10 @@ function renderSkinSourcePanel(catalog, wishlist, locale) {
 }
 
 function renderSkinFooter(catalog, wishlist, locale) {
-  const visitorCount = wishlist.community.visitorCount ?? wishlist.visitorCount;
-  const updatedAt = catalog.fetchedAt || catalog.serverTime || "";
-
   return `
-    <footer class="elf-home-footer" aria-label="${skinLandingText("footerInfoTitle", locale)}">
-      <div class="elf-footer-metrics">
-        ${renderFooterMetric(t("elfLanding.localVisitors", locale), formatLocalizedNumber(visitorCount, locale))}
-        ${renderFooterMetric(t("elfLanding.skinRanking", locale), t("elfLanding.rankedBySupply", locale))}
-        ${renderFooterMetric(
-          skinLandingText("updateTime", locale),
-          updatedAt ? escapeHtml(updatedAt) : t("dashboard.pending", locale)
-        )}
-        ${renderFooterMetric(skinLandingText("version", locale), t("app.versionEyebrow", locale))}
-      </div>
+    <footer class="elf-home-footer" aria-label="${t("elfLanding.skinSourceTitle", locale)}">
       ${renderSkinSourcePanel(catalog, wishlist, locale)}
-      <p class="elf-footer-disclaimer">${t("elfLanding.communityDisclaimer", locale)}</p>
     </footer>
-  `;
-}
-
-function renderFooterMetric(label, value) {
-  return `
-    <div class="elf-footer-metric">
-      <span>${escapeHtml(label)}</span>
-      <strong>${value}</strong>
-    </div>
   `;
 }
 
@@ -346,8 +325,9 @@ function renderSupplyPlaceholder(index, locale) {
   `;
 }
 
-function renderWishlistLeader(skin, index, locale, selectedPreviewId) {
+function renderWishlistLeader(skin, index, topWishCount, locale, selectedPreviewId) {
   const wishCount = skin.wishCount ?? 1;
+  const share = Math.max(6, Math.min(100, (wishCount / topWishCount) * 100));
   const supply = skin.quantity === null
     ? t("elfLanding.supplyPending", locale)
     : formatLocalizedNumber(skin.quantity, locale);
@@ -368,6 +348,7 @@ function renderWishlistLeader(skin, index, locale, selectedPreviewId) {
           <strong>${getWishCountLabel(locale, wishCount, skin.isRemoteLeader === true)}</strong>
           <span>${t("elfLanding.supply", locale)} ${supply}</span>
         </small>
+        <div class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
       </div>
       ${skin.isLocalSelection ? `
         <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">

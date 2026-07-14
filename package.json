@@ -6,8 +6,7 @@
   "scripts": {
     "preview": "node scripts/serve-static.mjs .",
     "test:market": "node --test tests/config-formatters.test.js tests/market-model.test.js tests/market-feature.test.js",
-    "test:ui": "playwright test tests/responsive-screenshots.spec.js",
-    "frames:validate": "C:\\Users\\User\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe scripts/process_kit.py validate"
+    "test:ui": "playwright test tests/responsive-screenshots.spec.js tests/unified-card-frame.spec.js"
   },
   "keywords": [],
   "author": "",

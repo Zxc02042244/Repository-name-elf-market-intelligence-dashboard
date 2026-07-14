@@ -1,0 +1,36 @@
+/* Responsive ELF forest scene. Kept separate so the visual can be removed without touching layout modules. */
+body {
+  position: relative;
+  isolation: isolate;
+  background: #102b1d;
+}
+
+body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-color: #102b1d;
+  background:
+    linear-gradient(90deg, rgb(3 7 10 / 44%), rgb(3 7 10 / 10%) 22%, rgb(3 7 10 / 10%) 78%, rgb(3 7 10 / 44%)),
+    linear-gradient(180deg, rgb(3 7 10 / 4%), rgb(3 7 10 / 12%) 56%, rgb(3 7 10 / 48%)),
+    url("../../assets/backgrounds/elf-forest-desktop-v2.webp") center top / 100% auto no-repeat,
+    linear-gradient(180deg, #294b2e 0%, #173824 58%, #0d2118 100%);
+  content: "";
+}
+
+@media (max-width: 920px) {
+  body::before {
+    background:
+      linear-gradient(90deg, rgb(3 7 10 / 46%), rgb(3 7 10 / 18%) 20%, rgb(3 7 10 / 18%) 80%, rgb(3 7 10 / 46%)),
+      linear-gradient(180deg, rgb(3 7 10 / 12%), rgb(3 7 10 / 24%) 54%, rgb(3 7 10 / 68%)),
+      url("../../assets/backgrounds/elf-forest-mobile-v2.webp") center top / 100% auto no-repeat,
+      linear-gradient(180deg, #315c36 0%, #20452c 56%, #10271b 100%);
+  }
+}
+
+@media (prefers-contrast: more) {
+  body::before {
+    filter: brightness(0.68);
+  }
+}

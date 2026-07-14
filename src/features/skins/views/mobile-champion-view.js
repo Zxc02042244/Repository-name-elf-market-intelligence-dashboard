@@ -1,4 +1,4 @@
-import { renderChampionCard } from "./champion-card-view.js?v=20260713-pumpkin-whisper-1";
+import { renderChampionCard } from "./champion-card-view.js?v=20260713-galactic-cadet-1";
 
 export function renderMobileChampionView(slides) {
   if (slides.length === 0) {
