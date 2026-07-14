@@ -17,7 +17,7 @@
 
 ## 2. 最常改的檔案
 
-### `src/views/elf-skin-landing-view.js`
+### `src/features/skins/views/skin-landing-view.js`
 
 皮膚首頁的主要 HTML 結構都在這裡。
 
@@ -29,7 +29,7 @@
 - 改排名顯示幾名。
 - 決定沒有資料時要顯示空狀態還是空格。
 
-重要變數：
+排行與願望上限集中在 `src/config/product-config.js`：
 
 - `wishlistLimit = 3`：本地願望最多 3 個。
 - `rankingLimit = 10`：排行顯示 Top 10。
@@ -109,7 +109,7 @@
 
 重要內容：
 
-- `ELF_SKIN_API_URL`：目前使用的 CiDi ELF 皮膚 API。
+- `src/config/public-runtime-config.js` 的 `skinApiUrl`：目前使用的 CiDi ELF 皮膚 API。
 - `loadElfSkinCatalog()`：讀取官方皮膚資料。
 - `fallbackElfSkins`：官方 API 失敗時的備援皮膚。
 - `normalizeElfSkin()`：把官方 API 格式轉成網站內部格式。
@@ -125,7 +125,7 @@
 
 ## 4. 願望資料
 
-### `src/app/skin-wishlist.js`
+### `src/features/skins/state/skin-wishlist.js`
 
 本地願望選擇邏輯在這裡。
 
@@ -136,7 +136,7 @@
 - 使用者可新增或取消願望。
 - 本地資料不等於全站統計，只有同步到 Supabase 後才會成為社群總數的一部分。
 
-### `src/app/skin-community-stats.js`
+### `src/features/skins/state/skin-community-stats.js`
 
 社群願望統計與匿名訪客 ID 在這裡。
 
@@ -149,15 +149,15 @@
 
 ## 5. 供給快照與今日新增
 
-### `src/app/skin-supply-stats.js`
+### `src/features/skins/state/skin-supply-stats.js`
 
 供給量快照讀取與同步邏輯在這裡。
 
 重要內容：
 
-- `syncSkinSupplySnapshots(skins)`：把目前官方皮膚供給量寫進 Supabase 快照。
 - `loadSkinSupplySnapshots()`：讀取 Supabase 已計算好的供給趨勢。
 - `todayAdded`：今日供給量 - 前一次快照供給量。
+- 寫入快照由 `scripts/sync-skin-supply-snapshot.mjs` 與 GitHub Actions 負責，不在瀏覽器端執行。
 
 注意：
 
@@ -217,20 +217,20 @@ Supabase 設定說明在這裡。
 
 ### `assets/skin-frames/`
 
-桌機排行榜角色卡框素材放這裡，統一使用 `1041 x 1511` 畫布。
+排行榜角色卡框素材放這裡。目前所有角色共用
+`unified-forest-card-frame-v1.png`，統一使用 `1041 x 1511` 畫布。
 
 正式規格請參考：
 
 - `docs/card-frame-layout-spec.md`
-- `assets/skin-frames/card-frame-layout-template.svg`
+- `src/styles/unified-card-frame.css`
 
-要新增某角色專屬卡框時：
+要更換全站卡框時：
 
-1. 優先準備底框、排名牌與名字牌三件套。
-2. 底框使用 `1041 x 1511`，排名牌使用 `601 x 168`，名字牌使用 `801 x 180`。
-3. 在 `src/views/elf-skin-landing-view.js` 登記卡框 class 與三件套模式。
-4. 在 `src/styles.css` 只設定圖片與文字色彩變數，不建立角色專屬座標。
-5. 檢查桌機固定座標與手機共用緊湊卡片是否正常。
+1. 準備一張 `1041 x 1511` 的完整卡框，排名牌、展示區與名字牌整合在同一張圖。
+2. 保留現有檔名 `unified-forest-card-frame-v1.png`，即可讓所有角色同步更換。
+3. 在 `src/styles/unified-card-frame.css` 調整排名、角色圖與名字的共用座標。
+4. 同時檢查桌機卡與手機輪播卡，不為單一角色建立專屬 class。
 
 建議卡框圖：
 
@@ -244,7 +244,7 @@ Supabase 設定說明在這裡。
 
 改這些地方：
 
-- `src/views/elf-skin-landing-view.js` 的 `rankingLimit`
+- `src/config/product-config.js` 的 `rankingLimit`
 - `src/i18n/translations.js` 的排行標題文字
 - `src/styles.css` 的排行列高度與間距
 
@@ -252,33 +252,33 @@ Supabase 設定說明在這裡。
 
 搜尋並同步修改：
 
-- `src/views/elf-skin-landing-view.js` 的 `wishlistLimit`
-- `src/app/skin-wishlist.js` 的 `wishlistLimit`
-- `src/app/skin-community-stats.js` 的 `wishlistLimit`
+- `src/config/product-config.js` 的 `wishlistLimit`
 - `src/i18n/translations.js` 相關顯示文字
 
 ### 改首頁上方資訊
 
 主要看：
 
-- `src/views/elf-skin-landing-view.js`
-- `src/styles.css` 的 `.elf-home-hero`
+- `src/features/skins/views/skin-landing-view.js`
+- `src/styles/app-chrome.css`
 - `src/i18n/translations.js`
 
 ### 改桌機版布局
 
 主要看：
 
-- `src/styles.css`
-- `@media (min-width: 1120px)`
+- `src/styles/desktop-layout.css`
+- `src/styles/unified-card-frame.css`
+- `src/styles/site-background.css`
 
 ### 改手機版布局
 
 主要看：
 
-- `src/styles.css`
-- `@media (max-width: 620px)`
-- `@media (max-width: 430px)`
+- `src/styles/mobile-layout.css`
+- `src/styles/mobile-ranking-card.css`
+- `src/styles/mobile-content-grid.css`
+- `src/styles/site-background.css`
 
 手機檢查寬度：
 
@@ -292,10 +292,10 @@ Supabase 設定說明在這裡。
 每次改 JS 後至少跑：
 
 ```powershell
-node --check src\views\elf-skin-landing-view.js
+node --check src\features\skins\views\skin-landing-view.js
 node --check src\i18n\translations.js
 node --check src\app\main.js
-node --check src\app\skin-supply-stats.js
+node --check src\features\skins\state\skin-supply-stats.js
 ```
 
 本機預覽：
@@ -332,10 +332,10 @@ http://127.0.0.1:4174/#home
 ## 11. 修改前的簡短流程
 
 1. 先確認要改的是畫面、文字、資料、還是資料庫。
-2. 畫面先看 `src/views/elf-skin-landing-view.js` 和 `src/styles.css`。
+2. 畫面先看 `src/features/skins/views/skin-landing-view.js` 和 `src/styles/` 對應的功能模組。
 3. 文字先看 `src/i18n/translations.js`。
-4. 願望統計先看 `src/app/skin-wishlist.js`、`src/app/skin-community-stats.js`、`supabase/schema.sql`。
-5. 今日新增先看 `src/app/skin-supply-stats.js`、`.github/workflows/sync-skin-supply-snapshot.yml`、`supabase/schema.sql`。
+4. 願望統計先看 `src/features/skins/state/skin-wishlist.js`、`src/features/skins/state/skin-community-stats.js`、`supabase/schema.sql`。
+5. 今日新增先看 `src/features/skins/state/skin-supply-stats.js`、`scripts/sync-skin-supply-snapshot.mjs`、`.github/workflows/sync-skin-supply-snapshot.yml`、`supabase/schema.sql`。
 6. 修改後跑 syntax check。
 7. 本機預覽手機與桌機。
 8. 確認沒問題再 commit / push。

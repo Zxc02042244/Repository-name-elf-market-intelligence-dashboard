@@ -210,19 +210,6 @@
     drop-shadow(0 0 14px rgb(244 211 106 / 24%));
 }
 
-.elf-champion-empty-art span {
-  display: grid;
-  place-items: center;
-  width: min(58%, 180px);
-  aspect-ratio: 1;
-  border: 1px dashed color-mix(in srgb, currentColor 60%, transparent);
-  border-radius: 8px;
-  background: rgb(8 12 10 / 48%);
-  color: #fff4d2;
-  font-size: 4rem;
-  font-weight: 900;
-}
-
 .elf-champion-body {
   display: grid;
   gap: 8px;

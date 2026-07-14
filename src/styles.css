@@ -263,20 +263,11 @@ h2 {
     inset 0 1px 0 rgb(255 226 142 / 10%);
 }
 
-.elf-tab-panel-wishlist {
-  background:
-    radial-gradient(circle at 14% 18%, rgb(255 138 42 / 14%), transparent 24%),
-    linear-gradient(135deg, rgb(169 140 240 / 10%), transparent 42%),
-    repeating-linear-gradient(90deg, rgb(231 199 125 / 4%) 0 1px, transparent 1px 18px),
-    rgb(15 13 20 / 88%);
-}
-
-.elf-tab-panel-supply {
-  background:
-    radial-gradient(circle at 88% 12%, rgb(112 199 216 / 15%), transparent 26%),
-    linear-gradient(135deg, rgb(73 126 255 / 12%), transparent 44%),
-    repeating-linear-gradient(90deg, rgb(231 199 125 / 4%) 0 1px, transparent 1px 18px),
-    rgb(9 15 24 / 88%);
+.elf-tab-panel.elf-tab-panel-wishlist,
+.elf-tab-panel.elf-tab-panel-supply {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .elf-champion-card-compact {
@@ -306,34 +297,8 @@ h2 {
     scroll-behavior: auto;
   }
 
-  .refresh-button {
-    transition: none;
-  }
-
-  .refresh-button:hover,
-  .refresh-button:focus-visible {
-    transform: none;
-  }
-
-  .metric-card,
-  .compact-card,
-  .transaction-row,
-  .category-tab,
-  .segment-link,
-  .detail-link,
-  .utility-link,
   .dashboard-nav a,
   .skip-link {
     transition: none;
-  }
-
-  .metric-card:hover,
-  .compact-card:hover,
-  .transaction-row:hover {
-    transform: none;
-  }
-
-  .metric-card-loading::after {
-    animation: none;
   }
 }

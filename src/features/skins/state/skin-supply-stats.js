@@ -1,4 +1,3 @@
-import { PRODUCT_RULES } from "../../../config/product-config.js";
 import { hasCommunityServiceConfig, readPublicServiceConfig } from "../../../config/service-config.js";
 
 export function createSkinSupplyState() {
@@ -12,43 +11,6 @@ export function createSkinSupplyState() {
       ? ""
       : "Skin supply snapshot API is not configured."
   };
-}
-
-export async function syncSkinSupplySnapshots(skins) {
-  const config = readSupplyConfig();
-
-  if (!config.enabled) {
-    return createSkinSupplyState();
-  }
-
-  const normalizedSkins = normalizeSupplySkins(skins);
-
-  if (normalizedSkins.length === 0) {
-    return {
-      ...createSkinSupplyState(),
-      status: "idle",
-      detail: "No skin supply data to sync."
-    };
-  }
-
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/sync_skin_supply_snapshot`, {
-    method: "POST",
-    headers: {
-      apikey: config.supabasePublishableKey,
-      Authorization: `Bearer ${config.supabasePublishableKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      p_skins: normalizedSkins
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Skin supply snapshot sync failed with HTTP ${response.status}.`);
-  }
-
-  const payload = await response.json();
-  return normalizeSupplyPayload(payload);
 }
 
 export async function loadSkinSupplySnapshots() {
@@ -137,21 +99,6 @@ function readSupplyConfig() {
     supabaseUrl: publicConfig.supabaseUrl,
     supabasePublishableKey: publicConfig.supabasePublishableKey
   };
-}
-
-function normalizeSupplySkins(skins) {
-  if (!Array.isArray(skins)) {
-    return [];
-  }
-
-  return skins
-    .map((skin) => ({
-      skinId: String(skin?.id ?? "").trim(),
-      skinName: String(skin?.name ?? "").trim(),
-      supply: normalizeNullableCount(skin?.quantity)
-    }))
-    .filter((skin) => skin.skinId && skin.skinName && skin.supply !== null && skin.supply > 0)
-    .slice(0, PRODUCT_RULES.supplySyncLimit);
 }
 
 function normalizeNullableCount(value) {

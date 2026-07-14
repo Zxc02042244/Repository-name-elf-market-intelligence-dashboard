@@ -208,8 +208,7 @@
     width: 100%;
   }
 
-  .app-header:not(.app-header-skins) .language-switch,
-  .app-header:not(.app-header-skins) .refresh-button {
+  .app-header:not(.app-header-skins) .language-switch {
     min-height: 44px;
   }
 }
