@@ -61,7 +61,7 @@ export async function forgetSkinCommunityData() {
       })
     });
 
-    if (!response.ok && response.status !== 404) {
+    if (!response.ok) {
       throw new Error(`Community data deletion failed with HTTP ${response.status}.`);
     }
   }
@@ -125,7 +125,10 @@ function getOrCreateVisitorCredentials() {
     return stored;
   }
 
-  const visitor = { id: createVisitorId(), token: createVisitorId() };
+  const visitor = {
+    id: stored.id || createVisitorId(),
+    token: stored.token || createVisitorId()
+  };
   writeStoredVisitorCredentials(visitor);
   return visitor;
 }

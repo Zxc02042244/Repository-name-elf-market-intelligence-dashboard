@@ -7,6 +7,7 @@ import {
   forgetSkinCommunityData,
   syncSkinCommunityWishlist
 } from "../src/features/skins/state/skin-community-stats.js";
+import { STORAGE_KEYS } from "../src/config/product-config.js";
 
 function installBrowserHarness() {
   const values = new Map();
@@ -79,6 +80,49 @@ test("community deletion sends the token and removes both local credentials", as
     });
     assert.equal(harness.values.size, 0);
     assert.equal(state.status, "forgotten");
+  } finally {
+    globalThis.window = originalWindow;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("legacy visitors keep their existing ID when a token is added", async () => {
+  const originalWindow = globalThis.window;
+  const originalFetch = globalThis.fetch;
+  const harness = installBrowserHarness();
+  const legacyVisitorId = "a5eb18e5-0f2e-4c93-a552-13f84508fc11";
+
+  try {
+    harness.values.set(STORAGE_KEYS.skinVisitor, legacyVisitorId);
+    await syncSkinCommunityWishlist(["toy-sheriff"]);
+
+    const body = JSON.parse(harness.requests[0].options.body);
+    assert.equal(body.p_visitor_id, legacyVisitorId);
+    assert.match(body.p_visitor_token, /^[0-9a-f-]{36}$/);
+    assert.equal(harness.values.get(STORAGE_KEYS.skinVisitor), legacyVisitorId);
+    assert.equal(harness.values.get(STORAGE_KEYS.skinVisitorToken), body.p_visitor_token);
+  } finally {
+    globalThis.window = originalWindow;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("failed community deletion preserves credentials for a retry", async () => {
+  const originalWindow = globalThis.window;
+  const originalFetch = globalThis.fetch;
+  const harness = installBrowserHarness();
+
+  try {
+    await syncSkinCommunityWishlist(["toy-sheriff"]);
+    globalThis.fetch = async () => ({ ok: false, status: 404 });
+
+    await assert.rejects(
+      forgetSkinCommunityData(),
+      /Community data deletion failed with HTTP 404/
+    );
+    assert.equal(harness.values.size, 2);
+    assert.ok(harness.values.get(STORAGE_KEYS.skinVisitor));
+    assert.ok(harness.values.get(STORAGE_KEYS.skinVisitorToken));
   } finally {
     globalThis.window = originalWindow;
     globalThis.fetch = originalFetch;
