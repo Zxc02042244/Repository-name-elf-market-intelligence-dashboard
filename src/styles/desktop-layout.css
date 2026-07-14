@@ -5,7 +5,18 @@
   }
 
   .elf-desktop-champion {
-    display: contents;
+    display: block;
+  }
+
+  .elf-rank-list-mobile,
+  .elf-mobile-official-gallery {
+    display: none;
+  }
+
+  .elf-rank-list-desktop,
+  .elf-ranking-pagination,
+  .elf-desktop-supply-data {
+    display: grid;
   }
 
   .market-dashboard-workspace {
@@ -248,7 +259,7 @@
   .elf-tab-panel-wishlist,
   .elf-tab-panel-supply {
     min-height: var(--elf-ranking-board-height);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 8px 12px;
     align-items: stretch;
     padding: 10px 12px 12px;
@@ -268,9 +279,9 @@
     grid-column: 1 / -1;
   }
 
-  .elf-tab-panel-wishlist > .elf-champion-card {
+  .elf-tab-panel-wishlist > .elf-desktop-champion {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 2 / 4;
     align-self: stretch;
   }
 
@@ -287,6 +298,11 @@
     grid-row: 2;
   }
 
+  .elf-tab-panel-wishlist > .elf-ranking-pagination {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
   .elf-tab-panel-wishlist .elf-champion-card-compact {
     justify-self: center;
     width: min(100%, var(--elf-champion-card-width));
@@ -295,19 +311,16 @@
   }
 
   .elf-tab-panel-supply {
-    grid-template-columns:
-      minmax(380px, var(--elf-champion-card-width))
-      minmax(300px, 1fr)
-      minmax(280px, 0.82fr);
+    grid-template-columns: minmax(380px, var(--elf-champion-card-width)) minmax(420px, 1fr);
   }
 
   .elf-tab-panel-supply > .section-heading {
     grid-column: 1 / -1;
   }
 
-  .elf-tab-panel-supply > .elf-champion-card {
+  .elf-tab-panel-supply > .elf-desktop-champion {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 2 / 4;
   }
 
   .elf-tab-panel-supply > .elf-rank-list {
@@ -315,9 +328,13 @@
     grid-row: 2;
   }
 
+  .elf-tab-panel-supply > .elf-ranking-pagination {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
   .elf-tab-panel-supply > .elf-delta-panel {
-    grid-column: 3;
-    grid-row: 2;
+    display: none;
   }
 
   .elf-tab-panel-wishlist .elf-champion-unified-frame,
@@ -333,29 +350,52 @@
 
   .elf-tab-panel-supply .elf-rank-list,
   .elf-tab-panel-wishlist .elf-rank-list {
+    grid-auto-flow: column;
+    grid-template-columns: repeat(var(--ranking-columns, 3), minmax(0, 1fr));
     grid-template-rows: repeat(10, minmax(0, 1fr));
-    height: var(--elf-champion-card-height);
+    height: 100%;
+    min-height: 0;
     gap: 4px;
-    align-self: start;
+    align-self: stretch;
+  }
+
+  .elf-tab-panel-supply .elf-rank-list[data-ranking-columns="1"],
+  .elf-tab-panel-wishlist .elf-rank-list[data-ranking-columns="1"] {
+    --ranking-columns: 1;
+    width: calc((100% - 8px) / 3);
+    justify-self: center;
+  }
+
+  .elf-tab-panel-supply .elf-rank-list[data-ranking-columns="2"],
+  .elf-tab-panel-wishlist .elf-rank-list[data-ranking-columns="2"] {
+    --ranking-columns: 2;
+    width: calc((100% - 4px) * 2 / 3);
+    justify-self: center;
+  }
+
+  .elf-tab-panel-supply .elf-rank-list[data-ranking-columns="3"],
+  .elf-tab-panel-wishlist .elf-rank-list[data-ranking-columns="3"] {
+    --ranking-columns: 3;
   }
 
   .elf-tab-panel-supply .elf-rank-row,
   .elf-tab-panel-wishlist .elf-rank-row {
-    grid-template-columns: 26px 36px minmax(0, 1fr);
+    grid-template-columns: 24px 30px minmax(0, 1fr);
     min-height: 42px;
-    padding: 2px 7px;
+    gap: 5px;
+    padding: 2px 6px;
   }
 
   .elf-tab-panel-wishlist .elf-rank-row {
-    grid-template-columns: 26px 36px minmax(0, 1fr) minmax(72px, auto);
+    grid-template-columns: 24px 30px minmax(0, 1fr) 28px;
   }
 
   .elf-tab-panel-supply .elf-rank-row img,
   .elf-tab-panel-wishlist .elf-rank-row img,
   .elf-tab-panel-supply .elf-rank-empty-mark,
   .elf-tab-panel-wishlist .elf-rank-empty-mark {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 
   .elf-tab-panel-supply .elf-rank-body,
@@ -365,12 +405,18 @@
 
   .elf-tab-panel-supply .elf-rank-body strong,
   .elf-tab-panel-wishlist .elf-rank-body strong {
-    font-size: 0.84rem;
+    font-size: 0.76rem;
   }
 
   .elf-tab-panel-supply .elf-rank-body small,
   .elf-tab-panel-wishlist .elf-rank-body small {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
+  }
+
+  .elf-tab-panel-wishlist .elf-rank-wish-toggle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.92rem;
   }
 
   .elf-tab-panel-wishlist .elf-rank-cancel {
@@ -436,5 +482,13 @@
     right: 6px;
     padding: 2px 6px;
     font-size: 0.54rem;
+  }
+
+  .elf-desktop-supply-data > .elf-delta-panel {
+    margin-top: 12px;
+  }
+
+  .elf-tab-panel-supply > .elf-delta-panel {
+    display: none;
   }
 }

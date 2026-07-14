@@ -11,12 +11,13 @@ export function renderElfSkinLandingView(
   locale = defaultLocale,
   activeTab = "wishlist",
   selectedPreviewId = "",
-  includeTabs = true
+  includeTabs = true,
+  rankingPage = 0
 ) {
   const catalog = normalizeCatalog(skinCatalog);
   const wishlist = normalizeWishlist(wishlistState);
   const currentTab = normalizeHomeTab(activeTab);
-  const supplyLeaders = catalog.skins.slice(0, PRODUCT_RULES.rankingLimit);
+  const supplyLeaders = catalog.skins;
   const wishlistLeaders = getWishlistLeaders(catalog.skins, wishlist);
   const todayAddedLeaders = getTodayAddedLeaders(catalog.skins);
   const topSupply = supplyLeaders[0]?.quantity ?? 0;
@@ -25,9 +26,9 @@ export function renderElfSkinLandingView(
   return `
     <section class="elf-home-workspace" aria-label="${t("elfLanding.rankingShowcase", locale)}">
       ${includeTabs ? renderElfSkinHomeTabs(currentTab, locale) : ""}
-      ${currentTab === "wishlist" ? renderWishlistTab(catalog.skins, wishlistLeaders, wishlist, locale, selectedPreviewId) : ""}
-      ${currentTab === "supply" ? renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAdded, locale, selectedPreviewId) : ""}
-      ${currentTab === "gallery" ? renderOfficialSkinTab(catalog, wishlist, locale) : ""}
+      ${currentTab === "wishlist" ? renderWishlistTab(catalog.skins, wishlistLeaders, wishlist, locale, selectedPreviewId, rankingPage) : ""}
+      ${currentTab === "supply" ? renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAdded, locale, selectedPreviewId, rankingPage) : ""}
+      ${currentTab === "gallery" ? renderSupplyDataAndOfficialTab(catalog, wishlist, todayAddedLeaders, topTodayAdded, locale) : ""}
     </section>
 
     ${renderSkinFooter(catalog, wishlist, locale)}
@@ -38,7 +39,9 @@ export function renderElfSkinHomeTabs(activeTab, locale = defaultLocale, placeme
   const tabs = [
     ["wishlist", skinLandingText("homeTabWishlist", locale)],
     ["supply", skinLandingText("homeTabSupply", locale)],
-    ["gallery", skinLandingText("homeTabOfficial", locale)]
+    ["gallery", placement === "desktop"
+      ? skinLandingText("homeTabSupplyData", locale)
+      : skinLandingText("homeTabOfficial", locale)]
   ];
 
   return `
@@ -61,19 +64,22 @@ function buildHomeTabHash(tab) {
   return tab === "wishlist" ? "#home" : `#home&tab=${tab}`;
 }
 
-function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPreviewId) {
-  const wishlistSlots = getWishlistSlots(skins, wishlistLeaders, wishlist);
-  const topWishCount = Math.max(1, ...wishlistSlots.map((skin) => skin?.wishCount ?? 0));
-  const wishlistChampion = wishlistSlots.find((skin) => skin?.id === selectedPreviewId)
+function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPreviewId, rankingPage) {
+  const wishlistCatalog = getWishlistCatalog(skins, wishlistLeaders, wishlist);
+  const wishlistSlots = wishlistCatalog.slice(0, PRODUCT_RULES.mobileChampionLimit);
+  const desktopPage = getDesktopRankingPage(wishlistCatalog, rankingPage);
+  const topWishCount = Math.max(1, ...wishlistCatalog.map((skin) => skin?.wishCount ?? 0));
+  const wishlistChampion = wishlistCatalog.find((skin) => skin?.id === selectedPreviewId)
     ?? wishlistLeaders[0]
+    ?? wishlistCatalog[0]
     ?? null;
-  const championIndex = Math.max(0, wishlistSlots.findIndex((skin) => skin?.id === wishlistChampion?.id));
+  const championIndex = Math.max(0, wishlistCatalog.findIndex((skin) => skin?.id === wishlistChampion?.id));
   const championRank = `TOP ${championIndex + 1}`;
 
   return `
     <section class="elf-tab-panel elf-tab-panel-wishlist" aria-labelledby="elf-wishlist-title">
       <div class="section-heading">
-        <h2 id="elf-wishlist-title">${t("elfLanding.wishlistTitle", locale)}</h2>
+        <h2 id="elf-wishlist-title">${skinLandingText("wishlistOverviewTitle", locale)}</h2>
         <span>${t("elfLanding.wishlistScope", locale)}</span>
       </div>
       ${wishlist.notice === "limit" ? `
@@ -87,26 +93,41 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
         title: championRank,
         eyebrow: skinLandingText("homeTabWishlist", locale),
         meta: t("elfLanding.wishlistScope", locale),
-        statLabel: getWishCountLabel(locale, wishlistChampion.wishCount ?? 1, wishlist.community.status === "remote"),
+        statLabel: getWishCountLabel(locale, wishlistChampion.wishCount ?? 0, wishlist.community.status === "remote"),
         statValue: wishlistChampion.isLocalSelection
           ? t("elfLanding.cancelWish", locale)
-          : formatLocalizedNumber(wishlistChampion.wishCount ?? 1, locale),
+          : formatLocalizedNumber(wishlistChampion.wishCount ?? 0, locale),
         rankLabel: championRank,
         kind: "wishlist",
         action: wishlistChampion.isLocalSelection ? "cancel" : "",
       } : null)}
-      ${wishlistLeaders.length > 0 ? `
+      ${wishlistCatalog.length > 0 ? `
         <div class="elf-rank-actions">
           <button class="elf-clear-wishlist" type="button" data-wishlist-clear>
             ${t("elfLanding.clearWishes", locale)}
           </button>
         </div>
-        <div class="elf-rank-list elf-wishlist-rank-list">
-          ${wishlistSlots.map((skin, index) => skin
-            ? renderWishlistLeader(skin, index, topWishCount, locale, wishlistChampion?.id)
-            : renderWishlistPlaceholder(index, locale)
-          ).join("")}
+        <div class="elf-rank-list elf-rank-list-mobile elf-wishlist-rank-list">
+          ${wishlistSlots.map((skin, index) => renderWishlistLeader(
+            skin,
+            index,
+            topWishCount,
+            locale,
+            wishlistChampion?.id,
+            wishlist
+          )).join("")}
         </div>
+        <div class="elf-rank-list elf-rank-list-desktop elf-wishlist-rank-list ${desktopPage.columns === 2 ? "is-two-columns" : ""}" data-ranking-columns="${desktopPage.columns}">
+          ${desktopPage.items.map((skin, index) => renderWishlistLeader(
+            skin,
+            desktopPage.start + index,
+            topWishCount,
+            locale,
+            wishlistChampion?.id,
+            wishlist
+          )).join("")}
+        </div>
+        ${renderDesktopRankingPagination(desktopPage, locale)}
       ` : `
         <p class="empty-state">${t("elfLanding.emptyWishlist", locale)}</p>
       `}
@@ -114,8 +135,8 @@ function renderWishlistTab(skins, wishlistLeaders, wishlist, locale, selectedPre
   `;
 }
 
-function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAdded, locale, selectedPreviewId) {
-  const supplySlots = Array.from({ length: PRODUCT_RULES.rankingLimit }, (_, index) => supplyLeaders[index] ?? null);
+function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAdded, locale, selectedPreviewId, rankingPage) {
+  const desktopPage = getDesktopRankingPage(supplyLeaders, rankingPage);
   const supplyChampion = supplyLeaders.find((skin) => skin.id === selectedPreviewId)
     ?? supplyLeaders[0]
     ?? getEmptySkin();
@@ -125,7 +146,7 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
   return `
     <section class="elf-tab-panel elf-tab-panel-supply" aria-labelledby="elf-supply-title">
       <div class="section-heading">
-        <h2 id="elf-supply-title">${t("elfLanding.supplyRankingTitle", locale)}</h2>
+        <h2 id="elf-supply-title">${skinLandingText("supplyOverviewTitle", locale)}</h2>
         <span>${t("elfLanding.supplyRankingScope", locale)}</span>
       </div>
       ${renderSupplyChampionCarousel(supplyLeaders, locale)}
@@ -142,12 +163,25 @@ function renderSupplyTab(supplyLeaders, topSupply, todayAddedLeaders, topTodayAd
         kind: "supply",
         eager: true
       } : null)}
-      <div class="elf-rank-list">
-        ${supplySlots.map((skin, index) => skin
-          ? renderSupplyLeader(skin, index, topSupply, locale, supplyChampion.id)
-          : renderSupplyPlaceholder(index, locale)
-        ).join("")}
+      <div class="elf-rank-list elf-rank-list-mobile">
+        ${supplyLeaders.slice(0, PRODUCT_RULES.rankingLimit).map((skin, index) => renderSupplyLeader(
+          skin,
+          index,
+          topSupply,
+          locale,
+          supplyChampion.id
+        )).join("")}
       </div>
+      <div class="elf-rank-list elf-rank-list-desktop ${desktopPage.columns === 2 ? "is-two-columns" : ""}" data-ranking-columns="${desktopPage.columns}">
+        ${desktopPage.items.map((skin, index) => renderSupplyLeader(
+          skin,
+          desktopPage.start + index,
+          topSupply,
+          locale,
+          supplyChampion.id
+        )).join("")}
+      </div>
+      ${renderDesktopRankingPagination(desktopPage, locale)}
       ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
     </section>
   `;
@@ -165,10 +199,10 @@ function renderWishlistChampionCarousel(wishlistSlots, wishlist, locale) {
     title: `TOP ${index + 1}`,
     eyebrow: skinLandingText("homeTabWishlist", locale),
     meta: t("elfLanding.wishlistScope", locale),
-    statLabel: getWishCountLabel(locale, skin.wishCount ?? 1, wishlist.community.status === "remote"),
+    statLabel: getWishCountLabel(locale, skin.wishCount ?? 0, wishlist.community.status === "remote"),
     statValue: skin.isLocalSelection
       ? t("elfLanding.cancelWish", locale)
-      : formatLocalizedNumber(skin.wishCount ?? 1, locale),
+      : formatLocalizedNumber(skin.wishCount ?? 0, locale),
     rankLabel: `TOP ${index + 1}`,
     kind: "wishlist",
     action: skin.isLocalSelection ? "cancel" : ""
@@ -197,11 +231,19 @@ function renderSupplyChampionCarousel(supplyLeaders, locale) {
   })));
 }
 
-function renderOfficialSkinTab(catalog, wishlist, locale) {
+function renderSupplyDataAndOfficialTab(catalog, wishlist, todayAddedLeaders, topTodayAdded, locale) {
   const hasOfficialCatalog = catalog.kind === "api" && catalog.skins.length > 0;
 
   return `
     <section class="elf-tab-panel elf-tab-panel-gallery" aria-labelledby="elf-skin-grid-title">
+      <div class="elf-desktop-supply-data">
+        <div class="section-heading">
+          <h2>${skinLandingText("homeTabSupplyData", locale)}</h2>
+          <span>${t("elfLanding.todayAddedRankingScope", locale)}</span>
+        </div>
+        ${renderTodayAddedRanking(todayAddedLeaders, topTodayAdded, locale)}
+      </div>
+      <div class="elf-mobile-official-gallery">
       <div class="section-heading">
         <h2 id="elf-skin-grid-title">${t("elfLanding.skinGallery", locale)}</h2>
         <span>${renderCatalogStatus(catalog, locale)}</span>
@@ -216,6 +258,7 @@ function renderOfficialSkinTab(catalog, wishlist, locale) {
           <span>${skinLandingText("officialSkinEmptyBody", locale)}</span>
         </p>
       `}
+      </div>
     </section>
   `;
 }
@@ -247,7 +290,14 @@ function renderSkinSourcePanel(catalog, wishlist, locale) {
           t("elfLanding.skinSourceSupplySnapshot", locale),
           t("elfLanding.skinSourceSupplySnapshotDetail", locale)
         )}
+        ${renderDataSourceItem(
+          t("elfLanding.skinPrivacyTitle", locale),
+          t("elfLanding.skinPrivacyDetail", locale)
+        )}
       </div>
+      <button class="elf-community-data-delete" type="button" data-community-data-delete>
+        ${t("elfLanding.skinPrivacyDelete", locale)}
+      </button>
     </section>
   `;
 }
@@ -295,9 +345,6 @@ function renderSupplyLeader(skin, index, topSupply, locale, selectedPreviewId) {
   return `
     <div
       class="elf-rank-row elf-rank-row-selectable ${skin.id === selectedPreviewId ? "is-preview-selected" : ""} ${getSkinClassNames(skin)}"
-      role="button"
-      tabindex="0"
-      aria-pressed="${skin.id === selectedPreviewId ? "true" : "false"}"
       data-skin-preview="${escapeHtml(skin.id)}"
     >
       <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
@@ -325,9 +372,11 @@ function renderSupplyPlaceholder(index, locale) {
   `;
 }
 
-function renderWishlistLeader(skin, index, topWishCount, locale, selectedPreviewId) {
-  const wishCount = skin.wishCount ?? 1;
-  const share = Math.max(6, Math.min(100, (wishCount / topWishCount) * 100));
+function renderWishlistLeader(skin, index, topWishCount, locale, selectedPreviewId, wishlist) {
+  const wishCount = skin.wishCount ?? 0;
+  const share = wishCount > 0
+    ? Math.max(6, Math.min(100, (wishCount / topWishCount) * 100))
+    : 0;
   const supply = skin.quantity === null
     ? t("elfLanding.supplyPending", locale)
     : formatLocalizedNumber(skin.quantity, locale);
@@ -350,16 +399,22 @@ function renderWishlistLeader(skin, index, topWishCount, locale, selectedPreview
         </small>
         <div class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
       </div>
-      ${skin.isLocalSelection ? `
-        <button class="elf-rank-cancel" type="button" data-wishlist-toggle="${escapeHtml(skin.id)}">
-          ${t("elfLanding.cancelWish", locale)}
-        </button>
-      ` : ""}
+      <button
+        class="elf-rank-wish-toggle ${skin.isLocalSelection ? "is-selected" : ""}"
+        type="button"
+        data-wishlist-toggle="${escapeHtml(skin.id)}"
+        aria-pressed="${skin.isLocalSelection ? "true" : "false"}"
+        aria-label="${skin.isLocalSelection ? t("elfLanding.removeWish", locale) : t("elfLanding.addWish", locale)}"
+        title="${skin.isLocalSelection ? t("elfLanding.removeWish", locale) : t("elfLanding.addWish", locale)}"
+        ${!skin.isLocalSelection && wishlist.selectedIds.length >= PRODUCT_RULES.wishlistLimit ? "disabled" : ""}
+      >
+        <span aria-hidden="true">☆</span>
+      </button>
     </div>
   `;
 }
 
-function getWishlistSlots(skins, wishlistLeaders, wishlist) {
+function getWishlistCatalog(skins, wishlistLeaders, wishlist) {
   const usedIds = new Set(wishlistLeaders.map((skin) => skin.id));
   const fillerSkins = skins
     .filter((skin) => !usedIds.has(skin.id))
@@ -371,9 +426,48 @@ function getWishlistSlots(skins, wishlistLeaders, wishlist) {
       isWishlistFiller: true
     }));
 
-  const slots = [...wishlistLeaders, ...fillerSkins].slice(0, PRODUCT_RULES.rankingLimit);
+  return [...wishlistLeaders, ...fillerSkins];
+}
 
-  return Array.from({ length: PRODUCT_RULES.rankingLimit }, (_, index) => slots[index] ?? null);
+function getDesktopRankingPage(items, requestedPage) {
+  const pageSize = PRODUCT_RULES.desktopRankingPageSize;
+  const columnSize = PRODUCT_RULES.desktopRankingColumnSize;
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+  const page = Math.min(Math.max(0, Number(requestedPage) || 0), pageCount - 1);
+  const start = page * pageSize;
+  const pageItems = items.slice(start, start + pageSize);
+
+  return {
+    page,
+    pageCount,
+    start,
+    items: pageItems,
+    columns: Math.max(1, Math.min(3, Math.ceil(pageItems.length / columnSize)))
+  };
+}
+
+function renderDesktopRankingPagination(pageState, locale) {
+  if (pageState.pageCount <= 1) {
+    return "";
+  }
+
+  return `
+    <nav class="elf-ranking-pagination" aria-label="${skinLandingText("rankingPages", locale)}">
+      <button
+        type="button"
+        data-skin-ranking-page="${pageState.page - 1}"
+        aria-label="${skinLandingText("previousPage", locale)}"
+        ${pageState.page === 0 ? "disabled" : ""}
+      >←</button>
+      <span>${pageState.page + 1} / ${pageState.pageCount}</span>
+      <button
+        type="button"
+        data-skin-ranking-page="${pageState.page + 1}"
+        aria-label="${skinLandingText("nextPage", locale)}"
+        ${pageState.page >= pageState.pageCount - 1 ? "disabled" : ""}
+      >→</button>
+    </nav>
+  `;
 }
 
 function renderWishlistPlaceholder(index, locale) {
@@ -658,6 +752,12 @@ function skinLandingText(key, locale, params = {}) {
       homeTabWishlist: "Wishes",
       homeTabSupply: "Supply",
       homeTabOfficial: "Skins",
+      homeTabSupplyData: "Supply data",
+      wishlistOverviewTitle: "Skin wish overview",
+      supplyOverviewTitle: "Skin supply overview",
+      rankingPages: "Skin ranking pages",
+      previousPage: "Previous ranking page",
+      nextPage: "Next ranking page",
       footerInfoTitle: "Skin page details",
       updateTime: "Updated",
       version: "Version",
@@ -669,6 +769,12 @@ function skinLandingText(key, locale, params = {}) {
       homeTabWishlist: "願望清單",
       homeTabSupply: "供給量排行",
       homeTabOfficial: "官方皮膚",
+      homeTabSupplyData: "供給數據",
+      wishlistOverviewTitle: "皮膚願望總覽",
+      supplyOverviewTitle: "皮膚供給總覽",
+      rankingPages: "皮膚排行分頁",
+      previousPage: "上一頁排行",
+      nextPage: "下一頁排行",
       footerInfoTitle: "皮膚頁面資訊",
       updateTime: "更新時間",
       version: "版本",
@@ -680,6 +786,12 @@ function skinLandingText(key, locale, params = {}) {
       homeTabWishlist: "願いリスト",
       homeTabSupply: "供給ランキング",
       homeTabOfficial: "公式スキン",
+      homeTabSupplyData: "供給データ",
+      wishlistOverviewTitle: "スキン願い一覧",
+      supplyOverviewTitle: "スキン供給一覧",
+      rankingPages: "スキンランキングページ",
+      previousPage: "前のランキングページ",
+      nextPage: "次のランキングページ",
       footerInfoTitle: "スキンページ情報",
       updateTime: "更新時刻",
       version: "バージョン",
@@ -691,6 +803,12 @@ function skinLandingText(key, locale, params = {}) {
       homeTabWishlist: "위시 목록",
       homeTabSupply: "공급량 순위",
       homeTabOfficial: "공식 스킨",
+      homeTabSupplyData: "공급 데이터",
+      wishlistOverviewTitle: "스킨 위시 개요",
+      supplyOverviewTitle: "스킨 공급 개요",
+      rankingPages: "스킨 순위 페이지",
+      previousPage: "이전 순위 페이지",
+      nextPage: "다음 순위 페이지",
       footerInfoTitle: "스킨 페이지 정보",
       updateTime: "업데이트 시간",
       version: "버전",
@@ -702,6 +820,12 @@ function skinLandingText(key, locale, params = {}) {
       homeTabWishlist: "Danh sách ước",
       homeTabSupply: "Xếp hạng cung",
       homeTabOfficial: "Skin chính thức",
+      homeTabSupplyData: "Dữ liệu cung",
+      wishlistOverviewTitle: "Tổng quan ước chọn skin",
+      supplyOverviewTitle: "Tổng quan cung skin",
+      rankingPages: "Trang xếp hạng skin",
+      previousPage: "Trang xếp hạng trước",
+      nextPage: "Trang xếp hạng tiếp theo",
       footerInfoTitle: "Thông tin trang skin",
       updateTime: "Cập nhật",
       version: "Phiên bản",

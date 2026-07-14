@@ -1,4 +1,10 @@
 @media (max-width: 920px) {
+  .elf-rank-wish-toggle,
+  .elf-ranking-pagination,
+  .elf-desktop-supply-data {
+    display: none;
+  }
+
   .data-source-grid,
   .elf-skin-grid,
   .elf-wishlist-leaders {

@@ -46,10 +46,13 @@ The public frontend calls only:
 
 ```txt
 POST /rest/v1/rpc/sync_skin_gallery_state
+POST /rest/v1/rpc/delete_skin_gallery_state
 POST /rest/v1/rpc/get_skin_supply_stats
 ```
 
-`sync_skin_gallery_state` records one anonymous `visitor_id` per browser localStorage and stores up to three selected skin IDs.
+`sync_skin_gallery_state` records one random `visitor_id` per browser localStorage and stores up to three selected skin IDs.
+The browser also keeps a separate random token. Supabase stores only its SHA-256 hash and requires the token on later
+updates, so one client cannot overwrite another client's choices merely by guessing or learning its visitor ID.
 Only skin IDs in `skin_gallery_allowed_skins` are accepted. Re-running `schema.sql` refreshes the current official
 skin allowlist and removes wishlist rows that are no longer allowed before adding the foreign key constraint.
 It returns:
@@ -65,7 +68,12 @@ It returns:
 
 This counts browsers, not real legal identities. A different PC or phone usually counts once. A different browser,
 private browsing session, or cleared localStorage can count again. The design avoids IP collection and browser
-fingerprinting.
+fingerprinting in the gallery tables, but the hosting providers may retain separate request logs. The public write
+endpoint is intentionally unauthenticated, so totals are community signals rather than identity-verified voting and
+still require platform rate limits/abuse monitoring.
+
+`delete_skin_gallery_state` deletes the matching visitor row and cascades deletion to its wish rows after verifying
+the browser-held token. The UI exposes this as **Delete my community data**.
 
 `get_skin_supply_stats` is the read-only endpoint used by the public frontend.
 
@@ -97,6 +105,10 @@ The scheduled worker runs once per hour by default. With the current daily table
 same Taipei-date row and keep the latest positive supply for that day. It does not store separate per-hour history
 unless a future hourly history table is added.
 
+The worker must use `ELF_SUPABASE_SECRET_KEY` (or a legacy service-role key stored under that secret name). The
+database grants the write RPC only to `service_role`; a publishable/anon key can read summaries but cannot write
+supply snapshots.
+
 ## Secrets
 
 Do not commit secrets in this directory.
@@ -113,17 +125,19 @@ Never commit:
 
 The Supabase project URL and publishable key are public by design and may be used by the static frontend only with
 the limited RPC/RLS setup from `schema.sql`. The Supabase secret key / service role key must live only in a trusted
-server-side environment.
+server-side environment such as GitHub Actions secrets. Rotate the former public worker key if it had broader grants
+before applying this hardening migration. Send new `sb_publishable_` and `sb_secret_` values in the `apikey` header,
+not as bearer tokens in the `Authorization` header.
 
 ## Current Status
 
-This is a schema draft only.
+The skin gallery RPC/RLS boundary and scheduled snapshot workflow are implemented. The historical market collector
+tables remain reserved for future server-side use and are RLS-enabled with no `anon` or `authenticated` grants.
 
 Not implemented yet:
 
 - historical database writes
-- Row Level Security policies
-- scheduled collector
+- historical collector policies beyond the current deny-by-default boundary
 - GitHub Actions workflow
 - Vercel Cron
 - historical read API

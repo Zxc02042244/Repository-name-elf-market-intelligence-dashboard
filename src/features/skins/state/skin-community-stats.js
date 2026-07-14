@@ -22,16 +22,16 @@ export async function syncSkinCommunityWishlist(selectedIds) {
     return createSkinCommunityState();
   }
 
-  const visitorId = getOrCreateVisitorId();
+  const visitor = getOrCreateVisitorCredentials();
   const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/sync_skin_gallery_state`, {
     method: "POST",
     headers: {
       apikey: config.supabasePublishableKey,
-      Authorization: `Bearer ${config.supabasePublishableKey}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      p_visitor_id: visitorId,
+      p_visitor_id: visitor.id,
+      p_visitor_token: visitor.token,
       p_skin_ids: normalizeSelectedIds(selectedIds)
     })
   });
@@ -41,7 +41,37 @@ export async function syncSkinCommunityWishlist(selectedIds) {
   }
 
   const payload = await response.json();
-  return normalizeCommunityPayload(payload, visitorId);
+  return normalizeCommunityPayload(payload, visitor.id);
+}
+
+export async function forgetSkinCommunityData() {
+  const config = readCommunityConfig();
+  const visitor = readStoredVisitorCredentials();
+
+  if (config.enabled && visitor.id && visitor.token) {
+    const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/delete_skin_gallery_state`, {
+      method: "POST",
+      headers: {
+        apikey: config.supabasePublishableKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        p_visitor_id: visitor.id,
+        p_visitor_token: visitor.token
+      })
+    });
+
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`Community data deletion failed with HTTP ${response.status}.`);
+    }
+  }
+
+  clearStoredVisitorCredentials();
+  return {
+    ...createSkinCommunityState(),
+    status: "forgotten",
+    detail: "Community identifier and wish records were deleted."
+  };
 }
 
 export function markSkinCommunityLoading(state) {
@@ -88,31 +118,48 @@ function readCommunityConfig() {
   };
 }
 
-function getOrCreateVisitorId() {
-  const storedVisitorId = readStoredVisitorId();
+function getOrCreateVisitorCredentials() {
+  const stored = readStoredVisitorCredentials();
 
-  if (storedVisitorId) {
-    return storedVisitorId;
+  if (stored.id && stored.token) {
+    return stored;
   }
 
-  const visitorId = createVisitorId();
-  writeStoredVisitorId(visitorId);
-  return visitorId;
+  const visitor = { id: createVisitorId(), token: createVisitorId() };
+  writeStoredVisitorCredentials(visitor);
+  return visitor;
 }
 
 function readStoredVisitorId() {
+  return readStoredVisitorCredentials().id;
+}
+
+function readStoredVisitorCredentials() {
   try {
-    return normalizeVisitorId(window.localStorage?.getItem(STORAGE_KEYS.skinVisitor));
+    return {
+      id: normalizeVisitorId(window.localStorage?.getItem(STORAGE_KEYS.skinVisitor)),
+      token: normalizeVisitorId(window.localStorage?.getItem(STORAGE_KEYS.skinVisitorToken))
+    };
   } catch {
-    return "";
+    return { id: "", token: "" };
   }
 }
 
-function writeStoredVisitorId(visitorId) {
+function writeStoredVisitorCredentials(visitor) {
   try {
-    window.localStorage?.setItem(STORAGE_KEYS.skinVisitor, visitorId);
+    window.localStorage?.setItem(STORAGE_KEYS.skinVisitor, visitor.id);
+    window.localStorage?.setItem(STORAGE_KEYS.skinVisitorToken, visitor.token);
   } catch {
     // Visitor persistence is optional; the UI still works without remote stats.
+  }
+}
+
+function clearStoredVisitorCredentials() {
+  try {
+    window.localStorage?.removeItem(STORAGE_KEYS.skinVisitor);
+    window.localStorage?.removeItem(STORAGE_KEYS.skinVisitorToken);
+  } catch {
+    // The remote deletion has still completed when localStorage is unavailable.
   }
 }
 

@@ -31,6 +31,25 @@
   line-height: 1.4;
 }
 
+.elf-community-data-delete {
+  justify-self: start;
+  margin-top: var(--space-2);
+  padding: 0.55rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-danger, #b84949) 55%, transparent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.elf-community-data-delete:hover,
+.elf-community-data-delete:focus-visible {
+  border-color: var(--color-danger, #b84949);
+  color: var(--color-text);
+}
+
 @media (min-width: 1120px) {
   .elf-home-footer {
     margin-top: var(--space-4);
@@ -55,6 +74,11 @@
   }
 
   .elf-home-footer .data-source-grid {
+    margin-top: 0;
+  }
+
+  .elf-community-data-delete {
+    grid-column: 2;
     margin-top: 0;
   }
 }

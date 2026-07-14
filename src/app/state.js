@@ -12,6 +12,10 @@ export function createAppState() {
     skinPreviewIds: {
       wishlist: "",
       supply: ""
+    },
+    skinRankingPages: {
+      wishlist: 0,
+      supply: 0
     }
   };
 }

@@ -189,7 +189,8 @@ Supabase SQL 結構在這裡。
 - `skin_gallery_allowed_skins`：允許被投願望的皮膚 ID 清單。
 - `skin_gallery_wishes`：匿名訪客選了哪些皮膚。
 - `get_skin_gallery_stats()`：讀取全站願望排行與來訪數。
-- `sync_skin_gallery_state(uuid, text[])`：同步某個匿名訪客的願望。
+- `sync_skin_gallery_state(uuid, uuid, text[])`：以瀏覽器識別碼與私密 token 同步願望；資料庫只保存 token 的 SHA-256 雜湊。
+- `delete_skin_gallery_state(uuid, uuid)`：驗證 token 後刪除該瀏覽器的訪客與願望資料。
 
 供給快照相關：
 
@@ -322,7 +323,8 @@ http://127.0.0.1:4174/#home
 
 ## 10. 安全注意事項
 
-- Publishable key 可以公開，但前提是 Supabase RLS / RPC 權限正確。
+- Publishable key 可以公開，但只能執行願望同步、願望刪除與唯讀統計 RPC。
+- 供給快照寫入必須使用 GitHub Actions 內的 `ELF_SUPABASE_SECRET_KEY`，不可再使用 Publishable key。
 - Secret key / service_role key 不可公開。
 - 不要把官方登入 token、私人 API token、玩家帳號資料放進 repo。
 - 不要讓瀏覽器端直接寫入任意資料表。
