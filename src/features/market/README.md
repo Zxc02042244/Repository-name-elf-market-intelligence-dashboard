@@ -26,13 +26,19 @@ top-level lifecycle.
   cannot replace lifecycle, model, safe error, or active generation.
 - The controller validates the source capability and the `{ transactions: [] }` payload boundary,
   runs transaction inspection, and is the only feature component that calls `buildMarketModel()`.
+- Public descriptor availability never replaces the executable contract: a non-reserved source
+  must still provide a callable `load()` and the `transactions` capability.
 - A valid result with zero accepted transactions is `empty`; a valid result with accepted
   transactions and a valid model is `ready`.
 - Request, capability, payload, validation, and model failures are `unavailable`, never `empty`.
 
-Public feature state contains only a sanitized source descriptor and a stable `{ kind, message }`
-safe error. Raw errors, responses, endpoints, credentials, headers, cookies, stack traces, and
-adapter configuration must not enter feature state.
+Valid source identifiers, kinds, and capabilities follow the existing non-empty string contract;
+namespaces, punctuation, and Unicode are not restricted by this feature. Invalid configuration is
+rejected safely rather than converted to lossy fallback identifiers. Public feature state contains
+only a validated source descriptor (`id`, `kind`, `capabilities`, and `available`) or `null` for an
+invalid source, plus a stable `{ kind, message }` safe error. Raw errors, responses, endpoints,
+credentials, headers, cookies, stack traces, and adapter configuration must not enter feature state.
+Unexpected source inspection or Core errors become `unavailable` with a stable `coreFailed` error.
 
 ## State and model ownership
 

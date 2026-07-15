@@ -142,16 +142,17 @@ test("future adapters must implement the market source contract", () => {
   });
   assert.deepEqual(Object.keys(publicState), ["id", "kind", "capabilities", "available"]);
   assert.equal(publicState.available, true);
-  const unsafePublicState = createMarketDataSourceState({
-    id: "https://private.example/token",
-    kind: "https://private.example",
-    capabilities: ["transactions", "secret/token"],
+
+  const namespacedAdapter = defineMarketDataSource({
+    id: "市場:elf/source",
+    kind: "供應者:adapter/正式",
+    capabilities: ["transactions", "市場:read/交易"],
     load: async () => ({ transactions: [] })
   });
-  assert.equal(unsafePublicState.id, "unknown");
-  assert.equal(unsafePublicState.kind, "adapter");
-  assert.deepEqual(unsafePublicState.capabilities, ["transactions"]);
-  assert.doesNotMatch(JSON.stringify(unsafePublicState), /private\.example|secret/);
+  const namespacedState = createMarketDataSourceState(namespacedAdapter);
+  assert.equal(namespacedState.id, "市場:elf/source");
+  assert.equal(namespacedState.kind, "供應者:adapter/正式");
+  assert.deepEqual(namespacedState.capabilities, ["transactions", "市場:read/交易"]);
 });
 
 test("planned market view is module-driven and contains no fake metrics", () => {
@@ -432,6 +433,101 @@ test("invalid capabilities, payloads, normalization, and model failures are unav
     { buildMarketModel: () => { throw new Error("model failed"); } }
   );
   assert.equal((await modelFailure.load()).safeError.kind, MARKET_ERROR_KIND.modelBuildFailed);
+});
+
+test("public availability cannot replace the executable load capability", async () => {
+  const dataSource = {
+    id: "descriptor-without-load",
+    kind: "adapter",
+    available: true,
+    capabilities: ["transactions"]
+  };
+  const controller = createMarketLoadController({
+    dataSource
+  });
+
+  const state = await controller.load();
+
+  assert.equal(isMarketDataSourceReady(dataSource), false);
+  assert.equal(state.status, "unavailable");
+  assert.equal(state.activeGeneration, 1);
+  assert.equal(state.safeError.kind, MARKET_ERROR_KIND.capabilityMissing);
+  assert.notEqual(state.safeError.kind, MARKET_ERROR_KIND.requestFailed);
+});
+
+test("invalid source configuration is rejected without lossy public fallbacks", async () => {
+  assert.throws(
+    () => defineMarketDataSource({ id: "", capabilities: [], load: async () => ({}) }),
+    /stable id/
+  );
+  assert.throws(
+    () => defineMarketDataSource({ id: "source", kind: 7, capabilities: [], load: async () => ({}) }),
+    /valid kind/
+  );
+  assert.throws(
+    () => defineMarketDataSource({ id: "source", kind: null, capabilities: [], load: async () => ({}) }),
+    /valid kind/
+  );
+  assert.throws(
+    () => defineMarketDataSource({ id: "source", capabilities: [""], load: async () => ({}) }),
+    /capabilities must be non-empty strings/
+  );
+
+  let loadCount = 0;
+  const invalidSources = [
+    { id: "", kind: "adapter", capabilities: ["transactions"] },
+    { id: 42, kind: "adapter", capabilities: ["transactions"] }
+  ];
+
+  for (const invalidSource of invalidSources) {
+    const controller = createMarketLoadController({
+      dataSource: {
+        ...invalidSource,
+        load: async () => {
+          loadCount += 1;
+          return { transactions: [] };
+        }
+      }
+    });
+    const state = await controller.load();
+
+    assert.equal(state.status, "unavailable");
+    assert.equal(state.safeError.kind, MARKET_ERROR_KIND.coreFailed);
+    assert.equal(state.dataSource, null);
+    assert.doesNotMatch(JSON.stringify(state), /"id":"unknown"|"kind":"adapter"/);
+  }
+
+  assert.equal(loadCount, 0);
+});
+
+test("unexpected source inspection errors stay inside the safe Core boundary", async () => {
+  let loadCount = 0;
+  const sensitiveErrorText = "endpoint=https://private.example token=secret-token";
+  const controller = createMarketLoadController({
+    dataSource: {
+      get id() {
+        throw new Error(sensitiveErrorText);
+      },
+      kind: "adapter",
+      capabilities: ["transactions"],
+      load: async () => {
+        loadCount += 1;
+        return { transactions: [] };
+      }
+    }
+  });
+
+  const state = await controller.load();
+  const serializedState = JSON.stringify(state);
+
+  assert.equal(loadCount, 0);
+  assert.equal(state.status, "unavailable");
+  assert.equal(state.safeError.kind, MARKET_ERROR_KIND.coreFailed);
+  assert.equal(state.dataSource, null);
+  assert.doesNotMatch(
+    serializedState,
+    /private\.example|secret-token|endpoint|token|stack|headers|cookies/i
+  );
 });
 
 test("request failures expose only a stable safe error and sanitized source state", async () => {

@@ -4,7 +4,7 @@ import {
   createMarketDataSourceState,
   createReservedMarketDataSource,
   hasMarketDataSourceCapabilities,
-  isMarketDataSourceReady
+  isMarketDataSourceLoadable
 } from "./data/market-data-source.js";
 import {
   createMarketLifecycleState,
@@ -20,7 +20,15 @@ export function createMarketLoadController(
   const inspectTransactions = dependencies.inspectTransactionList ?? inspectTransactionList;
   const buildModel = dependencies.buildMarketModel ?? buildMarketModel;
   const now = dependencies.now ?? Date.now;
-  const dataSourceState = createMarketDataSourceState(dataSource);
+  let dataSourceState = null;
+  let sourceInspectionFailed = false;
+
+  try {
+    dataSourceState = createMarketDataSourceState(dataSource);
+  } catch {
+    sourceInspectionFailed = true;
+  }
+
   let nextGeneration = 0;
   let state = createMarketLifecycleState({ dataSource: dataSourceState });
 
@@ -50,7 +58,7 @@ export function createMarketLoadController(
   }
 
   async function load() {
-    if (dataSource?.kind === "reserved") {
+    if (!sourceInspectionFailed && dataSourceState.kind === "reserved") {
       return getState();
     }
 
@@ -61,64 +69,73 @@ export function createMarketLoadController(
       activeGeneration: generation
     });
 
-    if (!isMarketDataSourceReady(dataSource) || !hasMarketDataSourceCapabilities(dataSource)) {
-      commitUnavailable(generation, MARKET_ERROR_KIND.capabilityMissing);
-      return getState();
-    }
-
-    let payload;
-
     try {
-      payload = await dataSource.load({ generation });
-    } catch {
-      commitUnavailable(generation, MARKET_ERROR_KIND.requestFailed);
-      return getState();
-    }
+      if (sourceInspectionFailed) {
+        commitUnavailable(generation, MARKET_ERROR_KIND.coreFailed);
+        return getState();
+      }
 
-    if (generation !== state.activeGeneration) {
-      return getState();
-    }
+      if (!isMarketDataSourceLoadable(dataSource) || !hasMarketDataSourceCapabilities(dataSource)) {
+        commitUnavailable(generation, MARKET_ERROR_KIND.capabilityMissing);
+        return getState();
+      }
 
-    if (
-      !payload ||
-      typeof payload !== "object" ||
-      Array.isArray(payload) ||
-      !Array.isArray(payload.transactions)
-    ) {
-      commitUnavailable(generation, MARKET_ERROR_KIND.invalidResponse);
-      return getState();
-    }
+      let payload;
 
-    let inspectedTransactions;
+      try {
+        payload = await dataSource.load({ generation });
+      } catch {
+        commitUnavailable(generation, MARKET_ERROR_KIND.requestFailed);
+        return getState();
+      }
 
-    try {
-      inspectedTransactions = inspectTransactions(payload.transactions);
-    } catch {
-      commitUnavailable(generation, MARKET_ERROR_KIND.normalizationFailed);
-      return getState();
-    }
+      if (generation !== state.activeGeneration) {
+        return getState();
+      }
 
-    let model;
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        Array.isArray(payload) ||
+        !Array.isArray(payload.transactions)
+      ) {
+        commitUnavailable(generation, MARKET_ERROR_KIND.invalidResponse);
+        return getState();
+      }
 
-    try {
-      model = buildModel(payload.transactions, {
-        source: dataSourceState.id,
-        generatedAt: now()
+      let inspectedTransactions;
+
+      try {
+        inspectedTransactions = inspectTransactions(payload.transactions);
+      } catch {
+        commitUnavailable(generation, MARKET_ERROR_KIND.normalizationFailed);
+        return getState();
+      }
+
+      let model;
+
+      try {
+        model = buildModel(payload.transactions, {
+          source: dataSourceState.id,
+          generatedAt: now()
+        });
+
+        assertMarketModel(model, inspectedTransactions.transactions.length);
+      } catch {
+        commitUnavailable(generation, MARKET_ERROR_KIND.modelBuildFailed);
+        return getState();
+      }
+
+      commit(generation, {
+        status: inspectedTransactions.transactions.length === 0
+          ? MARKET_LIFECYCLE.empty
+          : MARKET_LIFECYCLE.ready,
+        model,
+        safeError: null
       });
-
-      assertMarketModel(model, inspectedTransactions.transactions.length);
     } catch {
-      commitUnavailable(generation, MARKET_ERROR_KIND.modelBuildFailed);
-      return getState();
+      commitUnavailable(generation, MARKET_ERROR_KIND.coreFailed);
     }
-
-    commit(generation, {
-      status: inspectedTransactions.transactions.length === 0
-        ? MARKET_LIFECYCLE.empty
-        : MARKET_LIFECYCLE.ready,
-      model,
-      safeError: null
-    });
 
     return getState();
   }

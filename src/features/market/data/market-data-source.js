@@ -1,5 +1,5 @@
 const RESERVED_CAPABILITIES = Object.freeze([]);
-const STABLE_SOURCE_FIELD_PATTERN = /^[a-z0-9][a-z0-9._-]*$/i;
+const PUBLIC_DATA_SOURCE_STATES = new WeakSet();
 
 export const MARKET_REQUIRED_CAPABILITIES = Object.freeze(["transactions"]);
 
@@ -17,8 +17,15 @@ export function defineMarketDataSource(definition) {
     throw new TypeError("Market data source definition must be an object.");
   }
 
-  if (!isStableSourceField(definition.id)) {
+  if (!isNonEmptyString(definition.id)) {
     throw new TypeError("Market data source requires a stable id.");
+  }
+
+  const kind = definition.kind === undefined ? "adapter" : definition.kind;
+  const capabilities = normalizeCapabilities(definition.capabilities);
+
+  if (!isNonEmptyString(kind)) {
+    throw new TypeError("Market data source requires a valid kind.");
   }
 
   if (typeof definition.load !== "function") {
@@ -27,17 +34,25 @@ export function defineMarketDataSource(definition) {
 
   return Object.freeze({
     id: definition.id.trim(),
-    kind: definition.kind ?? "adapter",
-    capabilities: Object.freeze([...new Set(definition.capabilities ?? [])]),
+    kind: kind.trim(),
+    capabilities,
     load: definition.load
   });
 }
 
 export function isMarketDataSourceReady(dataSource) {
+  if (PUBLIC_DATA_SOURCE_STATES.has(dataSource)) {
+    return dataSource.available === true;
+  }
+
+  return isMarketDataSourceLoadable(dataSource);
+}
+
+export function isMarketDataSourceLoadable(dataSource) {
   return Boolean(
     dataSource &&
     dataSource.kind !== "reserved" &&
-    (dataSource.available === true || typeof dataSource.load === "function")
+    typeof dataSource.load === "function"
   );
 }
 
@@ -53,22 +68,40 @@ export function hasMarketDataSourceCapabilities(
 }
 
 export function createMarketDataSourceState(dataSource) {
-  const capabilities = Array.isArray(dataSource?.capabilities)
-    ? [...new Set(dataSource.capabilities.filter(isStableSourceField).map((value) => value.trim()))]
-    : [];
+  if (!dataSource || typeof dataSource !== "object") {
+    throw new TypeError("Market data source state requires a source object.");
+  }
 
-  return Object.freeze({
-    id: isStableSourceField(dataSource?.id) ? dataSource.id.trim() : "unknown",
-    kind: isStableSourceField(dataSource?.kind) ? dataSource.kind.trim() : "adapter",
-    capabilities: Object.freeze(capabilities),
-    available: isMarketDataSourceReady(dataSource)
+  if (!isNonEmptyString(dataSource.id)) {
+    throw new TypeError("Market data source state requires a stable id.");
+  }
+
+  const kind = dataSource.kind === undefined ? "adapter" : dataSource.kind;
+
+  if (!isNonEmptyString(kind)) {
+    throw new TypeError("Market data source state requires a valid kind.");
+  }
+
+  const capabilities = normalizeCapabilities(dataSource.capabilities);
+  const state = Object.freeze({
+    id: dataSource.id.trim(),
+    kind: kind.trim(),
+    capabilities,
+    available: isMarketDataSourceLoadable(dataSource)
   });
+
+  PUBLIC_DATA_SOURCE_STATES.add(state);
+  return state;
 }
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function isStableSourceField(value) {
-  return isNonEmptyString(value) && STABLE_SOURCE_FIELD_PATTERN.test(value.trim());
+function normalizeCapabilities(capabilities = []) {
+  if (!Array.isArray(capabilities) || !capabilities.every(isNonEmptyString)) {
+    throw new TypeError("Market data source capabilities must be non-empty strings.");
+  }
+
+  return Object.freeze([...new Set(capabilities.map((capability) => capability.trim()))]);
 }
