@@ -5,12 +5,52 @@ The market feature is intentionally independent from the skin gallery runtime.
 ## Active files
 
 - market-feature.js owns market feature state and the current planned/empty view.
+- market-lifecycle.js defines the only valid top-level lifecycle states and the stable safe-error contract.
+- market-load-controller.js owns source coordination, request generations, validation, model creation, and state transitions.
 - market-modules.js is the stable registry for overview, asset, actor, and indicator modules.
 - market-module-runtime.js is the composition boundary that connects registered modules to renderers.
 - data/market-data-source.js defines the contract for a future verified data adapter.
 - styles/ contains only the active market shell and module styles.
 - modules/overview/, modules/assets/, modules/actors/, and modules/indicators/ own their model, view, and explicit data states.
 - The indicators module exposes documented TTS and MPS/MPI boundaries but deliberately calculates no scores until policies are approved.
+
+## Core data lifecycle
+
+The top-level Market lifecycle is limited to `planned`, `loading`, `empty`, `ready`, and
+`unavailable`. `policyPending` is an Indicators module state only and must never replace the
+top-level lifecycle.
+
+- A reserved source remains `planned`; its `load()` capability is never invoked.
+- Every configured-source load receives a monotonically increasing generation.
+- Starting a newer load makes that generation active. Older requests may finish naturally, but
+  cannot replace lifecycle, model, safe error, or active generation.
+- The controller validates the source capability and the `{ transactions: [] }` payload boundary,
+  runs transaction inspection, and is the only feature component that calls `buildMarketModel()`.
+- Public descriptor availability never replaces the executable contract: a non-reserved source
+  must still provide a callable `load()` and the `transactions` capability.
+- A valid result with zero accepted transactions is `empty`; a valid result with accepted
+  transactions and a valid model is `ready`.
+- Before entering `ready` or `empty`, the Core requires the formal MarketModel top-level contract:
+  `transactions` must be an array, `totals` and `meta` must be objects, and `assetStats` and
+  `actorStats` must be arrays. Incomplete or mistyped model results are `modelBuildFailed`.
+- Request, capability, payload, validation, and model failures are `unavailable`, never `empty`.
+
+Valid source identifiers, kinds, and capabilities follow the existing non-empty string contract;
+namespaces, punctuation, and Unicode are not restricted by this feature. Invalid configuration is
+rejected safely rather than converted to lossy fallback identifiers. Public feature state contains
+only a validated source descriptor (`id`, `kind`, `capabilities`, and `available`) or `null` for an
+invalid source, plus a stable `{ kind, message }` safe error. Raw errors, responses, endpoints,
+credentials, headers, cookies, stack traces, and adapter configuration must not enter feature state.
+Unexpected source inspection or Core errors become `unavailable` with a stable `coreFailed` error.
+
+## State and model ownership
+
+Only the Market Feature Core may transition the top-level lifecycle, update the active generation,
+replace the safe error, or install a complete `MarketModel`. Modules are read-only consumers: they
+must create independent derived arrays and objects for sorting, filtering, aggregation, or display.
+They must not mutate or retain mutable references into `transactions`, `totals`, `meta`,
+`assetStats`, or `actorStats`. This is a behavioral contract and does not require freezing the
+model.
 
 ## Removed legacy renderers
 
