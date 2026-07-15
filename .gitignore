@@ -6,3 +6,32 @@ __pycache__/
 playwright-report/
 test-results/
 blob-report/
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and generated output
+*.log
+coverage/
+dist/
+build/
+tmp/
+supabase/.temp/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Personal IDE settings
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
