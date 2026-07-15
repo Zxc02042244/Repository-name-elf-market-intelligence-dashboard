@@ -1,14 +1,23 @@
 import { t } from "../../i18n/i18n.js";
-import { createReservedMarketDataSource } from "./data/market-data-source.js";
+import {
+  createMarketDataSourceState,
+  createReservedMarketDataSource
+} from "./data/market-data-source.js";
+import { createMarketLifecycleState } from "./market-lifecycle.js";
+import { createMarketLoadController } from "./market-load-controller.js";
 import { renderActiveMarketModules } from "./market-module-runtime.js";
 import { MARKET_MODULES } from "./market-modules.js";
 
 export function createMarketFeatureState() {
-  return {
-    dataSource: createReservedMarketDataSource(),
-    model: null,
-    status: "planned"
-  };
+  const dataSource = createReservedMarketDataSource();
+
+  return createMarketLifecycleState({
+    dataSource: createMarketDataSourceState(dataSource)
+  });
+}
+
+export function createMarketFeature({ dataSource = createReservedMarketDataSource() } = {}) {
+  return createMarketLoadController({ dataSource });
 }
 
 export function renderMarketFeatureView(marketState, locale) {
