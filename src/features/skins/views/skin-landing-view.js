@@ -345,15 +345,18 @@ function renderSupplyLeader(skin, index, topSupply, locale, selectedPreviewId) {
   return `
     <div
       class="elf-rank-row elf-rank-row-selectable ${skin.id === selectedPreviewId ? "is-preview-selected" : ""} ${getSkinClassNames(skin)}"
-      data-skin-preview="${escapeHtml(skin.id)}"
     >
-      <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
-      <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
-      <div class="elf-rank-body">
-        <strong>${escapeHtml(skin.name)}</strong>
-        <small>${t("elfLanding.supply", locale)} ${formatLocalizedNumber(supply, locale)}</small>
-        <div class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
-      </div>
+      ${renderRankPreviewButton({
+        skin,
+        index,
+        locale,
+        selectedPreviewId,
+        body: `
+          <strong>${escapeHtml(skin.name)}</strong>
+          <small>${t("elfLanding.supply", locale)} ${formatLocalizedNumber(supply, locale)}</small>
+          <span class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></span>
+        `
+      })}
     </div>
   `;
 }
@@ -384,21 +387,21 @@ function renderWishlistLeader(skin, index, topWishCount, locale, selectedPreview
   return `
     <div
       class="elf-rank-row elf-rank-row-selectable ${skin.id === selectedPreviewId ? "is-preview-selected" : ""} ${getSkinClassNames(skin)}"
-      role="button"
-      tabindex="0"
-      aria-pressed="${skin.id === selectedPreviewId ? "true" : "false"}"
-      data-skin-preview="${escapeHtml(skin.id)}"
     >
-      <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
-      <img src="${escapeHtml(skin.image)}" alt="${escapeHtml(skin.name)}" width="64" height="64" loading="lazy" decoding="async">
-      <div class="elf-rank-body">
-        <strong>${escapeHtml(skin.name)}</strong>
-        <small>
-          <strong>${getWishCountLabel(locale, wishCount, skin.isRemoteLeader === true)}</strong>
-          <span>${t("elfLanding.supply", locale)} ${supply}</span>
-        </small>
-        <div class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></div>
-      </div>
+      ${renderRankPreviewButton({
+        skin,
+        index,
+        locale,
+        selectedPreviewId,
+        body: `
+          <strong>${escapeHtml(skin.name)}</strong>
+          <small>
+            <strong>${getWishCountLabel(locale, wishCount, skin.isRemoteLeader === true)}</strong>
+            <span>${t("elfLanding.supply", locale)} ${supply}</span>
+          </small>
+          <span class="elf-rank-meter" aria-hidden="true"><span style="width: ${share}%"></span></span>
+        `
+      })}
       <button
         class="elf-rank-wish-toggle ${skin.isLocalSelection ? "is-selected" : ""}"
         type="button"
@@ -411,6 +414,22 @@ function renderWishlistLeader(skin, index, topWishCount, locale, selectedPreview
         <span aria-hidden="true">☆</span>
       </button>
     </div>
+  `;
+}
+
+function renderRankPreviewButton({ skin, index, locale, selectedPreviewId, body }) {
+  return `
+    <button
+      class="elf-rank-preview-button"
+      type="button"
+      data-skin-preview="${escapeHtml(skin.id)}"
+      aria-pressed="${skin.id === selectedPreviewId ? "true" : "false"}"
+      aria-label="${escapeHtml(t("elfLanding.openSkinPreview", locale, { name: skin.name }))}"
+    >
+      <span class="elf-rank-index">${String(index + 1).padStart(2, "0")}</span>
+      <img src="${escapeHtml(skin.image)}" alt="" width="64" height="64" loading="lazy" decoding="async">
+      <span class="elf-rank-body">${body}</span>
+    </button>
   `;
 }
 

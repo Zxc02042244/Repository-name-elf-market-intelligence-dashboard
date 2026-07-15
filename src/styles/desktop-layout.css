@@ -386,8 +386,18 @@
     padding: 2px 6px;
   }
 
-  .elf-tab-panel-wishlist .elf-rank-row {
-    grid-template-columns: 24px 30px minmax(0, 1fr) 28px;
+  .elf-tab-panel-supply .elf-rank-row-selectable {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .elf-tab-panel-wishlist .elf-rank-row-selectable {
+    grid-template-columns: minmax(0, 1fr) 28px;
+  }
+
+  .elf-tab-panel-supply .elf-rank-preview-button,
+  .elf-tab-panel-wishlist .elf-rank-preview-button {
+    grid-template-columns: 24px 30px minmax(0, 1fr);
+    gap: 5px;
   }
 
   .elf-tab-panel-supply .elf-rank-row img,

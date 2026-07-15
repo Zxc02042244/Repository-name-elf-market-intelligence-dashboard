@@ -18,7 +18,7 @@ test("every champion reuses the single global frame", async ({ page }) => {
 
   const rows = page.locator(".elf-tab-panel-supply .elf-rank-list-desktop .elf-rank-row-selectable");
   await expect(rows).toHaveCount(30);
-  await rows.nth(1).click();
+  await rows.nth(1).locator("button[data-skin-preview]").click();
 
   const secondBackground = await card.evaluate((element) => getComputedStyle(element).backgroundImage);
   expect(secondBackground).toBe(firstBackground);
@@ -44,6 +44,59 @@ test("every champion reuses the single global frame", async ({ page }) => {
   expect(layout.rankInside).toBe(true);
   expect(layout.artInside).toBe(true);
   expect(layout.nameInside).toBe(true);
+});
+
+test("ranking preview and wishlist controls keep independent keyboard semantics", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?v=playwright-ranking-keyboard-contract#home", {
+    waitUntil: "domcontentloaded"
+  });
+
+  const skinId = "pioneer-spark";
+  const row = page.locator(`.elf-tab-panel-wishlist .elf-rank-list-desktop .elf-rank-row-selectable:has(> button[data-skin-preview='${skinId}'])`);
+  const previewButton = row.locator(`:scope > button[data-skin-preview='${skinId}']`);
+  const wishlistButton = row.locator(`:scope > button[data-wishlist-toggle='${skinId}']`);
+
+  await expect(previewButton).toHaveCount(1);
+  await expect(wishlistButton).toHaveCount(1);
+  await expect(row).not.toHaveAttribute("role", "button");
+  await expect(row).not.toHaveAttribute("tabindex", "0");
+  await expect(row.locator("button button")).toHaveCount(0);
+  await expect(previewButton.locator("img")).toHaveAttribute("alt", "");
+
+  await previewButton.focus();
+  await expect(previewButton).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(previewButton).toHaveAttribute("aria-pressed", "true");
+  await expect(previewButton).toBeFocused();
+
+  await page.keyboard.press("Tab");
+  await expect(wishlistButton).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(wishlistButton).toHaveAttribute("aria-pressed", "true");
+  await expect(wishlistButton).toBeFocused();
+
+  await page.keyboard.press("Space");
+  await expect(wishlistButton).toHaveAttribute("aria-pressed", "false");
+  await wishlistButton.click();
+  await expect(wishlistButton).toHaveAttribute("aria-pressed", "true");
+});
+
+test("mobile ranking preview remains independently clickable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?v=playwright-ranking-mobile-preview-contract#home", {
+    waitUntil: "domcontentloaded"
+  });
+
+  const row = page.locator(".elf-rank-list-mobile .elf-rank-row-selectable").nth(1);
+  const previewButton = row.locator(":scope > button[data-skin-preview]");
+  const wishlistButton = row.locator(":scope > button[data-wishlist-toggle]");
+
+  await expect(previewButton).toBeVisible();
+  await expect(wishlistButton).toBeHidden();
+  await expect(previewButton).toHaveAttribute("aria-pressed", "false");
+  await previewButton.click();
+  await expect(previewButton).toHaveAttribute("aria-pressed", "true");
 });
 
 test("mobile carousel uses the same global frame", async ({ page }) => {

@@ -65,7 +65,7 @@
 }
 
 .elf-rank-row-selectable {
-  cursor: pointer;
+  grid-template-columns: minmax(0, 1fr) auto;
   transition:
     border-color 150ms ease,
     background-color 150ms ease,
@@ -73,7 +73,7 @@
 }
 
 .elf-rank-row-selectable:hover,
-.elf-rank-row-selectable:focus-visible,
+.elf-rank-row-selectable:focus-within,
 .elf-rank-row-selectable.is-preview-selected {
   border-color: color-mix(in srgb, var(--skin-accent, #f2b84b) 72%, #fff4d2);
   outline: 0;
@@ -87,6 +87,32 @@
 
 .elf-rank-panel-supply .elf-rank-row {
   grid-template-columns: 34px 64px minmax(0, 1fr);
+}
+
+.elf-rank-panel-supply .elf-rank-row-selectable {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.elf-rank-preview-button {
+  display: grid;
+  grid-template-columns: 34px 64px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.elf-rank-preview-button:focus-visible {
+  outline: 2px solid #ffd76f;
+  outline-offset: 2px;
 }
 
 .elf-rank-index {
@@ -166,6 +192,7 @@
 }
 
 .elf-rank-meter {
+  display: block;
   height: 6px;
   overflow: hidden;
   border-radius: 999px;
