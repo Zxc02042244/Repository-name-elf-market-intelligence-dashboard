@@ -145,12 +145,19 @@ export function createMarketLoadController(
 
 function assertMarketModel(model, acceptedTransactionCount) {
   if (
-    !model ||
-    typeof model !== "object" ||
+    !isRecord(model) ||
     !Array.isArray(model.transactions) ||
-    !Number.isFinite(model.totals?.totalTransactions) ||
+    !isRecord(model.totals) ||
+    !isRecord(model.meta) ||
+    !Array.isArray(model.assetStats) ||
+    !Array.isArray(model.actorStats) ||
+    !Number.isFinite(model.totals.totalTransactions) ||
     model.totals.totalTransactions !== acceptedTransactionCount
   ) {
     throw new TypeError("MarketModel is invalid.");
   }
+}
+
+function isRecord(value) {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }

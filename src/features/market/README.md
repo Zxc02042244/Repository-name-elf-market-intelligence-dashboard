@@ -30,6 +30,9 @@ top-level lifecycle.
   must still provide a callable `load()` and the `transactions` capability.
 - A valid result with zero accepted transactions is `empty`; a valid result with accepted
   transactions and a valid model is `ready`.
+- Before entering `ready` or `empty`, the Core requires the formal MarketModel top-level contract:
+  `transactions` must be an array, `totals` and `meta` must be objects, and `assetStats` and
+  `actorStats` must be arrays. Incomplete or mistyped model results are `modelBuildFailed`.
 - Request, capability, payload, validation, and model failures are `unavailable`, never `empty`.
 
 Valid source identifiers, kinds, and capabilities follow the existing non-empty string contract;

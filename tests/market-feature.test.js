@@ -435,6 +435,56 @@ test("invalid capabilities, payloads, normalization, and model failures are unav
   assert.equal((await modelFailure.load()).safeError.kind, MARKET_ERROR_KIND.modelBuildFailed);
 });
 
+test("incomplete or mistyped MarketModel results cannot enter ready or empty", async () => {
+  const transaction = createTransaction();
+  const validModel = buildMarketModel([transaction], {
+    source: "model-contract-test",
+    generatedAt: 456
+  });
+  const invalidModels = [
+    {
+      transactions: [transaction],
+      totals: { totalTransactions: 1 },
+      privatePayload: "builder-secret"
+    },
+    { ...validModel, meta: [] },
+    { ...validModel, assetStats: {} },
+    { ...validModel, actorStats: null }
+  ];
+
+  for (const invalidModel of invalidModels) {
+    const controller = createMarketLoadController(
+      {
+        dataSource: defineMarketDataSource({
+          id: "invalid-model-result",
+          capabilities: ["transactions"],
+          load: async () => ({ transactions: [transaction] })
+        })
+      },
+      { buildMarketModel: () => invalidModel }
+    );
+    const state = await controller.load();
+
+    assert.equal(state.status, "unavailable");
+    assert.equal(state.safeError.kind, MARKET_ERROR_KIND.modelBuildFailed);
+    assert.equal(state.model, null);
+    assert.doesNotMatch(JSON.stringify(state), /builder-secret|privatePayload/);
+  }
+
+  const readyController = createMarketLoadController({
+    dataSource: defineMarketDataSource({
+      id: "valid-model-result",
+      capabilities: ["transactions"],
+      load: async () => ({ transactions: [transaction] })
+    })
+  });
+  const readyState = await readyController.load();
+
+  assert.equal(readyState.status, "ready");
+  assert.equal(readyState.safeError, null);
+  assert.equal(readyState.model.totals.totalTransactions, 1);
+});
+
 test("public availability cannot replace the executable load capability", async () => {
   const dataSource = {
     id: "descriptor-without-load",
