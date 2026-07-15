@@ -144,6 +144,7 @@ function restoreUiSnapshot(snapshot) {
   }
 
   pendingUiSnapshot = snapshot;
+  findElementByIdentity(snapshot.focus)?.focus?.({ preventScroll: true });
   const restore = () => {
     const carousel = [...appRoot.querySelectorAll(".elf-mobile-champion-carousel")]
       .find((element) => isElementVisible(element));
@@ -341,8 +342,8 @@ function handleAppKeydown(event) {
     return;
   }
 
-  const skinPreview = getEventElement(event)?.closest("[data-skin-preview]");
-  if (!skinPreview) {
+  const skinPreview = getEventElement(event);
+  if (!(skinPreview instanceof HTMLButtonElement) || !skinPreview.matches("button[data-skin-preview]")) {
     return;
   }
 
@@ -407,7 +408,7 @@ function selectSkinPreview(skinId) {
     ...appState.skinPreviewIds,
     [appState.skinHomeTab]: skinId
   };
-  renderApp();
+  renderApp({ preserveUi: true });
 }
 
 function selectSkinRankingPage(page) {
