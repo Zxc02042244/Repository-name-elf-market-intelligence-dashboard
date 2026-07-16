@@ -86,8 +86,8 @@ Mandatory interpretation rules:
 | Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
 | --- | --- | --- | --- | --- | --- | --- |
 | [`card-frame-layout-spec.md`](./card-frame-layout-spec.md) | ACTIVE | Fixed 1041×1511 card-frame geometry, plaques, layers, and export rules | L2 | Current frame asset, unified frame CSS, and Playwright frame tests | 2026-07-16 | Layout changes must remain synchronized with the runtime asset and CSS coordinates. |
-| [`elf-skin-self-edit-guide.md`](./elf-skin-self-edit-guide.md) | ACTIVE | Skin gallery maintenance, data sources, local state, Supabase boundary, and visual checks | L2 | Current skins feature, product config, migrations, workflow, and tests | 2026-07-16 | Some path descriptions predate the latest CSS modularization; use current feature files when they differ. |
-| [`local-static-preview-workflow.md`](./local-static-preview-workflow.md) | ACTIVE | GitHub Pages-compatible local static preview without a bundler | L2 | `package.json`, `scripts/serve-static.mjs`, current runtime, and current tests | 2026-07-16 | Its older single-storage-key statement is not the current storage inventory. |
+| [`elf-skin-self-edit-guide.md`](./elf-skin-self-edit-guide.md) | ACTIVE | Skin gallery maintenance, data sources, local state, Supabase boundary, and visual checks | L2 | Current skins feature, product config, migrations, workflow, and tests | 2026-07-16 | Follow its production-state-first authority order; do not use `supabase/schema.sql` to override registered migrations or verified ACL. |
+| [`local-static-preview-workflow.md`](./local-static-preview-workflow.md) | ACTIVE | GitHub Pages-compatible local static preview without a bundler | L2 | `package.json`, `scripts/serve-static.mjs`, current runtime, and current tests | 2026-07-16 | Clearing all localStorage is not a harmless first-line debugging step; preserve visitor credentials unless their recovery impact is understood. |
 
 ## 3. Security / Supabase / ACL
 
