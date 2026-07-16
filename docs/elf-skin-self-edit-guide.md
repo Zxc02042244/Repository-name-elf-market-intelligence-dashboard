@@ -33,34 +33,29 @@
 
 - `wishlistLimit = 3`：本地願望最多 3 個。
 - `rankingLimit = 10`：排行顯示 Top 10。
-- `supplyLeaders`：供給量排行資料。
-- `wishlistLeaders`：願望排行資料。
-- `todayAddedLeaders`：今日新增排行資料。
-- `getChampionFrameClass()`：決定 TOP 1 展示卡使用哪種角色框。
+- `mobileChampionLimit = 10`：手機冠軍輪播的上限。
+- `desktopRankingPageSize = 30`、`desktopRankingColumnSize = 10`：桌機排行分頁與欄位大小。
+- `supplySyncLimit = 100`：供給同步批次上限。
 
-### `src/styles.css`
+`supplyLeaders`、`wishlistLeaders`、`todayAddedLeaders` 與卡框 class 是 view/model 產出的資料，不是 `product-config.js` 的設定值。
 
-大部分視覺設計與手機/桌機排版都在這裡。
+### CSS 模組與責任
 
-常見用途：
+`src/styles.css` 只負責全站基礎樣式；皮膚、卡框、背景與 responsive 排版已拆成模組，載入順序以 `index.html` 為準。
 
-- 改首頁 Hero 高度、寬度、間距。
-- 改桌機版左右欄、三欄排行布局。
-- 改手機版 390px / 430px 顯示。
-- 改 TOP 1 卡框、排名列、願望按鈕、今日新增橫式排行。
+主要模組：
 
-重要區塊：
+- `src/styles/tokens.css`、`src/themes/elf-theme.css`：共用視覺 token 與 ELF theme。
+- `src/styles/app-chrome.css`：頁首、導覽與應用外框。
+- `src/styles/home-tabs.css`、`src/styles/home-wishlist.css`、`src/styles/home-supply.css`、`src/styles/home-skin-gallery.css`：皮膚首頁頁籤與各功能區。
+- `src/styles/home-ranking.css`、`src/styles/home-champion-card.css`：排行與 TOP 1 展示。
+- `src/styles/unified-card-frame.css`：統一卡框圖層與固定座標。
+- `src/styles/mobile-layout.css`、`src/styles/mobile-content-grid.css`、`src/styles/mobile-ranking-card.css`、`src/styles/mobile-navigation.css`、`src/styles/mobile-header.css`：`max-width: 920px` 的手機／平板布局。
+- `src/styles/desktop-layout.css`：`min-width: 921px` 的桌機布局。
+- `src/styles/site-background.css`：桌機與手機森林背景。
+- `src/features/market/styles/`：Market 功能自己的視覺模組，不應混入 skin CSS。
 
-- `.app-shell-home`：皮膚首頁最大寬度。
-- `.elf-home-hero`：首頁頂部標題區。
-- `.elf-home-tabs`：願望 / 供給 / 官方皮膚頁籤。
-- `.elf-tab-panel-supply`：供給排行頁布局。
-- `.elf-tab-panel-wishlist`：願望排行頁布局。
-- `.elf-champion-card`：TOP 1 大展示卡。
-- `.elf-rank-list` / `.elf-rank-row`：直式排行列。
-- `.elf-delta-panel` / `.elf-delta-card`：今日新增排行。
-- `@media (min-width: 1120px)`：桌機版布局。
-- `@media (max-width: 620px)`、`@media (max-width: 430px)`：手機版布局。
+修改 layout、responsive、卡框或背景後，至少檢查 390px、430px、920px、921px 與桌機寬度。
 
 ### `src/i18n/translations.js`
 
@@ -147,6 +142,15 @@
 - 讀取全站願望排行與來訪數。
 - 不收集玩家帳號、錢包、email 或個人資料。
 
+目前 localStorage 共保存四類資料，key 以 `src/config/product-config.js` 為唯一程式碼來源：
+
+- locale：`marketDashboard.locale`
+- wishlist：`elfSkinGallery.wishlist.v1`
+- visitor ID：`elfSkinGallery.visitorId.v1`
+- visitor token：`elfSkinGallery.visitorToken.v1`
+
+不要把「清除全部 localStorage」當成一般無害除錯步驟；這會重設語言與本地願望、遺失 visitor credential，並可能讓 legacy／NULL-hash visitor 的後續同步需要額外處理。
+
 ## 5. 供給快照與今日新增
 
 ### `src/features/skins/state/skin-supply-stats.js`
@@ -175,9 +179,31 @@ GitHub Actions 的定時供給快照同步設定。
 - 手動觸發快照。
 - 檢查快照同步是否失敗。
 
-如果改成每小時同步，資料量仍然很小，但要注意官方 API 呼叫頻率與 GitHub Actions 配額。
+正式 workflow 目前在每小時第 7 分鐘同步 skin supply snapshot，也可手動觸發。這個排程只負責皮膚供給快照。
+
+`scripts/collect-elf-history.mjs` 是另一條 historical market collector 路徑，目前仍是 dry-run skeleton；即使要求非 dry-run，也不會啟用資料庫寫入，執行摘要固定為 `databaseWrites: 0`，且沒有正式排程。不得把它與 active skin supply workflow 混為一談。
 
 ## 6. Supabase 資料表與函式
+
+### Supabase 權威順序
+
+安全與 ACL 判斷必須依下列順序：
+
+```txt
+verified production state
+> latest registered migration
+> migration tests
+> supabase/schema.sql reference
+> historical docs
+> SQL drafts
+```
+
+目前最新的 registered migrations 是：
+
+- `supabase/migrations/20260714141341_skin_gallery_security_hardening.sql`
+- `supabase/migrations/20260715165129_harden_public_rpc_privileges.sql`
+
+`supabase/schema.sql` 是 reference，不是 production ACL 的最高權威。不得重新套用其中較舊的 grants 來「修正」production 權限或覆蓋已驗證 ACL。strict-token 與 rollback SQL 都是非 migration 草稿，未經另行審查與明確授權不得套用。
 
 ### `supabase/schema.sql`
 
@@ -247,7 +273,8 @@ Supabase 設定說明在這裡。
 
 - `src/config/product-config.js` 的 `rankingLimit`
 - `src/i18n/translations.js` 的排行標題文字
-- `src/styles.css` 的排行列高度與間距
+- `src/styles/home-ranking.css`、`src/styles/home-wishlist.css`、`src/styles/home-supply.css` 的排行列高度與間距
+- `src/styles/mobile-ranking-card.css`、`src/styles/desktop-layout.css` 的 responsive 排版
 
 ### 改最多可選幾個願望
 
@@ -285,36 +312,39 @@ Supabase 設定說明在這裡。
 
 - 390px
 - 430px
+- 920px
+- 921px
 
 第一個手機畫面底部最好能看到第一名排行內容，不要讓 Hero 太高。
 
 ## 9. 修改後檢查
 
-每次改 JS 後至少跑：
+以 `package.json` 為測試命令權威來源：
 
 ```powershell
-node --check src\features\skins\views\skin-landing-view.js
-node --check src\i18n\translations.js
-node --check src\app\main.js
-node --check src\features\skins\state\skin-supply-stats.js
+pnpm test:market
+pnpm test:skins
+pnpm test:ui
 ```
 
-本機預覽：
+目前可驗證基線是 Node 42 + Playwright 12 = 54；若實際 test runner 輸出不同，以當次輸出為準。
+
+本機預覽命令同樣取自 `package.json`：
 
 ```powershell
-$env:PORT='4174'
-node scripts\serve-static.mjs .
+pnpm preview
 ```
 
 打開：
 
 ```txt
-http://127.0.0.1:4174/#home
+http://127.0.0.1:4173/#home
 ```
 
 人工檢查：
 
 - 手機 390px 是否沒有左右捲動。
+- 920px / 921px 邊界是否正確切換 mobile 與 desktop layout。
 - 手機第一屏是否能看到排行。
 - 桌機左右空白是否合理。
 - TOP 1 卡框是否沒有壓縮變形。
@@ -323,8 +353,12 @@ http://127.0.0.1:4174/#home
 
 ## 10. 安全注意事項
 
-- Publishable key 可以公開，但只能執行願望同步、願望刪除與唯讀統計 RPC。
+- 可安全自行修改：顯示文字、五語翻譯、既有視覺 token、角色名稱與已核准的角色資料。
+- 需要完整測試：layout、responsive、卡框座標、資料模型、localStorage 或 Supabase client flow。
+- 不得直接修改：security 邊界、visitor token 協定、Supabase ACL、registered migration、workflow secret 或 production 設定。
+- Browser RPC 的現行 production ACL 只授權 `anon`；`authenticated` 沒有 ELF RPC `EXECUTE`。
 - 供給快照寫入必須使用 GitHub Actions 內的 `ELF_SUPABASE_SECRET_KEY`，不可再使用 Publishable key。
+- Supply sync 只授權 `service_role`；`rls_auto_enable()` 不授權 `PUBLIC`、`anon` 或 `authenticated`。
 - Secret key / service_role key 不可公開。
 - 不要把官方登入 token、私人 API token、玩家帳號資料放進 repo。
 - 不要讓瀏覽器端直接寫入任意資料表。
@@ -336,8 +370,8 @@ http://127.0.0.1:4174/#home
 1. 先確認要改的是畫面、文字、資料、還是資料庫。
 2. 畫面先看 `src/features/skins/views/skin-landing-view.js` 和 `src/styles/` 對應的功能模組。
 3. 文字先看 `src/i18n/translations.js`。
-4. 願望統計先看 `src/features/skins/state/skin-wishlist.js`、`src/features/skins/state/skin-community-stats.js`、`supabase/schema.sql`。
-5. 今日新增先看 `src/features/skins/state/skin-supply-stats.js`、`scripts/sync-skin-supply-snapshot.mjs`、`.github/workflows/sync-skin-supply-snapshot.yml`、`supabase/schema.sql`。
-6. 修改後跑 syntax check。
+4. 願望統計先看 `src/features/skins/state/skin-wishlist.js`、`src/features/skins/state/skin-community-stats.js`、registered migrations，再把 `supabase/schema.sql` 當 reference。
+5. 今日新增先看 `src/features/skins/state/skin-supply-stats.js`、`scripts/sync-skin-supply-snapshot.mjs`、`.github/workflows/sync-skin-supply-snapshot.yml` 與 registered migrations。
+6. 修改後跑 `package.json` 定義的相關測試。
 7. 本機預覽手機與桌機。
 8. 確認沒問題再 commit / push。

@@ -30,26 +30,30 @@ HOST=127.0.0.1
 ## What To Check
 
 - `index.html` loads.
-- `src/styles.css` loads.
+- `src/styles.css` and the modular files under `src/styles/` load.
 - `src/themes/elf-theme.css` loads.
 - `src/app/main.js` loads.
 - relative paths work under the local root.
-- dashboard renders or shows a safe live API failure state.
+- Home renders the wishlist, supply, and skins/gallery tabs.
+- Market renders within the current market feature boundary or shows a safe data-source failure state.
+- wishlist selection and supply information display without exposing credentials.
+- `en`, `zh-Hant`, `ja`, `ko`, and `vi` can be selected without untranslated keys.
 - no blank screen appears.
 
 ## Browser QA Notes
 
-Use this local preview together with:
+The current automated UI command from `package.json` is:
 
 ```txt
-docs/v2-qa-a-live-manual-browser-mobile-smoke-checklist.md
+pnpm test:ui
 ```
 
-Recommended viewport checks:
+The Playwright suite checks 375px, 390px, 430px, 768px, 1024px, 1440px, and 1920px widths. It also verifies the responsive boundary explicitly:
 
-- desktop width
-- 430px width
-- 390px width
+- 920px uses the mobile layout.
+- 921px uses the desktop layout.
+
+Local static preview verifies repository-relative behavior on `127.0.0.1`. GitHub Pages production smoke is a separate check of the deployed public URL, asset paths, and production-safe RPC behavior. Do not treat a local pass as proof that Pages deployment succeeded.
 
 ## Non-goals
 
@@ -60,10 +64,11 @@ This workflow does not add:
 - React
 - Webpack
 - a build step
-- browser automation tooling
 - API/proxy changes
-- Supabase reads or writes
+- Supabase schema, ACL, migration, or production changes
 - scheduled collector behavior
+
+Playwright already exists as a development dependency, but starting this preview does not install or run it. The preview also does not execute the hourly skin supply workflow or enable the historical market collector, which remains a dry-run skeleton.
 
 ## Security Boundary
 
@@ -76,8 +81,15 @@ Do not use this workflow to expose or print:
 - cookies
 - request headers
 
-The only allowed localStorage key remains:
+Local preview never requires a production secret. Do not paste service-role credentials, workflow secrets, visitor UUIDs, or visitor tokens into commands, URLs, screenshots, or documentation.
+
+The current localStorage keys are defined by `src/config/product-config.js`:
 
 ```txt
 marketDashboard.locale
+elfSkinGallery.wishlist.v1
+elfSkinGallery.visitorId.v1
+elfSkinGallery.visitorToken.v1
 ```
+
+They represent locale, local wishlist state, visitor ID, and visitor token respectively. Clearing all localStorage may reset the language and wishlist, lose the visitor credential pair, and create follow-up sync risk for legacy／NULL-hash visitors. Do not recommend clearing all localStorage as a harmless first-line debugging step; remove only the specific key whose state is being tested, after understanding the recovery impact.
