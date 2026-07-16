@@ -20,18 +20,6 @@
     }
   },
   "type": "module",
-  "dependencies": {
-    "@fontsource/be-vietnam-pro": "^5.2.8",
-    "@fontsource/fira-code": "^5.2.7",
-    "@fontsource/noto-sans": "^5.2.10",
-    "@fontsource/noto-sans-jp": "^5.2.9",
-    "@fontsource/noto-sans-kr": "^5.2.9",
-    "@fontsource/noto-sans-tc": "^5.2.9",
-    "@fontsource/noto-serif": "^5.2.9",
-    "@fontsource/noto-serif-jp": "^5.2.8",
-    "@fontsource/noto-serif-kr": "^5.2.9",
-    "@fontsource/noto-serif-tc": "^5.2.10"
-  },
   "devDependencies": {
     "@playwright/test": "^1.61.1"
   }
