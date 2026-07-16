@@ -1,3 +1,9 @@
+> **Status:** SUPERSEDED — DO NOT USE AS CURRENT RESUME POINT
+> **Current authority:** [registered migrations](../supabase/migrations/), [`supabase/schema.sql`](../supabase/schema.sql) as a reference, [current scripts](../scripts/), the [current workflow](../.github/workflows/sync-skin-supply-snapshot.yml), and [`docs/index.md`](./index.md)
+> **Superseded reason:** This pause point predates the registered skin migrations, current ACL baseline, current scripts, and active skin supply workflow.
+> **Last verified:** 2026-07-16
+> **Warning:** Do not resume a collector or modify production by following this document directly.
+
 # V2-6B Historical DB Pause Handoff
 
 This document records the current pause point for historical database work. It is documentation only and

@@ -1,3 +1,9 @@
+> **Status:** SUPERSEDED — DO NOT USE AS CURRENT QA BASELINE
+> **Current authority:** [`package.json`](../package.json), [current Node and Playwright tests](../tests/), [`src/features/market/README.md`](../src/features/market/README.md), and [`src/features/skins/README.md`](../src/features/skins/README.md)
+> **Superseded reason:** The UI, browser storage, API boundary, and automated test baseline have changed since this checklist was written.
+> **Last verified:** 2026-07-16
+> **Warning:** Do not treat the UI, storage, or API expectations below as the current QA baseline.
+
 # V2-QA-D Current Baseline Regression Checklist
 
 ## Purpose

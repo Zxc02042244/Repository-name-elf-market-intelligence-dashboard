@@ -1,3 +1,9 @@
+> **Status:** HISTORICAL INCIDENT — DO NOT APPLY
+> **Current authority:** [`src/features/market/README.md`](../src/features/market/README.md) and the [current market feature boundary](../src/features/market/)
+> **Historical reason:** This incident record covers the former refresh-proxy runtime and is retained only as evidence of that investigation.
+> **Last verified:** 2026-07-16
+> **Warning:** The old endpoints, refresh-token flow, and Vercel repair procedure are not part of the current runtime.
+
 # Live Refresh 403 Handoff
 
 This document records the live token refresh failure triage result. It is documentation only and does not

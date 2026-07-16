@@ -1,3 +1,9 @@
+> **Status:** SUPERSEDED — DO NOT APPLY
+> **Current authority:** [`src/features/market/README.md`](../src/features/market/README.md), [current market modules](../src/features/market/), and [tests](../tests/)
+> **Superseded reason:** This document describes a removed live-first proxy architecture and no longer matches the current reserved market data-source boundary.
+> **Last verified:** 2026-07-16
+> **Warning:** Do not restore the old live-first Vercel proxy or token architecture from this document.
+
 # Codex Operation DM
 
 Use this DM when working on the Elf market intelligence dashboard. It is written from the issues already encountered in this project.
