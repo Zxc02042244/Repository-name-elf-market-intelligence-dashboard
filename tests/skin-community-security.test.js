@@ -183,3 +183,32 @@ test("Supabase boundary denies public snapshot writes and removes default functi
   assert.match(schema, /set search_path = ''/i);
   assert.match(schema, /visitor_secret_hash = sha256/i);
 });
+
+test("schema reference uses the deployed gallery sync definition", async () => {
+  const [schema, deployedMigration] = await Promise.all([
+    readFile(new URL("../supabase/schema.sql", import.meta.url), "utf8"),
+    readFile(
+      new URL(
+        "../supabase/migrations/20260714141341_skin_gallery_security_hardening.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ]);
+  const functionPattern =
+    /create or replace function public\.sync_skin_gallery_state\([\s\S]*?\n\$\$;/i;
+  const normalizeNewlines = (value) => value.replaceAll("\r\n", "\n");
+  const schemaDefinition = schema.match(functionPattern)?.[0];
+  const deployedDefinition = deployedMigration.match(functionPattern)?.[0];
+
+  assert.ok(schemaDefinition, "schema sync function definition is missing");
+  assert.ok(deployedDefinition, "deployed migration sync function definition is missing");
+  assert.equal(
+    normalizeNewlines(schemaDefinition),
+    normalizeNewlines(deployedDefinition),
+  );
+  assert.match(
+    schema,
+    /Accepted production difference:[\s\S]*visitor_secret_hash[\s\S]*do not rebuild production solely/i,
+  );
+});

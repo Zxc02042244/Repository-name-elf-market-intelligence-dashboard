@@ -141,6 +141,11 @@ create table if not exists skin_gallery_visitors (
     check (visit_count > 0)
 );
 
+-- Accepted production difference: existing projects received
+-- visitor_secret_hash through this ALTER, so it is physically the last column
+-- there, while a database created from this reference declares it second.
+-- Column-name-based behavior is equivalent; do not rebuild production solely
+-- to reorder this column.
 alter table skin_gallery_visitors
   add column if not exists visitor_secret_hash bytea;
 
@@ -290,9 +295,9 @@ as $$
   );
 $$;
 
-drop function if exists sync_skin_gallery_state(uuid, text[]);
+drop function if exists public.sync_skin_gallery_state(uuid, text[]);
 
-create or replace function sync_skin_gallery_state(
+create or replace function public.sync_skin_gallery_state(
   p_visitor_id uuid,
   p_visitor_token uuid,
   p_skin_ids text[] default '{}'::text[]
@@ -317,8 +322,7 @@ begin
     from unnest(coalesce(p_skin_ids, '{}'::text[])) as requested(skin_id)
     where length(trim(requested.skin_id)) = 0
        or not exists (
-         select 1
-         from public.skin_gallery_allowed_skins allowed
+         select 1 from public.skin_gallery_allowed_skins allowed
          where allowed.skin_id = trim(requested.skin_id)
        )
   ) then
@@ -326,24 +330,15 @@ begin
   end if;
 
   insert into public.skin_gallery_visitors as visitors (
-    visitor_id,
-    visitor_secret_hash,
-    first_seen_at,
-    last_seen_at,
-    visit_count
+    visitor_id, visitor_secret_hash, first_seen_at, last_seen_at, visit_count
   )
   values (
-    p_visitor_id,
-    sha256(convert_to(p_visitor_token::text, 'UTF8')),
-    now(),
-    now(),
-    1
+    p_visitor_id, sha256(convert_to(p_visitor_token::text, 'UTF8')), now(), now(), 1
   )
   on conflict (visitor_id) do update
-    set
-      last_seen_at = excluded.last_seen_at,
-      visit_count = least(visitors.visit_count + 1, 2147483647),
-      visitor_secret_hash = excluded.visitor_secret_hash
+    set last_seen_at = excluded.last_seen_at,
+        visit_count = least(visitors.visit_count + 1, 2147483647),
+        visitor_secret_hash = excluded.visitor_secret_hash
     where visitors.visitor_secret_hash is null
        or visitors.visitor_secret_hash = excluded.visitor_secret_hash;
 
@@ -354,40 +349,14 @@ begin
   delete from public.skin_gallery_wishes
   where visitor_id = p_visitor_id
     and skin_id not in (
-      select normalized.skin_id
-      from (
-        select distinct trim(skin_id) as skin_id
-        from unnest(coalesce(p_skin_ids, '{}'::text[])) as skin_id
-        where exists (
-          select 1
-          from public.skin_gallery_allowed_skins allowed
-          where allowed.skin_id = trim(skin_id)
-        )
-        order by 1
-        limit 3
-      ) normalized
+      select distinct trim(skin_id)
+      from unnest(coalesce(p_skin_ids, '{}'::text[])) as skin_id
     );
 
-  insert into public.skin_gallery_wishes (
-    visitor_id,
-    skin_id,
-    selected_at
-  )
-  select
-    p_visitor_id,
-    normalized.skin_id,
-    now()
-  from (
-    select distinct trim(skin_id) as skin_id
-    from unnest(coalesce(p_skin_ids, '{}'::text[])) as skin_id
-    where exists (
-      select 1
-      from public.skin_gallery_allowed_skins allowed
-      where allowed.skin_id = trim(skin_id)
-    )
-    order by 1
-    limit 3
-  ) normalized
+  insert into public.skin_gallery_wishes (visitor_id, skin_id, selected_at)
+  select p_visitor_id, trim(skin_id), now()
+  from unnest(coalesce(p_skin_ids, '{}'::text[])) as skin_id
+  group by trim(skin_id)
   on conflict (visitor_id, skin_id) do nothing;
 
   return public.get_skin_gallery_stats();
