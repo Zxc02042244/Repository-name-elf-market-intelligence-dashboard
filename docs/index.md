@@ -1,210 +1,306 @@
-# Project Documentation Index
+# ELF Project Documentation Governance Index
 
-## Current Baseline
-
-Latest closeout:
-
-```txt
-V2-DOCS-C Targeted Documentation Cleanup
+```text
+Status: ACTIVE
+Last verified: 2026-07-16
+Baseline verified against: 93174cabe6deabe7c1aa84c622f901c45ebf8311
 ```
 
-Latest reviewed baseline before this cleanup:
+This is the single governance index for all 47 files under `docs/`.
+The classification inventory records each document as it existed at the verified
+baseline. The pre-governance version of this index was classified as
+`SUPERSEDED`; this rewritten file is now the active governance entry point while
+retaining that baseline classification record so the approved totals remain
+auditable.
 
-```txt
-14bd1f17e38d48c28269a64f37245345bd31edb6
+Classification totals:
+
+| Status | Files |
+| --- | ---: |
+| ACTIVE | 7 |
+| HISTORICAL | 30 |
+| SUPERSEDED | 10 |
+| UNCERTAIN | 0 |
+| **Total** | **47** |
+
+Authority levels:
+
+| Level | Meaning |
+| --- | --- |
+| L1 | Current runtime, registered migration, or verified production state |
+| L2 | Active specification, runbook, or maintenance guide |
+| L3 | Historical audit, closeout, implementation record, or decision evidence |
+| L4 | Superseded; must not be used as current operational instructions |
+| Draft | Undeployed proposal requiring separate review and explicit authorization |
+
+## 1. Current runtime and authority order
+
+### Current baseline
+
+- Architecture: no bundler; HTML, CSS, and native ES modules are served directly.
+- Dependency state: unused Fontsource packages have been removed. The only
+  project development dependency is Playwright, as recorded by
+  [`package.json`](../package.json) and [`pnpm-lock.yaml`](../pnpm-lock.yaml).
+- Market authority:
+  [`src/features/market/README.md`](../src/features/market/README.md).
+- Skins authority:
+  [`src/features/skins/README.md`](../src/features/skins/README.md).
+- Browser storage key authority:
+  [`src/config/product-config.js`](../src/config/product-config.js).
+- Current browser storage keys cover locale, local wishlist, anonymous visitor
+  ID, and the paired private visitor token.
+- Test inventory: 42 Node test declarations plus 12 Playwright test
+  declarations, for 54 total.
+- Active workflow: the skin supply snapshot workflow runs once per hour.
+- Historical market collector: the existing collector remains a dry-run
+  skeleton and performs zero historical database writes.
+
+### Authority order
+
+When sources disagree, use this order:
+
+```text
+verified production state
+> latest registered migration
+> migration tests
+> supabase/schema.sql reference
+> historical documents
+> SQL drafts
 ```
 
-Current product mode:
+Mandatory interpretation rules:
 
-- GitHub Pages frontend
-- plain HTML, CSS, and JavaScript ES modules
-- skin gallery runtime plus a modular market feature with a reserved data-source boundary
-- local static i18n dictionaries
-- Elf-inspired CSS theme
-- text-first asset UI with generic CSS-only asset badges
+- [`supabase/schema.sql`](../supabase/schema.sql) is a reference schema. It must
+  not override a newer registered migration or a verified production ACL.
+- Do not reapply `schema.sql` to "fix" production permissions.
+- `SUPERSEDED` documents must not be used as current operational instructions.
+- `HISTORICAL` documents preserve evidence from a specific commit or completed
+  phase; statements written as current or pending must be read in that context.
+- Draft SQL requires a fresh review, isolated tests, explicit authorization,
+  and promotion to a registered migration before deployment.
+- A proposed path that was never created is not automatically a broken current
+  reference. Check the document status and wording first.
 
-Paused lines:
+## 2. ACTIVE maintenance guides
 
-- live API/proxy work
-- historical DB write work unless safe secret env is configured
-- scheduled collection
-- asset image mapping and official artwork
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`card-frame-layout-spec.md`](./card-frame-layout-spec.md) | ACTIVE | Fixed 1041×1511 card-frame geometry, plaques, layers, and export rules | L2 | Current frame asset, unified frame CSS, and Playwright frame tests | 2026-07-16 | Layout changes must remain synchronized with the runtime asset and CSS coordinates. |
+| [`elf-skin-self-edit-guide.md`](./elf-skin-self-edit-guide.md) | ACTIVE | Skin gallery maintenance, data sources, local state, Supabase boundary, and visual checks | L2 | Current skins feature, product config, migrations, workflow, and tests | 2026-07-16 | Some path descriptions predate the latest CSS modularization; use current feature files when they differ. |
+| [`local-static-preview-workflow.md`](./local-static-preview-workflow.md) | ACTIVE | GitHub Pages-compatible local static preview without a bundler | L2 | `package.json`, `scripts/serve-static.mjs`, current runtime, and current tests | 2026-07-16 | Its older single-storage-key statement is not the current storage inventory. |
 
-## Core Project References
+## 3. Security / Supabase / ACL
 
-- `AGENTS.md`
-- `CODEX_MARKET_INTELLIGENCE_DASHBOARD_BRIEF.md`
-- `CHECKLIST.md`
-- `src/config/README.md`
-- `src/features/skins/README.md`
-- `src/features/market/README.md`
-- `docs/elf-skin-self-edit-guide.md`
+Registered migrations:
 
-## Current Safe-work Closeouts
+1. [`20260714141341_skin_gallery_security_hardening.sql`](../supabase/migrations/20260714141341_skin_gallery_security_hardening.sql)
+   - Hardens gallery tables and RPC function bodies.
+   - Adds paired visitor-token hashing and protects the supply write boundary.
+2. [`20260715165129_harden_public_rpc_privileges.sql`](../supabase/migrations/20260715165129_harden_public_rpc_privileges.sql)
+   - Repairs effective function ACLs and future default function privileges.
+   - Is permission-only and does not replace application function bodies.
 
-- `docs/v2-closeout-a-near-term-safe-work-closeout.md`
-- `docs/v2-qa-a-live-manual-browser-mobile-smoke-checklist.md`
-- `docs/v2-qa-b-live-pages-deployment-smoke-closeout.md`
-- `docs/v2-qa-c-manual-browser-mobile-interactive-smoke-result-backfill.md`
-- `docs/v2-qa-d-current-baseline-regression-checklist.md`
-- `docs/v2-docs-b-encoding-legacy-doc-cleanup-audit.md`
-- `docs/v2-docs-c-targeted-documentation-cleanup.md`
-- `docs/local-static-preview-workflow.md`
+Verified production ACL baseline:
 
-Use these first when deciding the next no-secret UI or documentation task.
+- Browser RPC execution is granted only to `anon`.
+- `authenticated` has no ELF RPC `EXECUTE`.
+- `sync_skin_supply_snapshot(jsonb)` is executable only by `service_role`
+  besides the function owner.
+- `rls_auto_enable()` has no `PUBLIC`, `anon`, or `authenticated` `EXECUTE`.
+- Browser code uses a publishable key and must never receive a service-role or
+  secret key.
 
-## Market Indicator Specifications
+Verification authorities:
 
-- docs/tts-two-step-transfer-spec.md
-  - Two-Step Transfer Confidence（TTS）的已找回概念與安全語言規範
-  - 目前僅完成紀錄，尚未啟用計算或畫面
-- docs/mps-market-pattern-score-spec.md
-  - Market Pattern Score（MPS）的六個構面、可解釋性及安全語言規範
-  - Market Pattern Index（MPI）為待確認的改名提案
-  - 目前僅完成紀錄，尚未啟用計算或畫面
+- [`harden_public_rpc_privileges_test.sql`](../supabase/tests/harden_public_rpc_privileges_test.sql)
+- [`skin-community-security.test.js`](../tests/skin-community-security.test.js)
+- [`supabase/README.md`](../supabase/README.md)
 
-## I18N Track
+Security warning:
 
-- `docs/v2-i18n-a-translation-coverage-audit.md`
-- `docs/v2-i18n-b-translation-dictionary-skeleton.md`
-- `docs/v2-i18n-c-snapshot-explorer-wiring.md`
-- `docs/v2-i18n-d-language-switch-persistence.md`
-- `docs/v2-i18n-e-full-visible-ui-translation-wiring.md`
-- `docs/v2-i18n-f-manual-translation-qa-checklist.md`
-- `docs/v2-i18n-h-manual-browser-mobile-locale-qa-closeout.md`
+`supabase/schema.sql` still serves as a rebuild/reference document and can
+contain definitions that reflect an earlier stage of ACL evolution. Production
+ACL conclusions must follow the registered privilege migration and verified
+production result, not a blind schema replay.
 
-Current i18n state:
+## 4. DRAFT ONLY SQL
 
-- supported locales: `en`, `zh-Hant`, `ja`, `ko`, `vi`
-- locale persistence key: `marketDashboard.locale`
-- source data remains intentionally untranslated
+These two files are part of the approved `ACTIVE` inventory because they remain
+maintained security references. Their authority level is nevertheless `Draft`,
+and neither file is a migration.
 
-Known note:
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`sql-drafts/enforce-strict-gallery-visitor-tokens.sql`](./sql-drafts/enforce-strict-gallery-visitor-tokens.sql) | ACTIVE — DRAFT ONLY | Proposed strict visitor-token function replacement that refuses null-hash visitor adoption | Draft | Current production function bodies, registered migrations, and the isolated draft test | 2026-07-16 | Not a migration. Do not apply until legacy-client behavior and null-hash handling receive a new review and explicit approval. |
+| [`sql-drafts/rollback-harden-public-rpc-privileges.sql`](./sql-drafts/rollback-harden-public-rpc-privileges.sql) | ACTIVE — DRAFT ONLY | Full rollback reference for the public RPC privilege migration | Draft | Current verified ACL and the registered privilege migration | 2026-07-16 | Not a migration and must not be applied automatically. It restores known-risk `PUBLIC EXECUTE` behavior. |
 
-- V2-I18N-G completed as translation polish, but no standalone V2-I18N-G document is present.
-- V2-I18N-F locale display text was verified as valid UTF-8; earlier corrupted output was a terminal display issue.
+Related isolated draft tests:
 
-## Theme / Mobile Track
+- [`draft_enforce_strict_gallery_visitor_tokens_test.sql`](../supabase/tests/draft_enforce_strict_gallery_visitor_tokens_test.sql)
+- [`draft_rollback_harden_public_rpc_privileges_test.sql`](../supabase/tests/draft_rollback_harden_public_rpc_privileges_test.sql)
 
-- `docs/v2-theme-a-elf-inspired-theme-audit.md`
-- `docs/v2-theme-b-theme-tokens-prototype.md`
-- `docs/v2-theme-c-snapshot-explorer-theme-pass.md`
-- `docs/v2-theme-d-mobile-readability-smoke.md`
-- `docs/v2-theme-e-post-i18n-390px-readability-css-pass.md`
+## 5. Market indicator specifications
 
-Current theme state:
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`mps-market-pattern-score-spec.md`](./mps-market-pattern-score-spec.md) | ACTIVE — DRAFT ONLY | MPS/MPI concepts, component boundaries, interpretability, and safe display language | L2 / Draft | Current market indicator catalog and market feature boundary | 2026-07-16 | No score or policy is deployed. Current runtime status is documented / policy pending only. |
+| [`tts-two-step-transfer-spec.md`](./tts-two-step-transfer-spec.md) | ACTIVE — DRAFT ONLY | Two-Step Transfer confidence concept, candidate factors, and non-accusatory wording | L2 / Draft | Current market indicator catalog and market feature boundary | 2026-07-16 | No TTS score, candidate engine, or enforcement behavior is deployed. |
 
-- generic layout styles: `src/styles.css`
-- Elf-inspired theme tokens: `src/themes/elf-theme.css`
-- V2-QA-C browser/mobile interactive smoke passed for page load, locale switching, persistence, search, Clear Search, refresh failure state, and narrow viewport overflow checks
-- asset/actor detail selection with live data remains limited by the current paused live API/proxy state
+## 6. HISTORICAL documents
 
-## Search / Snapshot Explorer Track
+All documents in this section are retained as evidence. They are not current
+implementation instructions.
 
-- `docs/v2-search-a-search-scope-wording-audit.md`
-- `docs/v2-4d-snapshot-explorer-search-selection-audit.md`
-- `docs/v2-4f-snapshot-explorer-closeout-audit.md`
+### Market / Snapshot Explorer track
 
-Current search state:
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`v2-3a-actor-analysis-information-audit.md`](./v2-3a-actor-analysis-information-audit.md) | HISTORICAL | Actor information architecture audit for the former loaded-snapshot UI | L3 | Current market modules and market tests | 2026-07-16 | References former `src/views` and Snapshot Explorer paths. |
+| [`v2-3d-actor-snapshot-closeout-audit.md`](./v2-3d-actor-snapshot-closeout-audit.md) | HISTORICAL | Actor snapshot refinement closeout | L3 | Current market modules and market tests | 2026-07-16 | Records a completed phase whose renderer was later removed. |
+| [`v2-4a-asset-analysis-information-audit.md`](./v2-4a-asset-analysis-information-audit.md) | HISTORICAL | Asset analysis snapshot-versus-history boundary | L3 | Current market asset module and market tests | 2026-07-16 | Old paths and recommendations do not describe the active module structure. |
+| [`v2-4d-snapshot-explorer-search-selection-audit.md`](./v2-4d-snapshot-explorer-search-selection-audit.md) | HISTORICAL | Snapshot Explorer search and selection audit | L3 | Current market feature boundary | 2026-07-16 | `snapshot-details.js` and the former explorer renderer no longer exist. |
+| [`v2-4f-snapshot-explorer-closeout-audit.md`](./v2-4f-snapshot-explorer-closeout-audit.md) | HISTORICAL | Snapshot Explorer closeout evidence | L3 | Current market modules and lifecycle tests | 2026-07-16 | Do not reconnect the removed all-in-one renderer. |
+| [`v2-search-a-search-scope-wording-audit.md`](./v2-search-a-search-scope-wording-audit.md) | HISTORICAL | Loaded-snapshot search wording audit | L3 | Current market feature and translations | 2026-07-16 | Search behavior described here belongs to the removed Snapshot Explorer. |
 
-- search is current loaded snapshot search only
-- asset search covers name, category, assetClass, and group
-- actor search covers actor name
-- transaction rows are not directly searched
-- historical global search is not available
+### Historical storage track
 
-## Asset Image Track
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`legacy-reference-checklist.md`](./legacy-reference-checklist.md) | HISTORICAL | Sanitized lessons from the legacy marketplace project | L3 | Current market/skin boundaries and the private archive | 2026-07-16 | `marketplace-resources-site` has moved outside the repository to a private archive. Do not restore its old auth/token flow. |
+| [`v2-6a-historical-storage-design.md`](./v2-6a-historical-storage-design.md) | HISTORICAL | Original historical storage schema, dedupe, cadence, and read-API design | L3 | Current schema, migrations, scripts, and Supabase README | 2026-07-16 | Proposed SQL and env lists do not override current schema or production state. |
+| [`v2-6b-historical-readiness-audit.md`](./v2-6b-historical-readiness-audit.md) | HISTORICAL | Historical implementation readiness checkpoint | L3 | Current schema, migrations, scripts, and workflow inventory | 2026-07-16 | Its statement that no workflow directory exists is no longer true. |
+| [`v2-6b-manual-collector-prototype-design.md`](./v2-6b-manual-collector-prototype-design.md) | HISTORICAL | Manual historical collector prototype design | L3 | Current dry-run collector scripts and Supabase boundary | 2026-07-16 | Some proposed paths were later created under different names; the collector remains dry-run only. |
 
-- `docs/v2-2d1-asset-image-source-audit.md`
-- `docs/v2-asset-b-asset-image-source-follow-up-audit.md`
-- `docs/v2-asset-c-image-source-decision.md`
+### I18N track
 
-Current asset image decision:
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`v2-i18n-a-translation-coverage-audit.md`](./v2-i18n-a-translation-coverage-audit.md) | HISTORICAL | Pre-i18n visible-text inventory and key proposal | L3 | Current translations, locale config, views, and tests | 2026-07-16 | It predates the active five-locale implementation and private legacy archive. |
+| [`v2-i18n-b-translation-dictionary-skeleton.md`](./v2-i18n-b-translation-dictionary-skeleton.md) | HISTORICAL | Static dictionary/helper skeleton implementation record | L3 | Current `src/i18n` modules and tests | 2026-07-16 | Later phases expanded and rewired the dictionary. |
+| [`v2-i18n-c-snapshot-explorer-wiring.md`](./v2-i18n-c-snapshot-explorer-wiring.md) | HISTORICAL | Initial Snapshot Explorer translation wiring | L3 | Current feature views and translations | 2026-07-16 | The referenced Snapshot Explorer renderer was removed. |
+| [`v2-i18n-d-language-switch-persistence.md`](./v2-i18n-d-language-switch-persistence.md) | HISTORICAL | Locale switch and persistence implementation record | L3 | Current product config, app runtime, and tests | 2026-07-16 | Locale persistence remains, but it is not the only current localStorage key. |
+| [`v2-i18n-e-full-visible-ui-translation-wiring.md`](./v2-i18n-e-full-visible-ui-translation-wiring.md) | HISTORICAL | Former dashboard-wide i18n wiring record | L3 | Current translations and feature views | 2026-07-16 | File lists and UI areas describe an earlier architecture. |
+| [`v2-i18n-h-manual-browser-mobile-locale-qa-closeout.md`](./v2-i18n-h-manual-browser-mobile-locale-qa-closeout.md) | HISTORICAL | Locale QA closeout that recorded unavailable browser automation | L3 | Current Node and Playwright tests | 2026-07-16 | Preserve the original blocked result; do not reinterpret it as current QA status. |
 
-- keep asset UI text-first
-- generic CSS-only asset badges are allowed and currently implemented
-- item-specific image mapping requires source/provenance approval
-- Elf-specific image mapping belongs in `src/sources/elf/`
+### Theme / mobile track
 
-## Actor / Asset Analysis Tracks
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`v2-theme-a-elf-inspired-theme-audit.md`](./v2-theme-a-elf-inspired-theme-audit.md) | HISTORICAL | Initial warm fantasy-market visual direction | L3 | Current theme, modular CSS, assets, and Playwright | 2026-07-16 | Predates forest backgrounds, the unified card frame, and current skin UI. |
+| [`v2-theme-b-theme-tokens-prototype.md`](./v2-theme-b-theme-tokens-prototype.md) | HISTORICAL | Theme token prototype implementation record | L3 | Current tokens and theme CSS | 2026-07-16 | Later CSS work may have changed individual values and component ownership. |
+| [`v2-theme-c-snapshot-explorer-theme-pass.md`](./v2-theme-c-snapshot-explorer-theme-pass.md) | HISTORICAL | Snapshot Explorer theme pass | L3 | Current feature styles and theme | 2026-07-16 | Applies to a renderer that is no longer active. |
+| [`v2-theme-d-mobile-readability-smoke.md`](./v2-theme-d-mobile-readability-smoke.md) | HISTORICAL | Static/render mobile readability smoke record | L3 | Current responsive Playwright tests | 2026-07-16 | Browser visual verification was unavailable in that phase. |
+| [`v2-theme-e-post-i18n-390px-readability-css-pass.md`](./v2-theme-e-post-i18n-390px-readability-css-pass.md) | HISTORICAL | Post-i18n narrow-screen CSS pass | L3 | Current modular CSS and responsive Playwright tests | 2026-07-16 | Describes an earlier single-file CSS ownership model. |
 
-- `docs/v2-3a-actor-analysis-information-audit.md`
-- `docs/v2-3d-actor-snapshot-closeout-audit.md`
-- `docs/v2-4a-asset-analysis-information-audit.md`
-- `docs/v2-4f-snapshot-explorer-closeout-audit.md`
+### Asset image / provenance track
 
-Current analysis state:
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`v2-2d1-asset-image-source-audit.md`](./v2-2d1-asset-image-source-audit.md) | HISTORICAL | Initial market-item image source and provenance audit | L3 | Current market/skin boundaries, assets, and retained exports | 2026-07-16 | Its no-image inventory is no longer globally true. |
+| [`v2-asset-b-asset-image-source-follow-up-audit.md`](./v2-asset-b-asset-image-source-follow-up-audit.md) | HISTORICAL | Follow-up review of image fields, paths, and rendering boundaries | L3 | Current market/skin code and assets | 2026-07-16 | The former text-only baseline and single-storage-key statement are historical. |
+| [`v2-asset-c-image-source-decision.md`](./v2-asset-c-image-source-decision.md) | HISTORICAL | Decision to keep former market-item UI text-first pending provenance | L3 | Current market/skin feature boundaries and current assets | 2026-07-16 | Do not reinterpret this as a ban on current skin images, backgrounds, frame assets, or retained exports. |
 
-- asset and actor detail views are loaded snapshot only
-- no true 7D/30D history
-- no suspicion scoring
-- no related-account analysis
-- neutral market-structure language only
+### QA / deployment track
 
-## Historical DB Track
+| Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`v2-closeout-a-near-term-safe-work-closeout.md`](./v2-closeout-a-near-term-safe-work-closeout.md) | HISTORICAL | Safe-work phase closeout and then-pending QA summary | L3 | Verified repository baseline, feature boundaries, and tests | 2026-07-16 | Recommended next phases and the only-storage-key statement are no longer current. |
+| [`v2-docs-b-encoding-legacy-doc-cleanup-audit.md`](./v2-docs-b-encoding-legacy-doc-cleanup-audit.md) | HISTORICAL | Documentation encoding and stale-baseline audit | L3 | Current repository state and this governance index | 2026-07-16 | Several root documents discussed here were later deliberately deleted. |
+| [`v2-docs-c-targeted-documentation-cleanup.md`](./v2-docs-c-targeted-documentation-cleanup.md) | HISTORICAL | Prior index/README cleanup record | L3 | Current repository state and this governance index | 2026-07-16 | The README updated in that phase was later deleted. |
+| [`v2-qa-b-live-pages-deployment-smoke-closeout.md`](./v2-qa-b-live-pages-deployment-smoke-closeout.md) | HISTORICAL | Pages deployment smoke at a specific baseline | L3 | Current Pages deployment and current tests | 2026-07-16 | Successful results apply to the recorded commit, not automatically to current production. |
+| [`v2-qa-c-manual-browser-mobile-interactive-smoke-result-backfill.md`](./v2-qa-c-manual-browser-mobile-interactive-smoke-result-backfill.md) | HISTORICAL | Browser/mobile smoke backfill for the former dashboard | L3 | Current responsive Playwright tests and current Pages smoke | 2026-07-16 | UI elements and API failure expectations describe the former dashboard. |
+| [`v2-qa-e-product-polish-manual-evidence-capture.md`](./v2-qa-e-product-polish-manual-evidence-capture.md) | HISTORICAL | Manual screenshot observations and product-polish recommendations | L3 | Current skin/market UI and responsive tests | 2026-07-16 | The evidence screenshot represented an earlier UI and was not committed. |
 
-- `docs/v2-6a-historical-storage-design.md`
-- `docs/v2-6b-historical-readiness-audit.md`
-- `docs/v2-6b-manual-collector-prototype-design.md`
-- `docs/v2-6b-historical-db-pause-handoff.md`
-- `supabase/schema.sql`
-- `supabase/README.md`
+## 7. SUPERSEDED — DO NOT USE AS CURRENT INSTRUCTIONS
 
-Current historical state:
+The following inventory records the approved baseline classification. The
+`index.md` row describes the pre-governance version replaced by this active
+rewrite.
 
-- Supabase schema was manually applied.
-- Verified tables were documented:
-  - `collector_runs`
-  - `items`
-  - `market_transactions`
-  - `price_snapshots`
-- No service role key should be committed.
-- One-item DB write test requires safe local/Codex secret env first.
+| Document | Status | Topic / responsibility | Authority | Superseded by | Last verified | Reading warning |
+| --- | --- | --- | --- | --- | --- | --- |
+| [`codex-operation-dm.md`](./codex-operation-dm.md) | SUPERSEDED | Old live-first market/API operating instructions | L4 | Current market feature README, market lifecycle Core, and tests | 2026-07-16 | DO NOT USE. It references removed proxy adapters and could reintroduce obsolete token/API behavior. |
+| [`index.md`](./index.md) | SUPERSEDED — baseline version | Previous documentation phase map | L4 | This ACTIVE governance rewrite | 2026-07-16 | This row preserves the baseline classification only; the current file content is the active index. |
+| [`live-refresh-403-handoff.md`](./live-refresh-403-handoff.md) | SUPERSEDED | Vercel refresh-proxy 403 incident handoff | L4 | Reserved market source boundary and current market Core | 2026-07-16 | DO NOT USE as a current repair runbook. Preserve only as incident evidence. |
+| [`v2-6b-historical-db-pause-handoff.md`](./v2-6b-historical-db-pause-handoff.md) | SUPERSEDED | Former exact resume point for historical DB work | L4 | Current schema, registered migrations, dry-run collector scripts, and current workflow inventory | 2026-07-16 | DO NOT follow its resume sequence without a new audit and explicit authorization. |
+| [`v2-i18n-f-manual-translation-qa-checklist.md`](./v2-i18n-f-manual-translation-qa-checklist.md) | SUPERSEDED | Manual translation QA for the former Snapshot Explorer dashboard | L4 | Current skin/market views, translations, and Playwright tests | 2026-07-16 | Checklist labels and failure expectations do not cover the current UI. |
+| [`v2-near-term-priority-note.md`](./v2-near-term-priority-note.md) | SUPERSEDED | Former ordered task plan | L4 | Verified repository baseline and current governance index | 2026-07-16 | Most listed phases are complete or no longer apply. |
+| [`v2-product-a-product-polish-priority-triage.md`](./v2-product-a-product-polish-priority-triage.md) | SUPERSEDED | Former product-polish priorities | L4 | Current skin/market UI and tests | 2026-07-16 | Based on the removed Snapshot Explorer and older storage assumptions. |
+| [`v2-product-polish-discussion-note.md`](./v2-product-polish-discussion-note.md) | SUPERSEDED | Former search/image/i18n product discussion | L4 | Completed later phases and current feature boundaries | 2026-07-16 | Do not restart its proposed phases without checking current implementation. |
+| [`v2-qa-a-live-manual-browser-mobile-smoke-checklist.md`](./v2-qa-a-live-manual-browser-mobile-smoke-checklist.md) | SUPERSEDED | Former dashboard manual smoke checklist | L4 | Current `package.json` scripts, Node tests, Playwright tests, and active maintenance guides | 2026-07-16 | Does not cover the current skin gallery and modular market runtime. |
+| [`v2-qa-d-current-baseline-regression-checklist.md`](./v2-qa-d-current-baseline-regression-checklist.md) | SUPERSEDED | Former reusable regression checklist | L4 | Current Node/Playwright suites and current feature boundaries | 2026-07-16 | Its API, UI, storage, and asset baseline is obsolete. |
 
-## Live API / Proxy Track
+## 8. External retained artifacts
 
-- `docs/live-refresh-403-handoff.md`
+### Private legacy archive
 
-Current live API state:
+- `marketplace-resources-site` has been moved outside the repository and
+  OneDrive project working tree to a private archive.
+- It no longer exists in the working tree.
+- Historical documents may still mention the former path; those references are
+  evidence, not instructions to restore it.
+- Do not execute archived workflows or collectors.
 
-- shared proxy blocks the GitHub Pages origin
-- active proxy repository is not controlled by this project
-- do not depend on another site's private proxy behavior
-- do not put tokens in frontend
+### Retained exports
 
-## Legacy Reference Track
+`exports/` contains two reviewed images. Both are `KEEP`:
 
-- `docs/legacy-reference-checklist.md`
+- [`elf-skin-mobile-home-mockup.png`](../exports/elf-skin-mobile-home-mockup.png)
+- [`elf-skins-iphone.png`](../exports/elf-skins-iphone.png)
 
-Current legacy state:
+Their current GitHub Pages fixed URLs must remain available:
 
-- legacy material is documentation/reference only
-- do not copy legacy site as one large file
-- do not migrate old API/auth/token flow
+- [Mobile home mockup](https://zxc02042244.github.io/Repository-name-elf-market-intelligence-dashboard/exports/elf-skin-mobile-home-mockup.png)
+- [iPhone skin group photo](https://zxc02042244.github.io/Repository-name-elf-market-intelligence-dashboard/exports/elf-skins-iphone.png)
 
-## Recommended Next Safe Options
+Do not modify, move, recompress, rename, or delete these files as part of
+documentation governance.
 
-1. Use `docs/v2-qa-d-current-baseline-regression-checklist.md` after each small docs, CSS, i18n, or UI polish change.
-2. Repeat V2-QA-C style browser/mobile smoke after future CSS or i18n changes.
-3. Use `scripts/serve-static.mjs` for local static preview smoke:
-   - `node scripts/serve-static.mjs .`
-   - `http://127.0.0.1:4173/`
-4. Keep CSS-only asset badges generic and source-data based.
-5. Plan personal proxy feasibility only if live API work is explicitly resumed.
-6. Resume V2-6B.5 one-item DB write test only when safe Supabase secret env is configured.
+## 9. Current test commands and workflow
 
-## Explicit Non-goals
+Current package commands:
 
-Do not add without explicit approval:
+```text
+pnpm preview
+pnpm test:market
+pnpm test:skins
+pnpm test:ui
+```
 
-- frontend `REFRESH_TOKEN`
-- hardcoded `accessToken`
-- official direct Elf/Cidi frontend API calls
-- external translation API
-- runtime translation service
-- external image API
-- official artwork or logo assets
-- scheduled collector
-- GitHub Actions collector workflow
-- Vercel Cron
-- MPS, TTS/TTP, Alerts, Watchlist, or Market Health implementation
+Test inventory:
+
+| Suite | Declarations | Scope |
+| --- | ---: | --- |
+| Node tests | 42 | Config/formatters, MarketModel, market lifecycle/modules, skin source, and community security |
+| Playwright tests | 12 | Responsive UI, navigation, storage safety, and unified card-frame behavior |
+| **Total** | **54** | Current automated declaration count |
+
+Workflow:
+
+- [`sync-skin-supply-snapshot.yml`](../.github/workflows/sync-skin-supply-snapshot.yml)
+- Schedule: `7 * * * *` — once per hour.
+- Worker uses server-side `ELF_SUPABASE_SECRET_KEY`; it must not use the public
+  browser key for writes.
+- Historical market collection is separate from this workflow and remains
+  dry-run only:
+  [`scripts/collect-elf-history.mjs`](../scripts/collect-elf-history.mjs).
+
+## 10. Retention and deletion rules
+
+- No document is approved for deletion by this governance phase.
+- `SUPERSEDED` means "do not use as current instructions", not "safe to
+  delete".
+- `HISTORICAL` records may contain obsolete current-state language but remain
+  evidence of audits, decisions, deployments, migrations, or QA limitations.
+- Security, Supabase, migration, rollback, deployment, provenance, legacy, and
+  decision records require an explicit retention review before any removal.
+- Do not batch merge or rewrite historical documents merely to make their old
+  statements look current.
+- Do not invent missing phase documents retroactively.
+- Do not restore deliberately deleted root documents solely because an old
+  historical record mentions them.
+- Do not treat an uncreated proposal path as a broken active link.
+- Do not alter `marketplace-resources-site` archive or `exports/` during docs
+  governance.
+- Any future move, archive, or deletion requires a separate read-only audit,
+  verified inbound-reference search, explicit approval, and a dedicated commit.
