@@ -1,4 +1,33 @@
 import { expect, test } from "@playwright/test";
+import {
+  installPlaywrightSupabaseIsolation,
+  SUPABASE_RPC_ALLOWLIST
+} from "./playwright-supabase-isolation.js";
+
+let supabaseIsolation;
+
+test.beforeAll(() => {
+  expect(SUPABASE_RPC_ALLOWLIST).toEqual([
+    "sync_skin_gallery_state",
+    "delete_skin_gallery_state",
+    "get_skin_gallery_stats",
+    "get_skin_supply_stats"
+  ]);
+});
+
+test.beforeEach(async ({ context }) => {
+  supabaseIsolation = await installPlaywrightSupabaseIsolation(context);
+});
+
+test.afterEach(async ({}, testInfo) => {
+  const summary = supabaseIsolation.assertSafe({
+    requiredRpcAttempts: { sync_skin_gallery_state: 1 }
+  });
+  testInfo.annotations.push({
+    type: "supabase-isolation",
+    description: JSON.stringify(summary)
+  });
+});
 
 test("every champion reuses the single global frame", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -80,6 +109,9 @@ test("ranking preview and wishlist controls keep independent keyboard semantics"
   await expect(wishlistButton).toHaveAttribute("aria-pressed", "false");
   await wishlistButton.click();
   await expect(wishlistButton).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(
+    () => supabaseIsolation.getRpcAttemptCount("sync_skin_gallery_state")
+  ).toBeGreaterThanOrEqual(4);
 });
 
 test("mobile ranking preview remains independently clickable", async ({ page }) => {

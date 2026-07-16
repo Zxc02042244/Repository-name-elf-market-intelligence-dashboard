@@ -1,4 +1,37 @@
 import { expect, test } from "@playwright/test";
+import {
+  installPlaywrightSupabaseIsolation,
+  SUPABASE_RPC_ALLOWLIST
+} from "./playwright-supabase-isolation.js";
+
+let supabaseIsolation;
+let standardContextRequiresSync;
+
+test.beforeAll(() => {
+  expect(SUPABASE_RPC_ALLOWLIST).toEqual([
+    "sync_skin_gallery_state",
+    "delete_skin_gallery_state",
+    "get_skin_gallery_stats",
+    "get_skin_supply_stats"
+  ]);
+});
+
+test.beforeEach(async ({ context }) => {
+  standardContextRequiresSync = true;
+  supabaseIsolation = await installPlaywrightSupabaseIsolation(context);
+});
+
+test.afterEach(async ({}, testInfo) => {
+  const summary = supabaseIsolation.assertSafe({
+    requiredRpcAttempts: {
+      sync_skin_gallery_state: standardContextRequiresSync ? 1 : 0
+    }
+  });
+  testInfo.annotations.push({
+    type: "supabase-isolation",
+    description: JSON.stringify(summary)
+  });
+});
 
 const viewports = [
   { name: "mobile-375", width: 375, height: 812 },
@@ -12,6 +45,7 @@ const viewports = [
 
 test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
   test.setTimeout(90_000);
+  standardContextRequiresSync = false;
 
   for (const viewport of viewports) {
     const context = await browser.newContext({
@@ -19,6 +53,7 @@ test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
       locale: "zh-TW",
       reducedMotion: "reduce"
     });
+    const manualContextIsolation = await installPlaywrightSupabaseIsolation(context);
     const page = await context.newPage();
 
     try {
@@ -87,6 +122,13 @@ test("capture responsive UI sequentially", async ({ browser }, testInfo) => {
         fullPage: false
       });
     } finally {
+      const summary = manualContextIsolation.assertSafe({
+        requiredRpcAttempts: { sync_skin_gallery_state: 1 }
+      });
+      testInfo.annotations.push({
+        type: `supabase-isolation-${viewport.name}`,
+        description: JSON.stringify(summary)
+      });
       await context.close();
     }
   }
@@ -185,19 +227,16 @@ test("mobile carousel keeps its active rank after asynchronous community refresh
     releaseCommunityResponse = resolve;
   });
 
-  await page.route("**/rest/v1/rpc/sync_skin_gallery_state", async (route) => {
+  supabaseIsolation.setRpcMock("sync_skin_gallery_state", async () => {
     await communityResponseGate;
-    await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify({
-        visitorCount: 1284,
-        wishlistLeaders: [
-          { skinId: "genesis-pioneer", wishCount: 6 },
-          { skinId: "flame-runner", wishCount: 5 },
-          { skinId: "bubble-beast", wishCount: 4 }
-        ]
-      })
-    });
+    return {
+      visitorCount: 1284,
+      wishlistLeaders: [
+        { skinId: "genesis-pioneer", wishCount: 6 },
+        { skinId: "flame-runner", wishCount: 5 },
+        { skinId: "bubble-beast", wishCount: 4 }
+      ]
+    };
   });
 
   await page.setViewportSize({ width: 390, height: 844 });
