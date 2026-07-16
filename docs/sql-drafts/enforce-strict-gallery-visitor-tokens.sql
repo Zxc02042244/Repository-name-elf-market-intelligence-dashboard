@@ -85,7 +85,17 @@ begin
     where visitors.visitor_secret_hash = excluded.visitor_secret_hash;
 
   if not found then
-    raise exception 'visitor credentials do not match' using errcode = '42501';
+    raise sqlstate 'PGRST'
+      using
+        message = pg_catalog.jsonb_build_object(
+          'code', 'ELF_VISITOR_CREDENTIAL_REJECTED',
+          'message', 'The visitor credential was not accepted.',
+          'details', null,
+          'hint', null
+        )::text,
+        detail = pg_catalog.jsonb_build_object(
+          'status', 409
+        )::text;
   end if;
 
   delete from public.skin_gallery_wishes
@@ -123,6 +133,10 @@ begin
     raise exception 'visitor credentials are required' using errcode = '22023';
   end if;
 
+  if p_visitor_id = p_visitor_token then
+    raise exception 'visitor ID and token must be different' using errcode = '22023';
+  end if;
+
   if exists (
     select 1
     from public.skin_gallery_visitors
@@ -133,7 +147,17 @@ begin
       and visitor_secret_hash = sha256(convert_to(p_visitor_token::text, 'UTF8'));
 
     if not found then
-      raise exception 'visitor credentials do not match' using errcode = '42501';
+      raise sqlstate 'PGRST'
+        using
+          message = pg_catalog.jsonb_build_object(
+            'code', 'ELF_VISITOR_CREDENTIAL_REJECTED',
+            'message', 'The visitor credential was not accepted.',
+            'details', null,
+            'hint', null
+          )::text,
+          detail = pg_catalog.jsonb_build_object(
+            'status', 409
+          )::text;
     end if;
   end if;
 
