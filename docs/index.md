@@ -47,10 +47,11 @@ Authority levels:
   [`src/features/skins/README.md`](../src/features/skins/README.md).
 - Browser storage key authority:
   [`src/config/product-config.js`](../src/config/product-config.js).
-- Current browser storage keys cover locale, local wishlist, anonymous visitor
-  ID, and the paired private visitor token.
-- Test inventory: 42 Node test declarations plus 12 Playwright test
-  declarations, for 54 total.
+- Current browser storage keys cover locale, local wishlist, the committed
+  anonymous visitor ID/token pair, and a short-lived pending replacement
+  credential used only after an exact machine-readable rejection.
+- Test inventory: 87 Node test cases plus 23 Playwright test cases, for 110
+  total.
 - Active workflow: the skin supply snapshot workflow runs once per hour.
 - Historical market collector: the existing collector remains a dry-run
   skeleton and performs zero historical database writes.

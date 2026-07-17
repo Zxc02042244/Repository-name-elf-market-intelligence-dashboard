@@ -5,6 +5,7 @@ import {
   toggleSkinWishlistSelection
 } from "../features/skins/state/skin-wishlist.js";
 import {
+  COMMUNITY_OPERATIONS,
   createSkinCommunityState,
   forgetSkinCommunityData,
   markSkinCommunityError,
@@ -37,6 +38,7 @@ const appRoot = document.querySelector("#app");
 let skinCatalogLoadStarted = false;
 let skinCommunitySyncStarted = false;
 let skinCommunitySyncQueued = false;
+let skinCommunityDeleteInFlight = false;
 let skinCommunityForgetQueued = false;
 let skinSupplySyncStarted = false;
 let pendingUiSnapshot = null;
@@ -284,7 +286,7 @@ function handleAppClick(event) {
       wishlistButton.dataset.wishlistToggle
     );
     renderApp({ preserveUi: true });
-    void syncSkinCommunity();
+    void syncSkinCommunity({ userInitiated: true });
     return;
   }
 
@@ -310,14 +312,12 @@ function handleAppClick(event) {
   if (target.closest("[data-wishlist-clear]")) {
     appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
     renderApp();
-    void syncSkinCommunity();
+    void syncSkinCommunity({ userInitiated: true });
     return;
   }
 
   if (target.closest("[data-community-data-delete]")) {
     if (window.confirm(translate("elfLanding.skinPrivacyDeleteConfirm"))) {
-      appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
-      renderApp({ preserveUi: true });
       void forgetSkinCommunity();
     }
     return;
@@ -539,6 +539,7 @@ function normalizeCommunityState(communityState) {
 
   return {
     status: communityState?.status ?? "disabled",
+    syncStatus: communityState?.syncStatus ?? "disabled",
     visitorCount: Number.isFinite(visitorCount) && visitorCount > 0
       ? Math.floor(visitorCount)
       : null,
@@ -693,9 +694,12 @@ function ensureSkinSupplyLoaded() {
   void loadSkinSupply();
 }
 
-async function syncSkinCommunity() {
+async function syncSkinCommunity(options = {}) {
+  const userInitiated = options.userInitiated === true;
   if (skinCommunitySyncStarted) {
-    skinCommunitySyncQueued = true;
+    if (userInitiated) {
+      skinCommunitySyncQueued = true;
+    }
     return;
   }
 
@@ -707,19 +711,27 @@ async function syncSkinCommunity() {
   appState.skinCommunity = markSkinCommunityLoading(appState.skinCommunity);
 
   try {
-    appState.skinCommunity = await syncSkinCommunityWishlist(appState.skinWishlist?.selectedIds);
+    appState.skinCommunity = await syncSkinCommunityWishlist(
+      () => appState.skinWishlist?.selectedIds,
+      { allowTerminalRotation: userInitiated }
+    );
   } catch (error) {
-    appState.skinCommunity = markSkinCommunityError(appState.skinCommunity, error);
+    appState.skinCommunity = markSkinCommunityError(
+      appState.skinCommunity,
+      error,
+      COMMUNITY_OPERATIONS.sync
+    );
   } finally {
     skinCommunitySyncStarted = false;
     if (skinCommunityForgetQueued) {
       skinCommunityForgetQueued = false;
+      skinCommunitySyncQueued = false;
       void forgetSkinCommunity();
       return;
     }
     if (skinCommunitySyncQueued) {
       skinCommunitySyncQueued = false;
-      void syncSkinCommunity();
+      void syncSkinCommunity({ userInitiated: true });
       return;
     }
     if (getCurrentRoute().name === "home") {
@@ -730,20 +742,41 @@ async function syncSkinCommunity() {
 
 async function forgetSkinCommunity() {
   if (skinCommunitySyncStarted) {
+    if (skinCommunityDeleteInFlight) {
+      return;
+    }
     skinCommunityForgetQueued = true;
     skinCommunitySyncQueued = false;
     return;
   }
 
   skinCommunitySyncStarted = true;
+  skinCommunityDeleteInFlight = true;
+  skinCommunitySyncQueued = false;
+  skinCommunityForgetQueued = false;
   appState.skinCommunity = markSkinCommunityLoading(appState.skinCommunity);
+  let deleteSucceeded = false;
 
   try {
     appState.skinCommunity = await forgetSkinCommunityData();
+    appState.skinWishlist = clearSkinWishlistSelection(appState.skinWishlist);
+    deleteSucceeded = true;
   } catch (error) {
-    appState.skinCommunity = markSkinCommunityError(appState.skinCommunity, error);
+    appState.skinCommunity = markSkinCommunityError(
+      appState.skinCommunity,
+      error,
+      COMMUNITY_OPERATIONS.delete
+    );
   } finally {
+    const shouldSyncLatestWishlist = !deleteSucceeded && skinCommunitySyncQueued;
+    skinCommunitySyncQueued = false;
+    skinCommunityForgetQueued = false;
+    skinCommunityDeleteInFlight = false;
     skinCommunitySyncStarted = false;
+    if (shouldSyncLatestWishlist) {
+      void syncSkinCommunity({ userInitiated: true });
+      return;
+    }
     if (getCurrentRoute().name === "home") {
       refreshHomeDataView();
     }

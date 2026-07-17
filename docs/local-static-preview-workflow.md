@@ -90,6 +90,11 @@ marketDashboard.locale
 elfSkinGallery.wishlist.v1
 elfSkinGallery.visitorId.v1
 elfSkinGallery.visitorToken.v1
+elfSkinGallery.visitorPending.v1
 ```
 
-They represent locale, local wishlist state, visitor ID, and visitor token respectively. Clearing all localStorage may reset the language and wishlist, lose the visitor credential pair, and create follow-up sync risk for legacy／NULL-hash visitors. Do not recommend clearing all localStorage as a harmless first-line debugging step; remove only the specific key whose state is being tested, after understanding the recovery impact.
+They represent locale, local wishlist state, the committed visitor ID/token pair, and a short-lived pending replacement credential. The pending envelope exists only after the RPC returns the exact machine-readable credential rejection contract; it records whether the replacement request may have been attempted, expires after 24 hours with a five-minute clock-skew allowance, and is reused after an ambiguous network failure. A replacement that is explicitly rejected becomes terminal and is not retried on reload. `ready + attemptedAt` is also terminal for automatic initialization because it can represent a failed attempt to persist the rejected state; only an explicit wishlist action may replace it under the rotation lock. Pending credentials are never sent through the DOM, URL, logs, analytics, or cross-tab messages.
+
+Privacy deletion enumerates the committed pair plus every pending pair whose attempt marker shows it may exist remotely. It clears browser credentials and wishlist state only after every candidate returns an explicit success or safe no-op response.
+
+Clearing all localStorage may reset the language and wishlist, lose both committed and recoverable pending credentials, and create follow-up sync risk for legacy／NULL-hash visitors. Do not recommend clearing all localStorage as a harmless first-line debugging step; remove only the specific key whose state is being tested, after understanding the recovery impact.

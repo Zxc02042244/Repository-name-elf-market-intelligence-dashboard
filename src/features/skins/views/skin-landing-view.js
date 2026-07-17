@@ -270,6 +270,7 @@ function renderSkinSourcePanel(catalog, wishlist, locale) {
   const wishlistDetail = wishlist.community.status === "remote"
     ? t("elfLanding.skinSourceWishlistRemoteDetail", locale)
     : t("elfLanding.skinSourceWishlistLocalDetail", locale);
+  const syncStatusDetail = getCommunitySyncStatusDetail(wishlist.community.syncStatus, locale);
 
   return `
     <section class="data-source-panel data-source-panel-skins" aria-label="${t("elfLanding.skinSourceTitle", locale)}">
@@ -294,6 +295,16 @@ function renderSkinSourcePanel(catalog, wishlist, locale) {
           t("elfLanding.skinPrivacyTitle", locale),
           t("elfLanding.skinPrivacyDetail", locale)
         )}
+        ${syncStatusDetail ? `
+          <article
+            class="data-source-item"
+            data-community-sync-status="${escapeHtml(wishlist.community.syncStatus)}"
+            role="status"
+          >
+            <strong>${escapeHtml(t("elfLanding.skinSyncStatusTitle", locale))}</strong>
+            <span>${escapeHtml(syncStatusDetail)}</span>
+          </article>
+        ` : ""}
       </div>
       <button class="elf-community-data-delete" type="button" data-community-data-delete>
         ${t("elfLanding.skinPrivacyDelete", locale)}
@@ -737,6 +748,7 @@ function normalizeCommunity(communityState) {
 
   return {
     status: communityState?.status ?? "disabled",
+    syncStatus: communityState?.syncStatus ?? "disabled",
     visitorCount: Number.isFinite(visitorCount) && visitorCount > 0
       ? Math.floor(visitorCount)
       : null,
@@ -744,6 +756,18 @@ function normalizeCommunity(communityState) {
       ? communityState.wishlistLeaders
       : []
   };
+}
+
+function getCommunitySyncStatusDetail(syncStatus, locale) {
+  const translationKeys = {
+    synced: "skinSyncSynced",
+    "credential-rotated": "skinSyncCredentialRotated",
+    "offline/transient-error": "skinSyncLocalOnly",
+    failed: "skinSyncRetryFailed",
+    "deletion-unverified": "skinDeleteUnverified"
+  };
+  const key = translationKeys[syncStatus];
+  return key ? t(`elfLanding.${key}`, locale) : "";
 }
 
 function getEmptySkin() {

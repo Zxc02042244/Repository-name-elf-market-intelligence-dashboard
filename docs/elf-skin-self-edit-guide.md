@@ -142,14 +142,31 @@
 - 讀取全站願望排行與來訪數。
 - 不收集玩家帳號、錢包、email 或個人資料。
 
-目前 localStorage 共保存四類資料，key 以 `src/config/product-config.js` 為唯一程式碼來源：
+### `src/features/skins/state/skin-community-credentials.js`
+
+匿名 visitor credential 的產生、pending replacement、Web Locks 互斥、部分 localStorage 寫入復原與 commit 都集中在這裡。
+
+安全規則：
+
+- 只有 sync 收到 HTTP 409 且 code 精確為 `ELF_VISITOR_CREDENTIAL_REJECTED` 才可自動 rotation。
+- ACL、validation、rate limit、network 與 5xx 不會建立 replacement visitor。
+- replacement 只 retry 一次，成功後才覆蓋 committed credential。
+- Web Locks 不可用時 fail closed，不自動 rotation。
+- pending credential 保存 24 小時並容許最多 5 分鐘時鐘偏差；過期或時間戳異常只移除 pending，不清除 committed credential 或 wishlist。
+- pending envelope 以 `attemptedAt` 記錄 replacement 是否可能已送達 server；明確再次被拒時進入 terminal `rejected`，reload 不自動重試。
+- 若 terminal `rejected` 寫入失敗，持久狀態會停在 `ready + attemptedAt`；此組合也必須 fail closed，初始化與 reload 不得自動送出。
+- terminal `rejected` 或 attempted `ready` 只有明確 wishlist 操作可在 Web Lock 內換成一組新 candidate，仍只送一次。
+- delete 永不 rotation，會逐一刪除 committed 與所有曾嘗試送出的 pending candidates；只有全部明確成功或安全 no-op 後才清除本機資料。
+
+目前 localStorage 共保存五類資料，key 以 `src/config/product-config.js` 為唯一程式碼來源：
 
 - locale：`marketDashboard.locale`
 - wishlist：`elfSkinGallery.wishlist.v1`
 - visitor ID：`elfSkinGallery.visitorId.v1`
 - visitor token：`elfSkinGallery.visitorToken.v1`
+- pending replacement credential：`elfSkinGallery.visitorPending.v1`
 
-不要把「清除全部 localStorage」當成一般無害除錯步驟；這會重設語言與本地願望、遺失 visitor credential，並可能讓 legacy／NULL-hash visitor 的後續同步需要額外處理。
+不要把「清除全部 localStorage」當成一般無害除錯步驟；這會重設語言與本地願望、遺失 committed／pending visitor credential，並可能讓 legacy／NULL-hash visitor 的後續同步需要額外處理。Pending token 不得放進 DOM、URL、log、analytics 或 BroadcastChannel。
 
 ## 5. 供給快照與今日新增
 

@@ -20,7 +20,8 @@ export const STORAGE_KEYS = Object.freeze({
   locale: "marketDashboard.locale",
   skinWishlist: "elfSkinGallery.wishlist.v1",
   skinVisitor: "elfSkinGallery.visitorId.v1",
-  skinVisitorToken: "elfSkinGallery.visitorToken.v1"
+  skinVisitorToken: "elfSkinGallery.visitorToken.v1",
+  skinVisitorPending: "elfSkinGallery.visitorPending.v1"
 });
 
 export function isSupportedHomeTab(tab) {

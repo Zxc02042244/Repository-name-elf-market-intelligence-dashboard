@@ -7,6 +7,7 @@ import {
   HOME_TABS,
   MARKET_DISPLAY_LIMITS,
   PRODUCT_RULES,
+  STORAGE_KEYS,
   isSupportedHomeTab,
   isSupportedMarketSort
 } from "../src/config/product-config.js";
@@ -19,6 +20,7 @@ test("product rules expose one immutable configuration source", () => {
   assert.equal(PRODUCT_RULES.mobileChampionLimit, 10);
   assert.equal(MARKET_DISPLAY_LIMITS.assetSummaries, 3);
   assert.deepEqual(HOME_TABS, ["wishlist", "supply", "gallery"]);
+  assert.equal(STORAGE_KEYS.skinVisitorPending, "elfSkinGallery.visitorPending.v1");
   assert.equal(Object.isFrozen(PRODUCT_RULES), true);
   assert.equal(isSupportedHomeTab("supply"), true);
   assert.equal(isSupportedHomeTab("unknown"), false);
