@@ -94,7 +94,8 @@ begin
           'hint', null
         )::text,
         detail = pg_catalog.jsonb_build_object(
-          'status', 409
+          'status', 409,
+          'headers', pg_catalog.jsonb_build_object()
         )::text;
   end if;
 
@@ -156,7 +157,8 @@ begin
             'hint', null
           )::text,
           detail = pg_catalog.jsonb_build_object(
-            'status', 409
+            'status', 409,
+            'headers', pg_catalog.jsonb_build_object()
           )::text;
     end if;
   end if;

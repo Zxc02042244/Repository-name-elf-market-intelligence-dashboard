@@ -184,7 +184,10 @@ begin
          'details', null,
          'hint', null
        )
-       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object('status', 409) then
+       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object(
+         'status', 409,
+         'headers', pg_catalog.jsonb_build_object()
+       ) then
       raise exception 'null-hash sync returned an unexpected custom error contract';
     end if;
   end;
@@ -205,7 +208,10 @@ begin
          'details', null,
          'hint', null
        )
-       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object('status', 409) then
+       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object(
+         'status', 409,
+         'headers', pg_catalog.jsonb_build_object()
+       ) then
       raise exception 'null-hash delete returned an unexpected custom error contract';
     end if;
   end;
@@ -235,7 +241,10 @@ begin
          'details', null,
          'hint', null
        )
-       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object('status', 409) then
+       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object(
+         'status', 409,
+         'headers', pg_catalog.jsonb_build_object()
+       ) then
       raise exception 'wrong-token sync returned an unexpected custom error contract';
     end if;
   end;
@@ -256,7 +265,10 @@ begin
          'details', null,
          'hint', null
        )
-       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object('status', 409) then
+       or v_detail::jsonb is distinct from pg_catalog.jsonb_build_object(
+         'status', 409,
+         'headers', pg_catalog.jsonb_build_object()
+       ) then
       raise exception 'wrong-token delete returned an unexpected custom error contract';
     end if;
   end;
