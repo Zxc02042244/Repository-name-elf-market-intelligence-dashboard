@@ -126,12 +126,13 @@ production result, not a blind schema replay.
 
 ## 4. DRAFT ONLY SQL
 
-These two files are part of the approved `ACTIVE` inventory because they remain
+These three files are part of the approved `ACTIVE` inventory because they remain
 maintained security references. Their authority level is nevertheless `Draft`,
-and neither file is a migration.
+and none of the files is a migration.
 
 | Document | Status | Topic / responsibility | Authority | Current authority | Last verified | Reading warning |
 | --- | --- | --- | --- | --- | --- | --- |
+| [`sql-drafts/cleanup-legacy-null-hash-visitors.sql`](./sql-drafts/cleanup-legacy-null-hash-visitors.sql) | ACTIVE — DRAFT ONLY | Proposed one-way cleanup of visitors that remain NULL-hash at execution time, with aggregate-only evidence and FK cascade verification | Draft | Current production data review, registered schema migrations, and a future separately approved cleanup migration | 2026-07-18 | Not a migration. The execution guard remains false; do not apply, promote, or enable without a new production review and explicit authorization. Cleanup is not recoverable by the application. |
 | [`sql-drafts/enforce-strict-gallery-visitor-tokens.sql`](./sql-drafts/enforce-strict-gallery-visitor-tokens.sql) | ACTIVE — DRAFT ONLY | Proposed strict visitor-token function replacement that refuses null-hash visitor adoption | Draft | Current production function bodies, registered migrations, and the isolated draft test | 2026-07-16 | Not a migration. Do not apply until legacy-client behavior and null-hash handling receive a new review and explicit approval. |
 | [`sql-drafts/rollback-harden-public-rpc-privileges.sql`](./sql-drafts/rollback-harden-public-rpc-privileges.sql) | ACTIVE — DRAFT ONLY | Full rollback reference for the public RPC privilege migration | Draft | Current verified ACL and the registered privilege migration | 2026-07-16 | Not a migration and must not be applied automatically. It restores known-risk `PUBLIC EXECUTE` behavior. |
 
