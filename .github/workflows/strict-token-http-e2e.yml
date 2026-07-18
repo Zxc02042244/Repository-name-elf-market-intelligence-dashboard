@@ -144,7 +144,7 @@ jobs:
           readonly STRICT_E2E_START_LOG="${RUNNER_TEMP}/strict-token-supabase-start.log"
           readonly STRICT_E2E_SQL_FILE="${RUNNER_TEMP}/strict-token-regression.sql"
           readonly STRICT_E2E_SQL_LOG="${RUNNER_TEMP}/strict-token-regression.log"
-          trap 'rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"' EXIT
+          trap 'unset PGDATABASE; rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"' EXIT
           rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"
           cd "$STRICT_E2E_PROJECT_DIR"
 
@@ -175,12 +175,18 @@ jobs:
               --override-name api.url=STRICT_E2E_URL \
               --override-name auth.anon_key=STRICT_E2E_ANON_KEY \
               --override-name auth.service_role_key=STRICT_E2E_SERVICE_ROLE_KEY \
+              --override-name db.url=STRICT_E2E_DB_URL \
               2> /dev/null
             )"; then
+            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
             exit 1
           fi
           eval "$status_values"
           unset status_values
+          if [[ -z "${STRICT_E2E_DB_URL:-}" ]]; then
+            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
+            exit 1
+          fi
           export STRICT_E2E_URL STRICT_E2E_ANON_KEY STRICT_E2E_SERVICE_ROLE_KEY
 
           export STRICT_E2E_CLI_VERSION
@@ -213,34 +219,51 @@ jobs:
 
           node "$GITHUB_WORKSPACE/scripts/strict-token-http-e2e.mjs"
 
+          set +e
           awk '
-            /^\\set[[:space:]]+ON_ERROR_STOP[[:space:]]+on[[:space:]]*$/ {
-              removed_on_error_stop += 1
-              next
-            }
             /^\\ir[[:space:]]+\.\.\/\.\.\/docs\/sql-drafts\/enforce-strict-gallery-visitor-tokens\.sql[[:space:]]*$/ {
               removed_draft_include += 1
               next
             }
             { print }
-            END {
-              if (removed_on_error_stop != 1 || removed_draft_include != 1) exit 42
-            }
+            END { if (removed_draft_include != 1) exit 42 }
           ' "$GITHUB_WORKSPACE/supabase/tests/draft_enforce_strict_gallery_visitor_tokens_test.sql" \
             > "$STRICT_E2E_SQL_FILE"
-          if grep -Eq '^[[:space:]]*\\' "$STRICT_E2E_SQL_FILE"; then
+          transform_status=$?
+          set -e
+          if [[ "$transform_status" -ne 0 ]] \
+              || grep -Fq '\ir ../../docs/sql-drafts/enforce-strict-gallery-visitor-tokens.sql' \
+                "$STRICT_E2E_SQL_FILE"; then
+            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
             exit 1
           fi
 
-          if supabase db query --local --file "$STRICT_E2E_SQL_FILE" \
-              > "$STRICT_E2E_SQL_LOG" 2>&1 \
-              && grep -Fq 'strict-token draft tests passed' "$STRICT_E2E_SQL_LOG"; then
-            printf '%s\n' 'SQL regression | transaction rollback | PASS'
-          else
-            printf '%s\n' 'SQL regression | transaction rollback | FAIL'
+          if ! command -v psql > /dev/null 2>&1; then
+            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
             rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
             exit 1
           fi
+
+          export PGDATABASE="$STRICT_E2E_DB_URL"
+          unset STRICT_E2E_DB_URL
+          set +e
+          psql --no-psqlrc --no-password --set=ON_ERROR_STOP=1 \
+            --file="$STRICT_E2E_SQL_FILE" > "$STRICT_E2E_SQL_LOG" 2>&1
+          sql_status=$?
+          set -e
+
+          if [[ "$sql_status" -ne 0 ]]; then
+            printf '%s\n' 'SQL regression | code=SQL_ASSERTION_FAILED | FAIL'
+            rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
+            exit 1
+          fi
+          if ! grep -Fq 'strict-token draft tests passed' "$STRICT_E2E_SQL_LOG"; then
+            printf '%s\n' 'SQL regression | code=SUCCESS_MARKER_MISSING | FAIL'
+            rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
+            exit 1
+          fi
+
+          printf '%s\n' 'SQL regression | code=OK | transaction rollback | PASS'
           rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
 
       - name: Verify the checkout stayed unchanged
