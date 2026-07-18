@@ -1,0 +1,291 @@
+name: Strict-token HTTP E2E
+
+on:
+  push:
+    branches:
+      - test/strict-token-http-e2e-ci
+
+permissions:
+  contents: read
+
+jobs:
+  strict-token-http-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      # Source: https://github.com/actions/checkout/releases/tag/v4.3.1
+      - name: Check out the temporary test branch
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      # Source: https://github.com/supabase/setup-cli/releases/tag/v2.1.1
+      - name: Install the pinned Supabase CLI
+        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          # Source: https://github.com/supabase/cli/releases/tag/v2.109.1
+          version: 2.109.1
+
+      - name: Build an isolated local Supabase project
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly STRICT_E2E_PROJECT_DIR="${RUNNER_TEMP}/strict-token-http-e2e"
+
+          if [[ -e "$STRICT_E2E_PROJECT_DIR" ]]; then
+            exit 1
+          fi
+
+          mkdir -p "$STRICT_E2E_PROJECT_DIR"
+          cd "$STRICT_E2E_PROJECT_DIR"
+          supabase init > /dev/null 2>&1
+          install -d -m 0755 "$STRICT_E2E_PROJECT_DIR/supabase/migrations"
+          test -f "$STRICT_E2E_PROJECT_DIR/supabase/config.toml"
+          test -d "$STRICT_E2E_PROJECT_DIR/supabase/migrations"
+
+          migration_dir="$STRICT_E2E_PROJECT_DIR/supabase/migrations"
+          install -m 0444 "$GITHUB_WORKSPACE/supabase/schema.sql" \
+            "$migration_dir/20260717000001_schema.sql"
+          install -m 0444 \
+            "$GITHUB_WORKSPACE/supabase/migrations/20260714141341_skin_gallery_security_hardening.sql" \
+            "$migration_dir/20260717000002_skin_gallery_security_hardening.sql"
+
+          cat > "$migration_dir/20260717000003_production_rls_auto_enable_fixture.sql" <<'SQL'
+          -- CI SYNTHETIC PRODUCTION BASELINE ONLY
+          -- Created only in RUNNER_TEMP.
+          -- Do not copy this fixture into repo supabase/migrations.
+          -- This fixture does not grant deployment authorization.
+          create or replace function public.rls_auto_enable()
+          returns event_trigger
+          language plpgsql
+          security definer
+          set search_path = pg_catalog
+          as $$
+          declare
+            cmd record;
+          begin
+            for cmd in
+              select *
+              from pg_event_trigger_ddl_commands()
+              where command_tag in ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+                and object_type in ('table', 'partitioned table')
+            loop
+              if cmd.schema_name is not null
+                 and cmd.schema_name in ('public')
+                 and cmd.schema_name not in ('pg_catalog', 'information_schema')
+                 and cmd.schema_name not like 'pg_toast%'
+                 and cmd.schema_name not like 'pg_temp%'
+              then
+                begin
+                  execute format(
+                    'alter table if exists %s enable row level security',
+                    cmd.object_identity
+                  );
+                  raise log 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
+                exception
+                  when others then
+                    raise log 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
+                end;
+              else
+                raise log
+                  'rls_auto_enable: skip % (either system schema or not in enforced list: %.)',
+                  cmd.object_identity,
+                  cmd.schema_name;
+              end if;
+            end loop;
+          end;
+          $$;
+
+          drop event trigger if exists ensure_rls;
+          create event trigger ensure_rls
+          on ddl_command_end
+          when tag in ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+          execute function public.rls_auto_enable();
+          SQL
+          chmod 0444 "$migration_dir/20260717000003_production_rls_auto_enable_fixture.sql"
+
+          install -m 0444 \
+            "$GITHUB_WORKSPACE/supabase/migrations/20260715165129_harden_public_rpc_privileges.sql" \
+            "$migration_dir/20260717000004_harden_public_rpc_privileges.sql"
+          install -m 0444 \
+            "$GITHUB_WORKSPACE/supabase/migrations/20260717235013_enforce_strict_gallery_visitor_tokens.sql" \
+            "$migration_dir/20260717235013_enforce_strict_gallery_visitor_tokens.sql"
+
+          cat > "$migration_dir/20260717235014_strict_token_http_e2e_fixture.sql" <<'SQL'
+          create or replace function public.strict_token_http_e2e_seed_null_hash(
+            p_visitor_id uuid
+          )
+          returns void
+          language sql
+          volatile
+          security definer
+          set search_path = ''
+          as $$
+            insert into public.skin_gallery_visitors (
+              visitor_id,
+              visitor_secret_hash
+            )
+            values (p_visitor_id, null);
+          $$;
+
+          revoke all on function public.strict_token_http_e2e_seed_null_hash(uuid)
+            from public, anon, authenticated;
+          grant execute on function public.strict_token_http_e2e_seed_null_hash(uuid)
+            to service_role;
+          SQL
+          chmod 0444 "$migration_dir/20260717235014_strict_token_http_e2e_fixture.sql"
+
+      - name: Start local Supabase and run HTTP and SQL regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly STRICT_E2E_PROJECT_DIR="${RUNNER_TEMP}/strict-token-http-e2e"
+          readonly STRICT_E2E_START_LOG="${RUNNER_TEMP}/strict-token-supabase-start.log"
+          readonly STRICT_E2E_SQL_FILE="${RUNNER_TEMP}/strict-token-regression.sql"
+          readonly STRICT_E2E_SQL_LOG="${RUNNER_TEMP}/strict-token-regression.log"
+          trap 'rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"' EXIT
+          rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"
+          cd "$STRICT_E2E_PROJECT_DIR"
+
+          if ! supabase start \
+              -x studio,imgproxy,mailpit,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta \
+              > "$STRICT_E2E_START_LOG" 2>&1; then
+            printf '%s\n' 'SANITIZED_SUPABASE_START_FAILURE'
+            grep -Ei 'Applying migration|ERROR|failed|SQLSTATE|container|health|database' \
+              "$STRICT_E2E_START_LOG" \
+              | perl -pe '
+                  s{\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b}{[REDACTED_UUID]}ig;
+                  s{\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b}{[REDACTED_JWT]}g;
+                  s{\bsb_[A-Za-z0-9_-]+\b}{[REDACTED_KEY]}ig;
+                  s{\b[0-9a-f]{64}\b}{[REDACTED_HASH]}ig;
+                  s{\b(?:https?|postgres(?:ql)?):\/\/[^\s\x27"]+}{[REDACTED_URL]}ig;
+                  s{\b((?:anon|service[_ -]?role)[_ -]?key|jwt[_ -]?secret|password|skin[_ -]?id)\b(\s*[:=]\s*)[^\s,;]+}{$1$2[REDACTED]}ig;
+                  s{\x27[^\x27]*\x27}{\x27[REDACTED]\x27}g;
+                ' \
+              | tail -n 100 || true
+            rm -f -- "$STRICT_E2E_START_LOG"
+            exit 1
+          fi
+          rm -f -- "$STRICT_E2E_START_LOG"
+
+          set +x
+          if ! status_values="$(
+              supabase status -o env \
+              --override-name api.url=STRICT_E2E_URL \
+              --override-name auth.anon_key=STRICT_E2E_ANON_KEY \
+              --override-name auth.service_role_key=STRICT_E2E_SERVICE_ROLE_KEY \
+              2> /dev/null
+            )"; then
+            exit 1
+          fi
+          eval "$status_values"
+          unset status_values
+          export STRICT_E2E_URL STRICT_E2E_ANON_KEY STRICT_E2E_SERVICE_ROLE_KEY
+
+          export STRICT_E2E_CLI_VERSION
+          STRICT_E2E_CLI_VERSION="$(supabase --version)"
+
+          if ! docker_images="$(docker ps --format '{{.Image}}')"; then
+            exit 1
+          fi
+          mapfile -t postgrest_image_names < <(
+            printf '%s\n' "$docker_images" \
+              | awk -F/ '{
+                  image_name = $NF
+                  sub(/@sha256:[0-9a-f]+$/, "", image_name)
+                  if (image_name ~ /^postgrest:/) print image_name
+                }'
+          )
+          unset docker_images
+
+          if [[ "${#postgrest_image_names[@]}" -ne 1 ]]; then
+            exit 1
+          fi
+          postgrest_image_name="${postgrest_image_names[0]}"
+          unset postgrest_image_names
+
+          if [[ ! "$postgrest_image_name" =~ ^postgrest:v?([0-9]+\.[0-9]+(\.[0-9]+)?)$ ]]; then
+            exit 1
+          fi
+          export STRICT_E2E_POSTGREST_VERSION="${BASH_REMATCH[1]}"
+          unset postgrest_image_name
+
+          node "$GITHUB_WORKSPACE/scripts/strict-token-http-e2e.mjs"
+
+          awk '
+            /^\\set[[:space:]]+ON_ERROR_STOP[[:space:]]+on[[:space:]]*$/ {
+              removed_on_error_stop += 1
+              next
+            }
+            /^\\ir[[:space:]]+\.\.\/\.\.\/docs\/sql-drafts\/enforce-strict-gallery-visitor-tokens\.sql[[:space:]]*$/ {
+              removed_draft_include += 1
+              next
+            }
+            { print }
+            END {
+              if (removed_on_error_stop != 1 || removed_draft_include != 1) exit 42
+            }
+          ' "$GITHUB_WORKSPACE/supabase/tests/draft_enforce_strict_gallery_visitor_tokens_test.sql" \
+            > "$STRICT_E2E_SQL_FILE"
+          if grep -Eq '^[[:space:]]*\\' "$STRICT_E2E_SQL_FILE"; then
+            exit 1
+          fi
+
+          if supabase db query --local --file "$STRICT_E2E_SQL_FILE" \
+              > "$STRICT_E2E_SQL_LOG" 2>&1 \
+              && grep -Fq 'strict-token draft tests passed' "$STRICT_E2E_SQL_LOG"; then
+            printf '%s\n' 'SQL regression | transaction rollback | PASS'
+          else
+            printf '%s\n' 'SQL regression | transaction rollback | FAIL'
+            rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
+            exit 1
+          fi
+          rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
+
+      - name: Verify the checkout stayed unchanged
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --quiet -- .
+          git diff --cached --quiet -- .
+          [[ -z "$(git status --porcelain=v1 --untracked-files=all)" ]]
+
+      - name: Stop the isolated local stack and remove test files
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          readonly STRICT_E2E_PROJECT_DIR="${RUNNER_TEMP}/strict-token-http-e2e"
+          cleanup_failed=0
+
+          rm -f -- \
+            "${RUNNER_TEMP}/strict-token-supabase-start.log" \
+            "${RUNNER_TEMP}/strict-token-regression.sql" \
+            "${RUNNER_TEMP}/strict-token-regression.log"
+
+          case "$STRICT_E2E_PROJECT_DIR" in
+            "${RUNNER_TEMP}/"*) ;;
+            *) printf '%s\n' 'Cleanup | HTTP 0 | code=PATH_REJECTED | FAIL'; exit 1 ;;
+          esac
+
+          if [[ -d "$STRICT_E2E_PROJECT_DIR/supabase" ]]; then
+            cd "$STRICT_E2E_PROJECT_DIR"
+            if ! supabase stop --no-backup > /dev/null 2>&1; then
+              cleanup_failed=1
+            fi
+          fi
+
+          cd "$RUNNER_TEMP"
+          rm -rf -- "$STRICT_E2E_PROJECT_DIR"
+          if [[ -e "$STRICT_E2E_PROJECT_DIR" ]]; then
+            cleanup_failed=1
+          fi
+
+          if [[ "$cleanup_failed" -eq 0 ]]; then
+            printf '%s\n' 'Cleanup | HTTP 0 | code=STACK_STOPPED_AND_FILES_REMOVED | PASS'
+          else
+            printf '%s\n' 'Cleanup | HTTP 0 | code=CLEANUP_FAILED | FAIL'
+            exit 1
+          fi
