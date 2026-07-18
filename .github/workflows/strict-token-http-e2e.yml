@@ -269,6 +269,69 @@ jobs:
             return value;
           }
 
+          const EXPECTED_STOPPED_SERVICE_IDS = Object.freeze([
+            'supabase_inbucket_strict-token-http-e2e',
+            'supabase_realtime_strict-token-http-e2e',
+            'supabase_storage_strict-token-http-e2e',
+            'supabase_imgproxy_strict-token-http-e2e',
+            'supabase_pg_meta_strict-token-http-e2e',
+            'supabase_studio_strict-token-http-e2e',
+            'supabase_edge_runtime_strict-token-http-e2e',
+            'supabase_analytics_strict-token-http-e2e',
+            'supabase_vector_strict-token-http-e2e',
+            'supabase_pooler_strict-token-http-e2e'
+          ]);
+          const REQUIRED_RUNNING_SERVICE_IDS = Object.freeze([
+            'supabase_db_strict-token-http-e2e',
+            'supabase_kong_strict-token-http-e2e',
+            'supabase_rest_strict-token-http-e2e',
+            'supabase_auth_strict-token-http-e2e'
+          ]);
+          const STATUS_STDERR_UNEXPECTED = Symbol('STATUS_STDERR_UNEXPECTED');
+
+          function validateStatusStderr(status) {
+            let decoded = '';
+            let payload = '';
+            let tokens = [];
+            try {
+              const expected = new Set(EXPECTED_STOPPED_SERVICE_IDS);
+              if (expected.size === 0 || expected.size !== EXPECTED_STOPPED_SERVICE_IDS.length) return STATUS_STDERR_UNEXPECTED;
+              if (new Set(REQUIRED_RUNNING_SERVICE_IDS).size !== REQUIRED_RUNNING_SERVICE_IDS.length) return STATUS_STDERR_UNEXPECTED;
+              if (REQUIRED_RUNNING_SERVICE_IDS.some((id) => expected.has(id))) return STATUS_STDERR_UNEXPECTED;
+              if (status.code !== 0 || !Buffer.isBuffer(status.stderr)) return STATUS_STDERR_UNEXPECTED;
+              if (status.stderr.length === 0) return true;
+
+              let contentLength = status.stderr.length;
+              if (status.stderr[contentLength - 1] === 0x0a) contentLength -= 1;
+              if (contentLength === 0) return STATUS_STDERR_UNEXPECTED;
+              for (let index = 0; index < contentLength; index += 1) {
+                const byte = status.stderr[index];
+                if (byte < 0x20 || byte > 0x7e) return STATUS_STDERR_UNEXPECTED;
+              }
+
+              decoded = status.stderr.subarray(0, contentLength).toString('utf8');
+              if (!Buffer.from(decoded, 'utf8').equals(status.stderr.subarray(0, contentLength))) return STATUS_STDERR_UNEXPECTED;
+              const prefix = 'Stopped services: [';
+              if (!decoded.startsWith(prefix) || !decoded.endsWith(']')) return STATUS_STDERR_UNEXPECTED;
+              payload = decoded.slice(prefix.length, -1);
+              if (payload.length === 0 || payload.startsWith(' ') || payload.endsWith(' ') || payload.includes('  ')) return STATUS_STDERR_UNEXPECTED;
+              tokens = payload.split(' ');
+              if (tokens.some((token) => !/^supabase_[a-z0-9_]+_strict-token-http-e2e$/.test(token))) return STATUS_STDERR_UNEXPECTED;
+              const actual = new Set(tokens);
+              if (actual.size !== tokens.length || actual.size !== expected.size) return STATUS_STDERR_UNEXPECTED;
+              if (REQUIRED_RUNNING_SERVICE_IDS.some((id) => actual.has(id))) return STATUS_STDERR_UNEXPECTED;
+              if (EXPECTED_STOPPED_SERVICE_IDS.some((id) => !actual.has(id))) return STATUS_STDERR_UNEXPECTED;
+              return true;
+            } finally {
+              tokens.fill('');
+              tokens = [];
+              payload = '';
+              decoded = '';
+              if (Buffer.isBuffer(status.stderr)) status.stderr.fill(0);
+              status.stderr = Buffer.alloc(0);
+            }
+          }
+
           function capture(command, args, timeoutMs) {
             return new Promise((resolve) => {
               let stdout = Buffer.alloc(0);
@@ -330,7 +393,17 @@ jobs:
               '--override-name', `auth.service_role_key=${names.service}`,
               '--override-name', `db.url=${names.discardedDb}`
             ], 15_000);
-            if (status.spawnError || status.code !== 0 || status.signal || status.overflow || status.timedOut || status.stderr.length !== 0) throw new Error();
+            if (status.spawnError || status.signal || status.overflow || status.timedOut) {
+              if (Buffer.isBuffer(status.stderr)) status.stderr.fill(0);
+              status.stderr = Buffer.alloc(0);
+              throw new Error();
+            }
+            if (status.code !== 0) {
+              if (Buffer.isBuffer(status.stderr)) status.stderr.fill(0);
+              status.stderr = Buffer.alloc(0);
+              throw new Error();
+            }
+            if (validateStatusStderr(status) !== true) throw new Error();
             const values = parseStringMap(status.stdout);
             status.stdout.fill(0);
             for (const name of Object.values(names)) {
@@ -518,6 +591,69 @@ jobs:
             if (value === null || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new Error();
             if (Object.values(value).some((entry) => typeof entry !== 'string')) throw new Error();
             return value;
+          }
+
+          const EXPECTED_STOPPED_SERVICE_IDS = Object.freeze([
+            'supabase_inbucket_strict-token-http-e2e',
+            'supabase_realtime_strict-token-http-e2e',
+            'supabase_storage_strict-token-http-e2e',
+            'supabase_imgproxy_strict-token-http-e2e',
+            'supabase_pg_meta_strict-token-http-e2e',
+            'supabase_studio_strict-token-http-e2e',
+            'supabase_edge_runtime_strict-token-http-e2e',
+            'supabase_analytics_strict-token-http-e2e',
+            'supabase_vector_strict-token-http-e2e',
+            'supabase_pooler_strict-token-http-e2e'
+          ]);
+          const REQUIRED_RUNNING_SERVICE_IDS = Object.freeze([
+            'supabase_db_strict-token-http-e2e',
+            'supabase_kong_strict-token-http-e2e',
+            'supabase_rest_strict-token-http-e2e',
+            'supabase_auth_strict-token-http-e2e'
+          ]);
+          const STATUS_STDERR_UNEXPECTED = Symbol('STATUS_STDERR_UNEXPECTED');
+
+          function validateStatusStderr(status) {
+            let decoded = '';
+            let payload = '';
+            let tokens = [];
+            try {
+              const expected = new Set(EXPECTED_STOPPED_SERVICE_IDS);
+              if (expected.size === 0 || expected.size !== EXPECTED_STOPPED_SERVICE_IDS.length) return STATUS_STDERR_UNEXPECTED;
+              if (new Set(REQUIRED_RUNNING_SERVICE_IDS).size !== REQUIRED_RUNNING_SERVICE_IDS.length) return STATUS_STDERR_UNEXPECTED;
+              if (REQUIRED_RUNNING_SERVICE_IDS.some((id) => expected.has(id))) return STATUS_STDERR_UNEXPECTED;
+              if (status.code !== 0 || !Buffer.isBuffer(status.stderr)) return STATUS_STDERR_UNEXPECTED;
+              if (status.stderr.length === 0) return true;
+
+              let contentLength = status.stderr.length;
+              if (status.stderr[contentLength - 1] === 0x0a) contentLength -= 1;
+              if (contentLength === 0) return STATUS_STDERR_UNEXPECTED;
+              for (let index = 0; index < contentLength; index += 1) {
+                const byte = status.stderr[index];
+                if (byte < 0x20 || byte > 0x7e) return STATUS_STDERR_UNEXPECTED;
+              }
+
+              decoded = status.stderr.subarray(0, contentLength).toString('utf8');
+              if (!Buffer.from(decoded, 'utf8').equals(status.stderr.subarray(0, contentLength))) return STATUS_STDERR_UNEXPECTED;
+              const prefix = 'Stopped services: [';
+              if (!decoded.startsWith(prefix) || !decoded.endsWith(']')) return STATUS_STDERR_UNEXPECTED;
+              payload = decoded.slice(prefix.length, -1);
+              if (payload.length === 0 || payload.startsWith(' ') || payload.endsWith(' ') || payload.includes('  ')) return STATUS_STDERR_UNEXPECTED;
+              tokens = payload.split(' ');
+              if (tokens.some((token) => !/^supabase_[a-z0-9_]+_strict-token-http-e2e$/.test(token))) return STATUS_STDERR_UNEXPECTED;
+              const actual = new Set(tokens);
+              if (actual.size !== tokens.length || actual.size !== expected.size) return STATUS_STDERR_UNEXPECTED;
+              if (REQUIRED_RUNNING_SERVICE_IDS.some((id) => actual.has(id))) return STATUS_STDERR_UNEXPECTED;
+              if (EXPECTED_STOPPED_SERVICE_IDS.some((id) => !actual.has(id))) return STATUS_STDERR_UNEXPECTED;
+              return true;
+            } finally {
+              tokens.fill('');
+              tokens = [];
+              payload = '';
+              decoded = '';
+              if (Buffer.isBuffer(status.stderr)) status.stderr.fill(0);
+              status.stderr = Buffer.alloc(0);
+            }
           }
 
           function capture(command, args, options = {}) {
@@ -812,7 +948,17 @@ jobs:
               stdoutLimit: STATUS_LIMIT,
               stderrLimit: STATUS_LIMIT
             });
-            if (status.spawnError || status.code !== 0 || status.signal || status.overflow || status.timedOut || status.stderr.length !== 0) fail('DB_URL_CAPTURE_FAILED');
+            if (status.spawnError || status.signal || status.overflow || status.timedOut) {
+              if (Buffer.isBuffer(status.stderr)) status.stderr.fill(0);
+              status.stderr = Buffer.alloc(0);
+              fail('DB_URL_CAPTURE_FAILED');
+            }
+            if (status.code !== 0) {
+              if (Buffer.isBuffer(status.stderr)) status.stderr.fill(0);
+              status.stderr = Buffer.alloc(0);
+              fail('DB_URL_CAPTURE_FAILED');
+            }
+            if (validateStatusStderr(status) !== true) fail('DB_URL_CAPTURE_FAILED');
             let values;
             try { values = parseStringMap(status.stdout); } catch { fail('DB_URL_CAPTURE_FAILED'); }
             status.stdout.fill(0);
