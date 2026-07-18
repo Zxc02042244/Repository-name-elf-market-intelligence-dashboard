@@ -137,15 +137,14 @@ jobs:
           chmod 0444 "$migration_dir/20260717235014_strict_token_http_e2e_fixture.sql"
 
       - name: Start local Supabase and run HTTP and SQL regression tests
+        id: strict_tests
         shell: bash
         run: |
           set -euo pipefail
           readonly STRICT_E2E_PROJECT_DIR="${RUNNER_TEMP}/strict-token-http-e2e"
           readonly STRICT_E2E_START_LOG="${RUNNER_TEMP}/strict-token-supabase-start.log"
-          readonly STRICT_E2E_SQL_FILE="${RUNNER_TEMP}/strict-token-regression.sql"
-          readonly STRICT_E2E_SQL_LOG="${RUNNER_TEMP}/strict-token-regression.log"
-          trap 'unset PGDATABASE; rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"' EXIT
-          rm -f -- "$STRICT_E2E_START_LOG" "$STRICT_E2E_SQL_FILE" "$STRICT_E2E_SQL_LOG"
+          trap 'rm -f -- "$STRICT_E2E_START_LOG"' EXIT
+          rm -f -- "$STRICT_E2E_START_LOG"
           cd "$STRICT_E2E_PROJECT_DIR"
 
           if ! supabase start \
@@ -170,25 +169,6 @@ jobs:
           rm -f -- "$STRICT_E2E_START_LOG"
 
           set +x
-          if ! status_values="$(
-              supabase status -o env \
-              --override-name api.url=STRICT_E2E_URL \
-              --override-name auth.anon_key=STRICT_E2E_ANON_KEY \
-              --override-name auth.service_role_key=STRICT_E2E_SERVICE_ROLE_KEY \
-              --override-name db.url=STRICT_E2E_DB_URL \
-              2> /dev/null
-            )"; then
-            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
-            exit 1
-          fi
-          eval "$status_values"
-          unset status_values
-          if [[ -z "${STRICT_E2E_DB_URL:-}" ]]; then
-            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
-            exit 1
-          fi
-          export STRICT_E2E_URL STRICT_E2E_ANON_KEY STRICT_E2E_SERVICE_ROLE_KEY
-
           export STRICT_E2E_CLI_VERSION
           STRICT_E2E_CLI_VERSION="$(supabase --version)"
 
@@ -217,56 +197,696 @@ jobs:
           export STRICT_E2E_POSTGREST_VERSION="${BASH_REMATCH[1]}"
           unset postgrest_image_name
 
-          node "$GITHUB_WORKSPACE/scripts/strict-token-http-e2e.mjs"
+          node --input-type=module <<'HTTP_NODE'
+          import { spawn } from 'node:child_process';
+          import path from 'node:path';
 
-          set +e
-          awk '
-            /^\\ir[[:space:]]+\.\.\/\.\.\/docs\/sql-drafts\/enforce-strict-gallery-visitor-tokens\.sql[[:space:]]*$/ {
-              removed_draft_include += 1
-              next
+          const MAX_STATUS_BYTES = 64 * 1024;
+          let activeChild = null;
+
+          function parseStringMap(raw) {
+            const text = raw.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(raw)) throw new Error();
+            let index = 0;
+            const keys = [];
+            const skipWhitespace = () => {
+              while (index < text.length && /[\x20\x09\x0a\x0d]/.test(text[index])) index += 1;
+            };
+            const readString = () => {
+              if (text[index] !== '"') throw new Error();
+              const start = index;
+              index += 1;
+              while (index < text.length) {
+                const character = text[index];
+                if (character === '"') {
+                  index += 1;
+                  return JSON.parse(text.slice(start, index));
+                }
+                if (character === '\\') {
+                  index += 1;
+                  if (index >= text.length) throw new Error();
+                  if (text[index] === 'u') {
+                    if (!/^[0-9a-fA-F]{4}$/.test(text.slice(index + 1, index + 5))) throw new Error();
+                    index += 5;
+                  } else {
+                    if (!/["\\/bfnrt]/.test(text[index])) throw new Error();
+                    index += 1;
+                  }
+                } else {
+                  if (text.charCodeAt(index) < 0x20) throw new Error();
+                  index += 1;
+                }
+              }
+              throw new Error();
+            };
+
+            skipWhitespace();
+            if (text[index] !== '{') throw new Error();
+            index += 1;
+            skipWhitespace();
+            if (text[index] !== '}') {
+              while (true) {
+                const key = readString();
+                keys.push(key);
+                skipWhitespace();
+                if (text[index] !== ':') throw new Error();
+                index += 1;
+                skipWhitespace();
+                readString();
+                skipWhitespace();
+                if (text[index] === '}') break;
+                if (text[index] !== ',') throw new Error();
+                index += 1;
+                skipWhitespace();
+              }
             }
-            { print }
-            END { if (removed_draft_include != 1) exit 42 }
-          ' "$GITHUB_WORKSPACE/supabase/tests/draft_enforce_strict_gallery_visitor_tokens_test.sql" \
-            > "$STRICT_E2E_SQL_FILE"
-          transform_status=$?
-          set -e
-          if [[ "$transform_status" -ne 0 ]] \
-              || grep -Fq '\ir ../../docs/sql-drafts/enforce-strict-gallery-visitor-tokens.sql' \
-                "$STRICT_E2E_SQL_FILE"; then
-            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
-            exit 1
-          fi
+            index += 1;
+            skipWhitespace();
+            if (index !== text.length || new Set(keys).size !== keys.length) throw new Error();
+            const value = JSON.parse(text);
+            if (value === null || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new Error();
+            if (Object.values(value).some((entry) => typeof entry !== 'string')) throw new Error();
+            return value;
+          }
 
-          if ! command -v psql > /dev/null 2>&1; then
-            printf '%s\n' 'SQL regression | code=RUNNER_UNAVAILABLE | FAIL'
-            rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
-            exit 1
-          fi
+          function capture(command, args, timeoutMs) {
+            return new Promise((resolve) => {
+              let stdout = Buffer.alloc(0);
+              let stderr = Buffer.alloc(0);
+              let overflow = false;
+              let timedOut = false;
+              let spawnError = null;
+              const child = spawn(command, args, { shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+              activeChild = child;
+              const timer = setTimeout(() => {
+                timedOut = true;
+                child.kill('SIGTERM');
+              }, timeoutMs);
+              const append = (current, chunk) => {
+                if (current.length + chunk.length > MAX_STATUS_BYTES) {
+                  overflow = true;
+                  child.kill('SIGTERM');
+                  return current;
+                }
+                return Buffer.concat([current, chunk]);
+              };
+              child.stdout.on('data', (chunk) => { stdout = append(stdout, chunk); });
+              child.stderr.on('data', (chunk) => { stderr = append(stderr, chunk); });
+              child.once('error', (error) => { spawnError = error; });
+              child.once('close', (code, signal) => {
+                clearTimeout(timer);
+                activeChild = null;
+                resolve({ code, signal, stdout, stderr, overflow, timedOut, spawnError });
+              });
+            });
+          }
 
-          export PGDATABASE="$STRICT_E2E_DB_URL"
-          unset STRICT_E2E_DB_URL
-          set +e
-          psql --no-psqlrc --no-password --set=ON_ERROR_STOP=1 \
-            --file="$STRICT_E2E_SQL_FILE" > "$STRICT_E2E_SQL_LOG" 2>&1
-          sql_status=$?
-          set -e
+          function localHttpUrl(value) {
+            if (typeof value !== 'string' || value.length === 0) throw new Error();
+            const parsed = new URL(value);
+            if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+            if (!['localhost', '127.0.0.1'].includes(parsed.hostname)) throw new Error();
+            if (parsed.username || parsed.password || parsed.hash) throw new Error();
+            return value;
+          }
 
-          if [[ "$sql_status" -ne 0 ]]; then
-            printf '%s\n' 'SQL regression | code=SQL_ASSERTION_FAILED | FAIL'
-            rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
-            exit 1
-          fi
-          if ! grep -Fq 'strict-token draft tests passed' "$STRICT_E2E_SQL_LOG"; then
-            printf '%s\n' 'SQL regression | code=SUCCESS_MARKER_MISSING | FAIL'
-            rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
-            exit 1
-          fi
+          const stop = () => {
+            if (activeChild && !activeChild.killed) activeChild.kill('SIGTERM');
+          };
+          process.once('SIGINT', () => { stop(); process.exit(130); });
+          process.once('SIGTERM', () => { stop(); process.exit(143); });
 
-          printf '%s\n' 'SQL regression | code=OK | transaction rollback | PASS'
-          rm -f -- "$STRICT_E2E_SQL_LOG" "$STRICT_E2E_SQL_FILE"
+          try {
+            const names = {
+              api: '__STRICT_HTTP_API_URL__',
+              anon: '__STRICT_HTTP_ANON_KEY__',
+              service: '__STRICT_HTTP_SERVICE_ROLE_KEY__',
+              discardedDb: '__STRICT_HTTP_DISCARDED_DB_URL__'
+            };
+            const status = await capture('supabase', [
+              'status', '-o', 'json',
+              '--override-name', `api.url=${names.api}`,
+              '--override-name', `auth.anon_key=${names.anon}`,
+              '--override-name', `auth.service_role_key=${names.service}`,
+              '--override-name', `db.url=${names.discardedDb}`
+            ], 15_000);
+            if (status.spawnError || status.code !== 0 || status.signal || status.overflow || status.timedOut || status.stderr.length !== 0) throw new Error();
+            const values = parseStringMap(status.stdout);
+            status.stdout.fill(0);
+            for (const name of Object.values(names)) {
+              if (!Object.hasOwn(values, name) || values[name].length === 0) throw new Error();
+            }
+            values[names.discardedDb] = '';
+            const childEnvironment = {
+              LANG: 'C',
+              LC_ALL: 'C',
+              TZ: 'UTC',
+              STRICT_E2E_URL: localHttpUrl(values[names.api]),
+              STRICT_E2E_ANON_KEY: values[names.anon],
+              STRICT_E2E_SERVICE_ROLE_KEY: values[names.service],
+              STRICT_E2E_CLI_VERSION: process.env.STRICT_E2E_CLI_VERSION,
+              STRICT_E2E_POSTGREST_VERSION: process.env.STRICT_E2E_POSTGREST_VERSION
+            };
+            values[names.api] = '';
+            values[names.anon] = '';
+            values[names.service] = '';
+            const scriptPath = path.join(process.env.GITHUB_WORKSPACE, 'scripts', 'strict-token-http-e2e.mjs');
+            const child = spawn(process.execPath, [scriptPath], {
+              shell: false,
+              env: childEnvironment,
+              stdio: ['ignore', 'inherit', 'inherit']
+            });
+            activeChild = child;
+            const result = await new Promise((resolve) => {
+              let spawnError = null;
+              child.once('error', (error) => { spawnError = error; });
+              child.once('close', (code, signal) => resolve({ code, signal, spawnError }));
+            });
+            activeChild = null;
+            for (const key of Object.keys(childEnvironment)) childEnvironment[key] = '';
+            if (result.spawnError || result.signal) throw new Error();
+            if (result.code !== 0) process.exitCode = 1;
+          } catch {
+            stop();
+            console.error('HTTP_STATUS_ADAPTER_FAILED');
+            process.exitCode = 1;
+          }
+          HTTP_NODE
+
+          node --input-type=module <<'SQL_NODE'
+          import { spawn } from 'node:child_process';
+          import {
+            closeSync,
+            constants,
+            lstatSync,
+            mkdirSync,
+            openSync,
+            readFileSync,
+            realpathSync,
+            rmSync,
+            statSync,
+            unlinkSync,
+            writeFileSync,
+            writeSync
+          } from 'node:fs';
+          import path from 'node:path';
+          import { randomBytes, createHash } from 'node:crypto';
+
+          const STATUS_LIMIT = 64 * 1024;
+          const CHECK_LIMIT = 64 * 1024;
+          const LOG_LIMIT = 1024 * 1024;
+          const SQL_LIMIT = 2 * 1024 * 1024;
+          const SUCCESS_SENTINEL = 'strict-token draft tests passed';
+          const INCLUDE_LINE = '\\ir ../../docs/sql-drafts/enforce-strict-gallery-visitor-tokens.sql';
+          const openFds = new Set();
+          const privateFiles = new Set();
+          let privateDirectory = null;
+          let activeChild = null;
+          let sensitiveEnvironment = null;
+
+          class ClassifiedError extends Error {
+            constructor(code) {
+              super(code);
+              this.code = code;
+            }
+          }
+
+          const fail = (code) => { throw new ClassifiedError(code); };
+          const closeTracked = (fd) => {
+            if (openFds.has(fd)) {
+              try { closeSync(fd); } catch {}
+              openFds.delete(fd);
+            }
+          };
+          const cleanupSync = () => {
+            if (activeChild && !activeChild.killed) {
+              try { activeChild.kill('SIGTERM'); } catch {}
+            }
+            activeChild = null;
+            if (sensitiveEnvironment) {
+              for (const key of Object.keys(sensitiveEnvironment)) sensitiveEnvironment[key] = '';
+              sensitiveEnvironment = null;
+            }
+            for (const fd of [...openFds]) closeTracked(fd);
+            for (const file of privateFiles) {
+              try { unlinkSync(file); } catch {}
+            }
+            privateFiles.clear();
+            if (privateDirectory) {
+              try { rmSync(privateDirectory, { recursive: true, force: true }); } catch {}
+              privateDirectory = null;
+            }
+          };
+
+          for (const [signal, exitCode] of [['SIGINT', 130], ['SIGTERM', 143]]) {
+            process.once(signal, () => {
+              cleanupSync();
+              process.exit(exitCode);
+            });
+          }
+          process.once('uncaughtException', () => {
+            console.error('PSQL_EXECUTION_FAILED');
+            cleanupSync();
+            process.exit(1);
+          });
+          process.once('unhandledRejection', () => {
+            console.error('PSQL_EXECUTION_FAILED');
+            cleanupSync();
+            process.exit(1);
+          });
+
+          function parseStringMap(raw) {
+            const text = raw.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(raw)) throw new Error();
+            let index = 0;
+            const keys = [];
+            const skipWhitespace = () => {
+              while (index < text.length && /[\x20\x09\x0a\x0d]/.test(text[index])) index += 1;
+            };
+            const readString = () => {
+              if (text[index] !== '"') throw new Error();
+              const start = index;
+              index += 1;
+              while (index < text.length) {
+                const character = text[index];
+                if (character === '"') {
+                  index += 1;
+                  return JSON.parse(text.slice(start, index));
+                }
+                if (character === '\\') {
+                  index += 1;
+                  if (index >= text.length) throw new Error();
+                  if (text[index] === 'u') {
+                    if (!/^[0-9a-fA-F]{4}$/.test(text.slice(index + 1, index + 5))) throw new Error();
+                    index += 5;
+                  } else {
+                    if (!/["\\/bfnrt]/.test(text[index])) throw new Error();
+                    index += 1;
+                  }
+                } else {
+                  if (text.charCodeAt(index) < 0x20) throw new Error();
+                  index += 1;
+                }
+              }
+              throw new Error();
+            };
+
+            skipWhitespace();
+            if (text[index] !== '{') throw new Error();
+            index += 1;
+            skipWhitespace();
+            if (text[index] !== '}') {
+              while (true) {
+                const key = readString();
+                keys.push(key);
+                skipWhitespace();
+                if (text[index] !== ':') throw new Error();
+                index += 1;
+                skipWhitespace();
+                readString();
+                skipWhitespace();
+                if (text[index] === '}') break;
+                if (text[index] !== ',') throw new Error();
+                index += 1;
+                skipWhitespace();
+              }
+            }
+            index += 1;
+            skipWhitespace();
+            if (index !== text.length || new Set(keys).size !== keys.length) throw new Error();
+            const value = JSON.parse(text);
+            if (value === null || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new Error();
+            if (Object.values(value).some((entry) => typeof entry !== 'string')) throw new Error();
+            return value;
+          }
+
+          function capture(command, args, options = {}) {
+            return new Promise((resolve) => {
+              let stdout = Buffer.alloc(0);
+              let stderr = Buffer.alloc(0);
+              let overflow = false;
+              let timedOut = false;
+              let spawnError = null;
+              const child = spawn(command, args, {
+                shell: false,
+                env: options.env,
+                stdio: ['pipe', 'pipe', 'pipe']
+              });
+              activeChild = child;
+              const timer = setTimeout(() => {
+                timedOut = true;
+                child.kill('SIGTERM');
+              }, options.timeoutMs);
+              const append = (current, chunk, limit) => {
+                if (current.length + chunk.length > limit) {
+                  overflow = true;
+                  child.kill('SIGTERM');
+                  return current;
+                }
+                return Buffer.concat([current, chunk]);
+              };
+              child.stdout.on('data', (chunk) => { stdout = append(stdout, chunk, options.stdoutLimit); });
+              child.stderr.on('data', (chunk) => { stderr = append(stderr, chunk, options.stderrLimit); });
+              child.once('error', (error) => { spawnError = error; });
+              child.once('close', (code, signal) => {
+                clearTimeout(timer);
+                activeChild = null;
+                resolve({ code, signal, stdout, stderr, overflow, timedOut, spawnError });
+              });
+              if (options.stdin === undefined) child.stdin.end();
+              else child.stdin.end(options.stdin);
+            });
+          }
+
+          function parseDatabaseUrl(value) {
+            if (typeof value !== 'string' || value.length === 0 || /[\u0000-\u001f\u007f]/.test(value)) fail('DB_URL_PARSE_FAILED');
+            const rawMatch = value.match(/^(postgres|postgresql):\/\/([^/?#]+)(\/[^?#]*)$/);
+            if (!rawMatch) fail('DB_URL_PARSE_FAILED');
+            const authorityParts = rawMatch[2].split('@');
+            if (authorityParts.length !== 2 || !/^(localhost|127\.0\.0\.1):[0-9]+$/.test(authorityParts[1])) fail('DB_URL_PARSE_FAILED');
+            let parsed;
+            try { parsed = new URL(value); } catch { fail('DB_URL_PARSE_FAILED'); }
+            if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) fail('DB_URL_PARSE_FAILED');
+            if (!['localhost', '127.0.0.1'].includes(parsed.hostname)) fail('DB_URL_PARSE_FAILED');
+            if (!parsed.port || !/^[0-9]+$/.test(parsed.port)) fail('DB_URL_PARSE_FAILED');
+            const port = Number(parsed.port);
+            if (!Number.isInteger(port) || port < 1 || port > 65535) fail('DB_URL_PARSE_FAILED');
+            if (parsed.search || parsed.hash) fail('DB_URL_PARSE_FAILED');
+            if (/%(?:2f|5c)/i.test(value) || value.includes('\\')) fail('DB_URL_PARSE_FAILED');
+            let username;
+            let password;
+            let database;
+            try {
+              username = decodeURIComponent(parsed.username);
+              password = decodeURIComponent(parsed.password);
+              database = decodeURIComponent(parsed.pathname.slice(1));
+            } catch {
+              fail('DB_URL_PARSE_FAILED');
+            }
+            const decoded = [username, password, database];
+            if (decoded.some((entry) => entry.length === 0 || /[\u0000-\u001f\u007f]/.test(entry))) fail('DB_URL_PARSE_FAILED');
+            if (!parsed.pathname.startsWith('/') || database.includes('/') || database.includes('\\')) fail('DB_URL_PARSE_FAILED');
+            if (parsed.pathname.slice(1).includes('/')) fail('DB_URL_PARSE_FAILED');
+            return {
+              PGHOST: parsed.hostname,
+              PGPORT: String(port),
+              PGUSER: username,
+              PGPASSWORD: password,
+              PGDATABASE: database
+            };
+          }
+
+          function createPrivateFile(extension) {
+            const file = path.join(privateDirectory, `${randomBytes(16).toString('hex')}.${extension}`);
+            const flags = constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | (constants.O_NOFOLLOW ?? 0);
+            const fd = openSync(file, flags, 0o600);
+            openFds.add(fd);
+            privateFiles.add(file);
+            if ((statSync(file).mode & 0o777) !== 0o600) fail('SQL_TRANSFORM_FAILED');
+            return { file, fd };
+          }
+
+          function initializePrivateDirectory() {
+            const runnerTemp = realpathSync(process.env.RUNNER_TEMP);
+            const candidate = path.join(runnerTemp, 'strict-token-ci-private');
+            const relative = path.relative(runnerTemp, candidate);
+            if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) fail('SQL_TRANSFORM_FAILED');
+            try {
+              lstatSync(candidate);
+              fail('SQL_TRANSFORM_FAILED');
+            } catch (error) {
+              if (error instanceof ClassifiedError) throw error;
+              if (error?.code !== 'ENOENT') fail('SQL_TRANSFORM_FAILED');
+            }
+            mkdirSync(candidate, { recursive: false, mode: 0o700 });
+            privateDirectory = candidate;
+            const status = lstatSync(candidate);
+            if (status.isSymbolicLink() || !status.isDirectory()) fail('SQL_TRANSFORM_FAILED');
+            if (realpathSync(candidate) !== candidate || (status.mode & 0o777) !== 0o700) fail('SQL_TRANSFORM_FAILED');
+          }
+
+          function transformSql(source) {
+            if (source.length === 0 || source.length > SQL_LIMIT) fail('SQL_TRANSFORM_FAILED');
+            const text = source.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(source) || source.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) fail('SQL_TRANSFORM_FAILED');
+            let newline = null;
+            for (let index = 0; index < source.length; index += 1) {
+              if (source[index] === 0x0d) {
+                if (source[index + 1] !== 0x0a) fail('SQL_TRANSFORM_FAILED');
+                if (newline && newline !== '\r\n') fail('SQL_TRANSFORM_FAILED');
+                newline = '\r\n';
+                index += 1;
+              } else if (source[index] === 0x0a) {
+                if (newline && newline !== '\n') fail('SQL_TRANSFORM_FAILED');
+                newline = '\n';
+              }
+            }
+            if (!newline) fail('SQL_TRANSFORM_FAILED');
+            const lineBytes = Buffer.from(`${INCLUDE_LINE}${newline}`, 'utf8');
+            const matches = [];
+            let offset = 0;
+            while ((offset = source.indexOf(lineBytes, offset)) !== -1) {
+              const lineStart = offset === 0 || source[offset - 1] === 0x0a;
+              if (lineStart) matches.push(offset);
+              offset += lineBytes.length;
+            }
+            if (matches.length !== 1) fail('SQL_TRANSFORM_FAILED');
+            const start = matches[0];
+            const end = start + lineBytes.length;
+            const transformed = Buffer.concat([source.subarray(0, start), source.subarray(end)]);
+            const reconstructed = Buffer.concat([transformed.subarray(0, start), source.subarray(start, end), transformed.subarray(start)]);
+            const originalHash = createHash('sha256').update(source).digest();
+            const reconstructedHash = createHash('sha256').update(reconstructed).digest();
+            if (!reconstructed.equals(source) || !originalHash.equals(reconstructedHash)) fail('SQL_TRANSFORM_FAILED');
+            const sentinelStatement = `select '${SUCCESS_SENTINEL}' as result;`;
+            const sentinelIndex = text.indexOf(sentinelStatement);
+            const lastAssertionIndex = text.lastIndexOf('raise exception');
+            const rollbackIndex = text.indexOf('rollback;', sentinelIndex + sentinelStatement.length);
+            if (sentinelIndex === -1 || text.indexOf(sentinelStatement, sentinelIndex + 1) !== -1 || lastAssertionIndex === -1 || rollbackIndex === -1) fail('SQL_TRANSFORM_FAILED');
+            if (!(lastAssertionIndex < sentinelIndex && sentinelIndex < rollbackIndex)) fail('SQL_TRANSFORM_FAILED');
+            return { transformed, text };
+          }
+
+          function extractFixtureIds(text) {
+            const block = text.match(/delete from public\.skin_gallery_visitors\s+where visitor_id in \(([\s\S]*?)\);/i);
+            if (!block) fail('SQL_TRANSFORM_FAILED');
+            const ids = [...block[1].matchAll(/'([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})'::uuid/ig)].map((match) => match[1]);
+            if (ids.length !== 4 || new Set(ids).size !== ids.length) fail('SQL_TRANSFORM_FAILED');
+            return ids;
+          }
+
+          function checkSql(fixtureIds) {
+            const fixtureArray = fixtureIds.map((id) => `'${id}'::uuid`).join(',');
+            return `select pg_catalog.json_build_object(
+              'visitors', (select count(*) from public.skin_gallery_visitors),
+              'wishes', (select count(*) from public.skin_gallery_wishes),
+              'allowed', (select count(*) from public.skin_gallery_allowed_skins),
+              'fixture_visitors', (select count(*) from public.skin_gallery_visitors where visitor_id = any(array[${fixtureArray}])),
+              'fixture_wishes', (select count(*) from public.skin_gallery_wishes where visitor_id = any(array[${fixtureArray}])),
+              'acl_ok', has_function_privilege('anon', 'public.sync_skin_gallery_state(uuid,uuid,text[])', 'EXECUTE')
+                and has_function_privilege('anon', 'public.delete_skin_gallery_state(uuid,uuid)', 'EXECUTE')
+                and not has_function_privilege('authenticated', 'public.sync_skin_gallery_state(uuid,uuid,text[])', 'EXECUTE')
+                and not has_function_privilege('authenticated', 'public.delete_skin_gallery_state(uuid,uuid)', 'EXECUTE'),
+              'signatures_ok', to_regprocedure('public.sync_skin_gallery_state(uuid,uuid,text[])') is not null
+                and to_regprocedure('public.delete_skin_gallery_state(uuid,uuid)') is not null,
+              'metadata_ok', not exists (
+                select 1 from pg_catalog.pg_proc p
+                join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+                where n.nspname = 'public'
+                  and p.proname in ('sync_skin_gallery_state', 'delete_skin_gallery_state')
+                  and (not p.prosecdef or p.provolatile <> 'v'
+                    or p.prorettype <> 'pg_catalog.jsonb'::pg_catalog.regtype
+                    or pg_catalog.pg_get_userbyid(p.proowner) <> 'postgres'
+                    or not coalesce(p.proconfig, '{}'::text[]) @> array['search_path=""'])
+              ),
+              'inventory_ok', (
+                select count(*) from pg_catalog.pg_proc p
+                join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+                where n.nspname = 'public'
+                  and p.proname in ('sync_skin_gallery_state', 'delete_skin_gallery_state')
+              ) = 2
+            )::text;\n`;
+          }
+
+          function classifyPsql(code) {
+            if (code === 1) return 'PSQL_CLIENT_FAILED';
+            if (code === 2) return 'PSQL_CONNECTION_FAILED';
+            if (code === 3) return 'SQL_SCRIPT_FAILED';
+            return 'PSQL_EXECUTION_FAILED';
+          }
+
+          function classifyPostcheck(code) {
+            if (code === 1) return 'POSTCHECK_CLIENT_FAILED';
+            if (code === 2) return 'POSTCHECK_CONNECTION_FAILED';
+            return 'POSTCHECK_SQL_FAILED';
+          }
+
+          async function runCheck(sql, pgEnvironment) {
+            const result = await capture('psql', [
+              '--no-psqlrc',
+              '--no-password',
+              '--set=ON_ERROR_STOP=1',
+              '--no-align',
+              '--tuples-only',
+              '--quiet'
+            ], {
+              env: pgEnvironment,
+              stdin: Buffer.from(sql, 'utf8'),
+              timeoutMs: 30_000,
+              stdoutLimit: CHECK_LIMIT,
+              stderrLimit: CHECK_LIMIT
+            });
+            if (result.spawnError?.code === 'ENOENT') fail('RUNNER_UNAVAILABLE');
+            if (result.spawnError || result.signal || result.timedOut || result.overflow) fail('POSTCHECK_SQL_FAILED');
+            if (result.code !== 0) fail(classifyPostcheck(result.code));
+            if (result.stderr.length !== 0) fail('POSTCHECK_OUTPUT_INVALID');
+            const text = result.stdout.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(result.stdout) || !/^[^\r\n]+\n$/.test(text)) fail('POSTCHECK_OUTPUT_INVALID');
+            let value;
+            try { value = JSON.parse(text.slice(0, -1)); } catch { fail('POSTCHECK_OUTPUT_INVALID'); }
+            const expectedKeys = ['acl_ok', 'allowed', 'fixture_visitors', 'fixture_wishes', 'inventory_ok', 'metadata_ok', 'signatures_ok', 'visitors', 'wishes'];
+            if (value === null || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) fail('POSTCHECK_OUTPUT_INVALID');
+            if (Object.keys(value).sort().join(',') !== expectedKeys.join(',')) fail('POSTCHECK_OUTPUT_INVALID');
+            for (const key of ['visitors', 'wishes', 'allowed', 'fixture_visitors', 'fixture_wishes']) {
+              if (!Number.isSafeInteger(value[key]) || value[key] < 0) fail('POSTCHECK_OUTPUT_INVALID');
+            }
+            for (const key of ['acl_ok', 'signatures_ok', 'metadata_ok', 'inventory_ok']) {
+              if (typeof value[key] !== 'boolean') fail('POSTCHECK_OUTPUT_INVALID');
+            }
+            return value;
+          }
+
+          function runRegression(sqlFile, stdoutFd, stderrFd, pgEnvironment) {
+            return new Promise((resolve) => {
+              let stdoutBytes = 0;
+              let stderrBytes = 0;
+              let overflow = false;
+              let timedOut = false;
+              let spawnError = null;
+              const child = spawn('psql', [
+                '--no-psqlrc',
+                '--no-password',
+                '--set=ON_ERROR_STOP=1',
+                '--no-align',
+                '--tuples-only',
+                '--quiet',
+                `--file=${sqlFile}`
+              ], {
+                shell: false,
+                env: pgEnvironment,
+                stdio: ['ignore', 'pipe', 'pipe']
+              });
+              activeChild = child;
+              const timer = setTimeout(() => {
+                timedOut = true;
+                child.kill('SIGTERM');
+              }, 120_000);
+              const writeLimited = (fd, chunk, streamName) => {
+                if ((streamName === 'stdout' ? stdoutBytes : stderrBytes) + chunk.length > LOG_LIMIT) {
+                  overflow = true;
+                  child.kill('SIGTERM');
+                  return;
+                }
+                writeSync(fd, chunk);
+                if (streamName === 'stdout') stdoutBytes += chunk.length;
+                else stderrBytes += chunk.length;
+              };
+              child.stdout.on('data', (chunk) => writeLimited(stdoutFd, chunk, 'stdout'));
+              child.stderr.on('data', (chunk) => writeLimited(stderrFd, chunk, 'stderr'));
+              child.once('error', (error) => { spawnError = error; });
+              child.once('close', (code, signal) => {
+                clearTimeout(timer);
+                activeChild = null;
+                resolve({ code, signal, overflow, timedOut, spawnError, stdoutBytes, stderrBytes });
+              });
+            });
+          }
+
+          async function main() {
+            const statusKey = '__STRICT_CI_DB_URL__';
+            const status = await capture('supabase', [
+              'status', '-o', 'json',
+              '--override-name', `db.url=${statusKey}`
+            ], {
+              timeoutMs: 15_000,
+              stdoutLimit: STATUS_LIMIT,
+              stderrLimit: STATUS_LIMIT
+            });
+            if (status.spawnError || status.code !== 0 || status.signal || status.overflow || status.timedOut || status.stderr.length !== 0) fail('DB_URL_CAPTURE_FAILED');
+            let values;
+            try { values = parseStringMap(status.stdout); } catch { fail('DB_URL_CAPTURE_FAILED'); }
+            status.stdout.fill(0);
+            if (!Object.hasOwn(values, statusKey) || values[statusKey].length === 0) fail('DB_URL_CAPTURE_FAILED');
+            let databaseUrl = values[statusKey];
+            const connection = parseDatabaseUrl(databaseUrl);
+            values[statusKey] = '';
+            databaseUrl = '';
+            const pgEnvironment = {
+              PATH: process.env.PATH,
+              LANG: 'C',
+              LC_ALL: 'C',
+              TZ: 'UTC',
+              PGCONNECT_TIMEOUT: '10',
+              PGHOST: connection.PGHOST,
+              PGPORT: connection.PGPORT,
+              PGUSER: connection.PGUSER,
+              PGPASSWORD: connection.PGPASSWORD,
+              PGDATABASE: connection.PGDATABASE
+            };
+            sensitiveEnvironment = pgEnvironment;
+
+            initializePrivateDirectory();
+            const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'supabase', 'tests', 'draft_enforce_strict_gallery_visitor_tokens_test.sql');
+            const source = readFileSync(sourcePath);
+            const { transformed, text } = transformSql(source);
+            const fixtureIds = extractFixtureIds(text);
+            const sqlCopy = createPrivateFile('sql');
+            if (transformed.length > SQL_LIMIT) fail('SQL_TRANSFORM_FAILED');
+            writeFileSync(sqlCopy.fd, transformed);
+            closeTracked(sqlCopy.fd);
+            const stdoutLog = createPrivateFile('stdout');
+            const stderrLog = createPrivateFile('stderr');
+
+            const probeSql = checkSql(fixtureIds);
+            const before = await runCheck(probeSql, pgEnvironment);
+            if (before.fixture_visitors !== 0 || before.fixture_wishes !== 0) fail('FIXTURE_STATE_INVALID');
+            if (!before.acl_ok || !before.signatures_ok || !before.metadata_ok || !before.inventory_ok) fail('RPC_METADATA_DRIFT');
+
+            const regression = await runRegression(sqlCopy.file, stdoutLog.fd, stderrLog.fd, pgEnvironment);
+            closeTracked(stdoutLog.fd);
+            closeTracked(stderrLog.fd);
+            if (regression.spawnError?.code === 'ENOENT') fail('RUNNER_UNAVAILABLE');
+            if (regression.spawnError || regression.signal || regression.overflow || regression.timedOut) fail('PSQL_EXECUTION_FAILED');
+            if (regression.code !== 0) fail(classifyPsql(regression.code));
+            const stdout = readFileSync(stdoutLog.file);
+            if (stdout.length !== regression.stdoutBytes) fail('SUCCESS_MARKER_INVALID');
+            const stdoutText = stdout.toString('utf8');
+            if (!Buffer.from(stdoutText, 'utf8').equals(stdout) || stdoutText.includes('\r')) fail('SUCCESS_MARKER_INVALID');
+            const markerCount = stdoutText.split('\n').filter((line) => line === SUCCESS_SENTINEL).length;
+            if (markerCount !== 1) fail('SUCCESS_MARKER_INVALID');
+
+            const after = await runCheck(probeSql, pgEnvironment);
+            if (after.fixture_visitors !== 0 || after.fixture_wishes !== 0) fail('FIXTURE_STATE_INVALID');
+            if (!after.acl_ok || !after.signatures_ok || !after.metadata_ok || !after.inventory_ok) fail('RPC_METADATA_DRIFT');
+            if (before.visitors !== after.visitors || before.wishes !== after.wishes || before.allowed !== after.allowed) fail('ROLLBACK_VERIFICATION_FAILED');
+
+            for (const key of Object.keys(pgEnvironment)) pgEnvironment[key] = '';
+            sensitiveEnvironment = null;
+            console.log('SQL regression | code=OK | transaction rollback and fixtures verified | PASS');
+          }
+
+          try {
+            await main();
+          } catch (error) {
+            console.error(error instanceof ClassifiedError ? error.code : 'PSQL_EXECUTION_FAILED');
+            process.exitCode = 1;
+          } finally {
+            cleanupSync();
+          }
+          SQL_NODE
 
       - name: Verify the checkout stayed unchanged
+        id: checkout_pollution
         if: always()
         shell: bash
         run: |
@@ -276,22 +896,32 @@ jobs:
           [[ -z "$(git status --porcelain=v1 --untracked-files=all)" ]]
 
       - name: Stop the isolated local stack and remove test files
+        id: cleanup
         if: always()
         shell: bash
         run: |
           set -u
           readonly STRICT_E2E_PROJECT_DIR="${RUNNER_TEMP}/strict-token-http-e2e"
+          readonly STRICT_E2E_PRIVATE_DIR="${RUNNER_TEMP}/strict-token-ci-private"
           cleanup_failed=0
 
-          rm -f -- \
-            "${RUNNER_TEMP}/strict-token-supabase-start.log" \
-            "${RUNNER_TEMP}/strict-token-regression.sql" \
-            "${RUNNER_TEMP}/strict-token-regression.log"
+          rm -f -- "${RUNNER_TEMP}/strict-token-supabase-start.log"
 
-          case "$STRICT_E2E_PROJECT_DIR" in
-            "${RUNNER_TEMP}/"*) ;;
-            *) printf '%s\n' 'Cleanup | HTTP 0 | code=PATH_REJECTED | FAIL'; exit 1 ;;
-          esac
+          for cleanup_path in "$STRICT_E2E_PROJECT_DIR" "$STRICT_E2E_PRIVATE_DIR"; do
+            case "$cleanup_path" in
+              "${RUNNER_TEMP}/"*) ;;
+              *) printf '%s\n' 'Cleanup | HTTP 0 | code=PATH_REJECTED | FAIL'; exit 1 ;;
+            esac
+          done
+
+          if [[ -L "$STRICT_E2E_PRIVATE_DIR" ]]; then
+            rm -f -- "$STRICT_E2E_PRIVATE_DIR"
+          elif [[ -e "$STRICT_E2E_PRIVATE_DIR" ]]; then
+            rm -rf -- "$STRICT_E2E_PRIVATE_DIR"
+          fi
+          if [[ -e "$STRICT_E2E_PRIVATE_DIR" || -L "$STRICT_E2E_PRIVATE_DIR" ]]; then
+            cleanup_failed=1
+          fi
 
           if [[ -d "$STRICT_E2E_PROJECT_DIR/supabase" ]]; then
             cd "$STRICT_E2E_PROJECT_DIR"
@@ -310,5 +940,23 @@ jobs:
             printf '%s\n' 'Cleanup | HTTP 0 | code=STACK_STOPPED_AND_FILES_REMOVED | PASS'
           else
             printf '%s\n' 'Cleanup | HTTP 0 | code=CLEANUP_FAILED | FAIL'
+            exit 1
+          fi
+
+      - name: Confirm the isolated CI result
+        if: always()
+        shell: bash
+        env:
+          STRICT_TEST_OUTCOME: ${{ steps.strict_tests.outcome }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout_pollution.outcome }}
+          CLEANUP_OUTCOME: ${{ steps.cleanup.outcome }}
+        run: |
+          set -euo pipefail
+          if [[ "$STRICT_TEST_OUTCOME" == 'success' \
+              && "$CHECKOUT_OUTCOME" == 'success' \
+              && "$CLEANUP_OUTCOME" == 'success' ]]; then
+            printf '%s\n' 'Strict-token isolated CI | code=ALL_GATES_PASSED | PASS'
+          else
+            printf '%s\n' 'Strict-token isolated CI | code=GATE_FAILED | FAIL'
             exit 1
           fi
