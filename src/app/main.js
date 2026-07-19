@@ -90,7 +90,7 @@ function renderApp({ preserveUi = false } = {}) {
           <p class="page-summary">
             ${headerCopy.subtitle}
           </p>
-          ${isHome ? renderHomeHeaderDetails(appState.skinWishlist, appState.skinCommunity) : ""}
+          ${isHome ? renderHomeHeaderDetails(appState.skinWishlist) : ""}
         </div>
         <div class="header-actions">
           ${!isHome ? renderLanguageSwitch(appState.locale) : ""}
@@ -188,7 +188,7 @@ function refreshHomeDataView() {
   const wishlist = withCommunityWishlist(appState.skinWishlist, appState.skinCommunity);
 
   template.innerHTML = `
-    ${renderHomeHeaderDetails(appState.skinWishlist, appState.skinCommunity)}
+    ${renderHomeHeaderDetails(appState.skinWishlist)}
     ${renderElfSkinLandingView(
       catalog,
       wishlist,
@@ -481,10 +481,8 @@ function renderRouteTabs(isHome) {
   `;
 }
 
-function renderHomeHeaderDetails(wishlistState, communityState) {
+function renderHomeHeaderDetails(wishlistState) {
   const wishlist = normalizeHeaderWishlist(wishlistState);
-  const community = normalizeCommunityState(communityState);
-  const visitorCount = community.visitorCount ?? wishlist.visitorCount;
 
   return `
     <div class="home-header-details">
@@ -496,7 +494,6 @@ function renderHomeHeaderDetails(wishlistState, communityState) {
           selected: formatNumber(wishlist.selectedIds.length, { locale: appState.locale }),
           limit: formatNumber(PRODUCT_RULES.wishlistLimit, { locale: appState.locale })
         }))}
-        ${renderHomeHeaderMetric(translate("elfLanding.localVisitors"), formatNumber(visitorCount, { locale: appState.locale }))}
         <button class="home-header-edit-wishes" type="button" data-skin-home-tab="gallery">
           ${translate("elfLanding.editWishes")}
         </button>
@@ -525,9 +522,6 @@ function renderHomeHeaderMetric(label, value, detail = "") {
 
 function normalizeHeaderWishlist(wishlistState) {
   return {
-    visitorCount: Number.isFinite(Number(wishlistState?.visitorCount))
-      ? Number(wishlistState.visitorCount)
-      : 0,
     selectedIds: Array.isArray(wishlistState?.selectedIds)
       ? wishlistState.selectedIds
       : []
@@ -535,36 +529,12 @@ function normalizeHeaderWishlist(wishlistState) {
 }
 
 function normalizeCommunityState(communityState) {
-  const visitorCount = Number(communityState?.visitorCount);
-
   return {
     status: communityState?.status ?? "disabled",
     syncStatus: communityState?.syncStatus ?? "disabled",
-    visitorCount: Number.isFinite(visitorCount) && visitorCount > 0
-      ? Math.floor(visitorCount)
-      : null,
     wishlistLeaders: Array.isArray(communityState?.wishlistLeaders)
       ? communityState.wishlistLeaders
       : []
-  };
-}
-
-function getVisitorMetricCopy(locale, communityStatus) {
-  if (communityStatus === "remote" || communityStatus === "loading") {
-    return locale === "zh-Hant"
-      ? {
-        label: "全站來訪",
-        detail: "每個瀏覽器匿名計一次"
-      }
-      : {
-        label: "Community visitors",
-        detail: "One anonymous browser counts once"
-      };
-  }
-
-  return {
-    label: translate("elfLanding.localVisitors"),
-    detail: translate("elfLanding.localVisitorsHint")
   };
 }
 

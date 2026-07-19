@@ -732,9 +732,6 @@ function normalizeHomeTab(tab) {
 
 function normalizeWishlist(wishlistState) {
   return {
-    visitorCount: Number.isFinite(Number(wishlistState?.visitorCount))
-      ? Number(wishlistState.visitorCount)
-      : 0,
     selectedIds: Array.isArray(wishlistState?.selectedIds)
       ? wishlistState.selectedIds
       : [],
@@ -744,14 +741,9 @@ function normalizeWishlist(wishlistState) {
 }
 
 function normalizeCommunity(communityState) {
-  const visitorCount = Number(communityState?.visitorCount);
-
   return {
     status: communityState?.status ?? "disabled",
     syncStatus: communityState?.syncStatus ?? "disabled",
-    visitorCount: Number.isFinite(visitorCount) && visitorCount > 0
-      ? Math.floor(visitorCount)
-      : null,
     wishlistLeaders: Array.isArray(communityState?.wishlistLeaders)
       ? communityState.wishlistLeaders
       : []

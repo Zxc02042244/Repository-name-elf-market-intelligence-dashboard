@@ -50,7 +50,9 @@ Authority levels:
 - Current browser storage keys cover locale, local wishlist, the committed
   anonymous visitor ID/token pair, and a short-lived pending replacement
   credential used only after an exact machine-readable rejection.
-- Test inventory: 87 Node test cases plus 23 Playwright test cases, for 110
+- The wishlist envelope persists only `selectedIds`; legacy local visitor-count
+  properties are ignored and removed by the next wishlist write.
+- Test inventory: 90 Node test cases plus 26 Playwright test cases, for 116
   total.
 - Active workflow: the skin supply snapshot workflow runs once per hour.
 - Historical market collector: the existing collector remains a dry-run
@@ -273,9 +275,9 @@ Test inventory:
 
 | Suite | Declarations | Scope |
 | --- | ---: | --- |
-| Node tests | 42 | Config/formatters, MarketModel, market lifecycle/modules, skin source, and community security |
-| Playwright tests | 12 | Responsive UI, navigation, storage safety, and unified card-frame behavior |
-| **Total** | **54** | Current automated declaration count |
+| Node tests | 78 | Config/formatters, MarketModel, market lifecycle/modules, skin source, and community security |
+| Playwright tests | 26 | Responsive UI, navigation, storage safety, and unified card-frame behavior |
+| **Total** | **104** | Current automated declaration count |
 
 Workflow:
 
