@@ -517,7 +517,7 @@ jobs:
             const expectedErr = [
               'DRY RUN: migrations will *not* be pushed to the database.',
               'Connecting to remote database...',
-              'Would push these migrations:', ` ??${TARGET}`, ''
+              'Would push these migrations:', ` • ${TARGET}`, ''
             ].join('\n');
             if (strictText(result.stdout, 'DRY_RUN_RESULT_INVALID') !== expectedOut ||
                 strictText(result.stderr, 'DRY_RUN_RESULT_INVALID') !== expectedErr) {
@@ -535,7 +535,7 @@ jobs:
             const allowed = new Set([
               'Connecting to remote database...',
               'Do you want to push these migrations to the remote database?',
-              ` ??${TARGET}`, '', ' [Y/n] y', `Applying migration ${TARGET}...`
+              ` • ${TARGET}`, '', ' [Y/n] y', `Applying migration ${TARGET}...`
             ]);
             if (stderr.split('\n').some((line) => !allowed.has(line))) fail('PUSH_STATE_UNKNOWN');
           }
