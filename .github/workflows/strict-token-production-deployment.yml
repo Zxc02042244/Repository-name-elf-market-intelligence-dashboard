@@ -474,7 +474,7 @@ jobs:
           function parseRows(result, keys, code) {
             validateResult(result, code);
             const stdout = strictText(result.stdout, code);
-            if (strictText(result.stderr, code) !== 'Connecting to remote database...\n') fail(code);
+            if (strictText(result.stderr, code) !== '') fail(code);
             for (const key of keys) {
               if (stdout.split(`"${key}"`).length - 1 !== 1) fail(code);
             }
