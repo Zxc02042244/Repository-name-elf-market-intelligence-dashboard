@@ -221,6 +221,56 @@ test("valid committed credentials update without rotation", async () => {
   });
 });
 
+test("legacy wishlist visitor fields are inert and the next wishlist write keeps only selected IDs", async () => {
+  await withBrowserHarness({
+    initialValues: {
+      [STORAGE_KEYS.skinWishlist]: JSON.stringify({
+        visitorCount: 42,
+        hasCountedLocalVisit: true,
+        selectedIds: ["arale"]
+      })
+    }
+  }, async (harness) => {
+    const initialState = createSkinWishlistState();
+
+    assert.deepEqual(initialState, {
+      selectedIds: ["arale"],
+      notice: ""
+    });
+    assert.equal(harness.setCounts.get(STORAGE_KEYS.skinWishlist) ?? 0, 0);
+
+    const nextState = toggleSkinWishlistSelection(initialState, "toy-sheriff");
+    const storedWishlist = JSON.parse(harness.values.get(STORAGE_KEYS.skinWishlist));
+
+    assert.deepEqual(nextState, {
+      selectedIds: ["arale", "toy-sheriff"],
+      notice: ""
+    });
+    assert.deepEqual(storedWishlist, {
+      selectedIds: ["arale", "toy-sheriff"]
+    });
+  });
+});
+
+for (const response of [
+  { name: "zero visitor count", json: { visitorCount: 0, wishlistLeaders: [] } },
+  { name: "missing visitor count", json: { wishlistLeaders: [] } }
+]) {
+  test(`community sync accepts ${response.name} without retaining visitor state`, async () => {
+    await withBrowserHarness({
+      initialValues: committedValues(),
+      responses: [{ status: 200, json: response.json }]
+    }, async () => {
+      const state = await syncSkinCommunityWishlist(["arale"]);
+
+      assert.equal(state.status, "remote");
+      assert.equal(state.syncStatus, "synced");
+      assert.equal(Object.prototype.hasOwnProperty.call(state, "visitorCount"), false);
+      assert.deepEqual(state.wishlistLeaders, []);
+    });
+  });
+}
+
 test("only the exact HTTP 409 credential code is classified for rotation", () => {
   assert.equal(isCredentialRejection(new SkinCommunityRpcError({
     operation: COMMUNITY_OPERATIONS.sync,
@@ -725,18 +775,18 @@ test("zero-filled random bytes fail closed", () => {
   }), /Community credential storage is unavailable/);
 });
 
-test("malformed HTTP 200 payload is never marked synced", async () => {
-  await withBrowserHarness({
-    initialValues: committedValues(),
-    responses: [{ status: 200, json: { visitorCount: "many", wishlistLeaders: [] } }]
-  }, async (harness) => {
-    await assert.rejects(syncSkinCommunityWishlist(["arale"]), (error) => {
-      assert.equal(error.kind, "invalid-payload");
-      return true;
+test("present visitor count still rejects negative, non-integer, and wrong-type values", async () => {
+  for (const visitorCount of [-1, 1.5, "many"]) {
+    await withBrowserHarness({
+      initialValues: committedValues(),
+      responses: [{ status: 200, json: { visitorCount, wishlistLeaders: [] } }]
+    }, async () => {
+      await assert.rejects(syncSkinCommunityWishlist(["arale"]), (error) => {
+        assert.equal(error.kind, "invalid-payload");
+        return true;
+      });
     });
-    assert.equal(harness.requests.length, 1);
-    assert.equal(harness.values.has(STORAGE_KEYS.skinVisitorPending), false);
-  });
+  }
 });
 
 test("normal sync response body failure is a safe transient network error", async () => {
@@ -856,8 +906,8 @@ test("delete treats a missing pending server row as a safe no-op success", async
       [STORAGE_KEYS.skinVisitorPending]: JSON.stringify(pendingEnvelope())
     }),
     responses: [
-      { status: 200, json: { visitorCount: 1, wishlistLeaders: [] } },
-      { status: 200, json: { visitorCount: 1, wishlistLeaders: [] } }
+      { status: 200, json: { wishlistLeaders: [] } },
+      { status: 200, json: { wishlistLeaders: [] } }
     ]
   }, async (harness) => {
     const state = await forgetSkinCommunityData();

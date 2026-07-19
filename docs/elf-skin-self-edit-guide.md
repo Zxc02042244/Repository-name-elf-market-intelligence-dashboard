@@ -10,9 +10,8 @@
 - `Supply / 供給量排行`：顯示官方皮膚供給量排行，目前是 Top 10。
 - `Skins / 官方皮膚`：顯示官方皮膚清單或空狀態。
 
-另有兩個輔助資料：
+另有一個輔助資料：
 
-- `Community visitors / 來訪數`：以瀏覽器本地 visitor id 計算，一個瀏覽器通常只算一次。
 - `Today added / 今日新增`：由每日供給快照比較出來，不是玩家開頁面即時寫入。
 
 ## 2. 最常改的檔案
@@ -127,19 +126,19 @@
 重要內容：
 
 - 每個瀏覽器最多 3 個願望。
-- 願望存在 `localStorage`。
+- 願望的 `selectedIds` 存在 `localStorage`；舊 envelope 內的 `visitorCount` 與 `hasCountedLocalVisit` 不再讀取或計算，下一次願望寫入會只保留 `selectedIds`。
 - 使用者可新增或取消願望。
 - 本地資料不等於全站統計，只有同步到 Supabase 後才會成為社群總數的一部分。
 
 ### `src/features/skins/state/skin-community-stats.js`
 
-社群願望統計與匿名訪客 ID 在這裡。
+社群願望同步、response validation 與匿名 credential 流程協調在這裡。
 
 重要內容：
 
-- 建立或讀取本地 `visitor_id`。
+- 透過獨立 credential lifecycle 取得匿名 visitor ID/token。
 - 把本地選擇的 skin id 送到 Supabase。
-- 讀取全站願望排行與來訪數。
+- 讀取全站願望排行。Backend 仍可計算及回傳 `visitorCount`，但 Frontend 不顯示或保留該欄位；缺少該欄位的合法 response 也可正常運作。
 - 不收集玩家帳號、錢包、email 或個人資料。
 
 ### `src/features/skins/state/skin-community-credentials.js`
@@ -165,6 +164,8 @@
 - visitor ID：`elfSkinGallery.visitorId.v1`
 - visitor token：`elfSkinGallery.visitorToken.v1`
 - pending replacement credential：`elfSkinGallery.visitorPending.v1`
+
+Wishlist key 與匿名 credential keys 彼此獨立；不得為了移除舊 visitor count 欄位而清除整個 Wishlist key 或任何 credential key。
 
 不要把「清除全部 localStorage」當成一般無害除錯步驟；這會重設語言與本地願望、遺失 committed／pending visitor credential，並可能讓 legacy／NULL-hash visitor 的後續同步需要額外處理。Pending token 不得放進 DOM、URL、log、analytics 或 BroadcastChannel。
 

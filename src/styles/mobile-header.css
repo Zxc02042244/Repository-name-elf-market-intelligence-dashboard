@@ -1,6 +1,6 @@
 @media (max-width: 920px) {
   .home-header-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .app-header.app-header-skins {
@@ -10,7 +10,7 @@
   }
 
   .app-header-skins .home-header-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
   }
 }
@@ -88,21 +88,6 @@
     font-size: 0.96rem;
   }
 
-  .app-header-skins .home-header-metric:nth-child(2) strong {
-    color: #d8eaff;
-  }
-
-  .app-header-skins .home-header-metric:nth-child(2) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-color: rgb(116 215 255 / 20%);
-    padding: 6px 10px;
-    background:
-      linear-gradient(90deg, rgb(116 215 255 / 10%), transparent 62%),
-      rgb(5 10 12 / 54%);
-  }
-
   .app-header-skins .language-switch {
     display: grid;
     align-content: center;
@@ -163,12 +148,11 @@
   }
 
   .app-header-skins .home-header-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(96px, auto);
+    grid-template-columns: minmax(0, 1fr) minmax(96px, auto);
     gap: 6px;
   }
 
   .app-header-skins .home-header-metric:first-child,
-  .app-header-skins .home-header-metric:nth-child(2),
   .app-header-skins .language-switch {
     grid-row: 1;
     min-height: 44px;
@@ -178,12 +162,8 @@
     grid-column: 1;
   }
 
-  .app-header-skins .home-header-metric:nth-child(2) {
-    grid-column: 2;
-  }
-
   .app-header-skins .language-switch {
-    grid-column: 3;
+    grid-column: 2;
     width: auto;
   }
 

@@ -30,7 +30,6 @@ export function createSkinCommunityState() {
   return {
     status: config.enabled ? "idle" : "disabled",
     syncStatus: config.enabled ? "credential-ready" : "disabled",
-    visitorCount: null,
     wishlistLeaders: [],
     detail: ""
   };
@@ -472,7 +471,6 @@ function normalizeCommunityPayload(payload, syncStatus) {
   return {
     status: "remote",
     syncStatus,
-    visitorCount: payload.visitorCount,
     wishlistLeaders: payload.wishlistLeaders
       .slice(0, PRODUCT_RULES.rankingLimit)
       .map((leader) => ({
@@ -488,8 +486,10 @@ function isValidCommunityPayload(payload) {
     payload
     && typeof payload === "object"
     && !Array.isArray(payload)
-    && Number.isInteger(payload.visitorCount)
-    && payload.visitorCount >= 0
+    && (
+      !Object.prototype.hasOwnProperty.call(payload, "visitorCount")
+      || (Number.isInteger(payload.visitorCount) && payload.visitorCount >= 0)
+    )
     && Array.isArray(payload.wishlistLeaders)
     && payload.wishlistLeaders.every((leader) => (
       leader

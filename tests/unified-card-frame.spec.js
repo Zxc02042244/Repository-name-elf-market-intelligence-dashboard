@@ -183,6 +183,24 @@ test("every champion reuses the single global frame", async ({ page }) => {
   expect(layout.nameInside).toBe(true);
 });
 
+test("legacy wishlist storage preserves selections without visitor UI or local visitor fields", async ({ context, page }) => {
+  await installCommittedCredentialFixture(context, ["arale"]);
+  await page.goto("/?v=playwright-visitor-decoupling#home", {
+    waitUntil: "domcontentloaded"
+  });
+
+  await expect(page.locator(".app-header-skins .home-header-metric")).toHaveCount(1);
+  await page.locator("[data-wishlist-toggle='toy-sheriff']:visible").first().click();
+
+  const storedWishlist = await page.evaluate((key) => (
+    JSON.parse(localStorage.getItem(key))
+  ), STORAGE_KEYS.skinWishlist);
+
+  expect(storedWishlist).toEqual({
+    selectedIds: ["arale", "toy-sheriff"]
+  });
+});
+
 test("ranking preview and wishlist controls keep independent keyboard semantics", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/?v=playwright-ranking-keyboard-contract#home", {

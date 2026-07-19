@@ -154,6 +154,13 @@ test("mobile home tabs are deep linked and primary navigation stays reachable", 
   await expect(page.locator(".mobile-primary-nav a[aria-current='page']")).toHaveAttribute("href", "#home");
   await expect(page.locator(".app-header .route-market-link")).toBeHidden();
   await expect(page.locator(".app-header-skins .page-summary")).toBeHidden();
+  await expect(page.locator(".app-header-skins .home-header-metric")).toHaveCount(1);
+  await expect(page.locator(".app-header-skins .home-header-edit-wishes")).toBeHidden();
+
+  const mobileHeaderColumns = await page.locator(".app-header-skins .home-header-metrics").evaluate((element) => (
+    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length
+  ));
+  expect(mobileHeaderColumns).toBe(2);
 
   const homeHeaderHeight = await page.locator(".app-header-skins").evaluate((element) => element.getBoundingClientRect().height);
   expect(homeHeaderHeight).toBeLessThanOrEqual(130);
@@ -311,6 +318,8 @@ test("desktop keeps the full header and does not render mobile navigation", asyn
   await expect(page.locator(".mobile-primary-nav")).toBeHidden();
   await expect(page.locator(".app-header-skins .route-market-link")).toBeVisible();
   await expect(page.locator(".elf-home-tabs-desktop")).toBeVisible();
+  await expect(page.locator(".app-header-skins .home-header-metric")).toHaveCount(1);
+  await expect(page.locator(".app-header-skins .home-header-metrics > *:visible")).toHaveCount(3);
 
   const desktopSupplyTab = page.locator(".elf-home-tabs-desktop [data-skin-home-tab='supply']");
   await desktopSupplyTab.click();
@@ -360,6 +369,9 @@ test("responsive view boundary switches exactly between 920 and 921 pixels", asy
 
   await expect(page.locator('[data-skin-champion-view="mobile"]')).toBeVisible();
   await expect(page.locator('[data-skin-champion-view="desktop"]')).toBeHidden();
+  await expect.poll(async () => page.locator(".app-header-skins .home-header-metrics").evaluate((element) => (
+    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length
+  ))).toBe(3);
 
   await page.setViewportSize({ width: 921, height: 900 });
 
@@ -368,7 +380,15 @@ test("responsive view boundary switches exactly between 920 and 921 pixels", asy
 
   await page.setViewportSize({ width: 620, height: 900 });
   await expect(page.locator(".mobile-primary-nav")).toBeVisible();
+  await expect(page.locator(".app-header-skins .home-header-edit-wishes")).toBeHidden();
+  await expect.poll(async () => page.locator(".app-header-skins .home-header-metrics").evaluate((element) => (
+    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length
+  ))).toBe(2);
 
   await page.setViewportSize({ width: 621, height: 900 });
   await expect(page.locator(".mobile-primary-nav")).toBeHidden();
+  await expect(page.locator(".app-header-skins .home-header-edit-wishes")).toBeVisible();
+  await expect.poll(async () => page.locator(".app-header-skins .home-header-metrics").evaluate((element) => (
+    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length
+  ))).toBe(3);
 });
