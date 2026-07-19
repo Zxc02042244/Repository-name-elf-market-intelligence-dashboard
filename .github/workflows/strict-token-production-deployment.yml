@@ -1,0 +1,713 @@
+name: Strict-token Production Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type STRICT_TOKEN_PRODUCTION_DEPLOY_20260717235013
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: strict-token-production-migration
+  cancel-in-progress: false
+
+jobs:
+  static-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out the reviewed deployment source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: 320acb38678a49da561122618a47cd4cb2c9d44d
+          persist-credentials: false
+
+      - name: Verify dispatch and reviewed migration source
+        shell: bash
+        env:
+          ACTUAL_CONFIRMATION: ${{ inputs.confirmation }}
+          ACTUAL_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          readonly expected_confirmation='STRICT_TOKEN_PRODUCTION_DEPLOY_20260717235013'
+          readonly expected_ref='refs/heads/main'
+          readonly expected_commit='320acb38678a49da561122618a47cd4cb2c9d44d'
+          readonly expected_blob='245a21725ae84401ebb822298f7328f01360f719'
+          readonly migration='supabase/migrations/20260717235013_enforce_strict_gallery_visitor_tokens.sql'
+
+          [[ "$ACTUAL_CONFIRMATION" == "$expected_confirmation" ]]
+          [[ "$ACTUAL_REF" == "$expected_ref" ]]
+          [[ "$(git rev-parse HEAD)" == "$expected_commit" ]]
+          [[ -f "$migration" && ! -L "$migration" ]]
+          [[ "$(git hash-object -- "$migration")" == "$expected_blob" ]]
+
+          mapfile -t migrations < <(
+            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' |
+              LC_ALL=C sort
+          )
+          readonly expected_migrations=(
+            '20260714141341_skin_gallery_security_hardening.sql'
+            '20260715165129_harden_public_rpc_privileges.sql'
+            '20260717235013_enforce_strict_gallery_visitor_tokens.sql'
+          )
+          [[ "${#migrations[@]}" -eq "${#expected_migrations[@]}" ]]
+          for index in "${!expected_migrations[@]}"; do
+            [[ "${migrations[$index]}" == "${expected_migrations[$index]}" ]]
+          done
+
+  production-deployment:
+    needs: static-gate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: Production
+    steps:
+      - name: Check out the reviewed deployment source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: 320acb38678a49da561122618a47cd4cb2c9d44d
+          persist-credentials: false
+
+      - name: Reverify the reviewed source after approval
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly expected_commit='320acb38678a49da561122618a47cd4cb2c9d44d'
+          readonly expected_blob='245a21725ae84401ebb822298f7328f01360f719'
+          readonly migration='supabase/migrations/20260717235013_enforce_strict_gallery_visitor_tokens.sql'
+          [[ "$(git rev-parse HEAD)" == "$expected_commit" ]]
+          [[ -f "$migration" && ! -L "$migration" ]]
+          [[ "$(git hash-object -- "$migration")" == "$expected_blob" ]]
+
+      - name: Install the pinned Supabase CLI
+        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          version: 2.109.1
+
+      - name: Apply the reviewed migration once and verify read-only gates
+        id: deployment
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+        run: |
+          set +x
+          node --input-type=module <<'DEPLOYMENT_NODE'
+          import { spawn } from 'node:child_process';
+          import { createHash, randomBytes } from 'node:crypto';
+          import {
+            closeSync, constants, lstatSync, mkdirSync, openSync, readFileSync,
+            readdirSync, realpathSync, rmSync, writeFileSync
+          } from 'node:fs';
+          import path from 'node:path';
+
+          const MAX_OUTPUT = 64 * 1024;
+          const MAX_FILE = 1024 * 1024;
+          const MAX_PRIVATE = 8 * 1024 * 1024;
+          const EXPECTED_CLI = '2.109.1';
+          const TARGET = '20260717235013_enforce_strict_gallery_visitor_tokens.sql';
+          const MIGRATIONS = Object.freeze([
+            '20260714141341_skin_gallery_security_hardening.sql',
+            '20260715165129_harden_public_rpc_privileges.sql',
+            TARGET
+          ]);
+          const ANCHOR = 'strict-token-production-deployment';
+          const FULL_SQL_SHA256 = '6d429ea68a07b12a052b26e137472480c20b982f5649b3a17f298a3dcaf7d0a3';
+          const REGISTRY_SQL_SHA256 = 'b15eb192d6b84eec39f873acb58abe2910381396647c361b885940cfffed27b2';
+
+          const FULL_SQL = `WITH
+          registry AS (
+            SELECT
+              pg_catalog.count(*)::integer AS registry_total,
+              pg_catalog.count(*) FILTER (WHERE version = '20260714141341')::integer AS base_one_count,
+              pg_catalog.count(*) FILTER (WHERE version = '20260715165129')::integer AS base_two_count,
+              pg_catalog.count(*) FILTER (WHERE version = '20260717235013')::integer AS target_count,
+              pg_catalog.count(*) FILTER (
+                WHERE version NOT IN ('20260714141341', '20260715165129', '20260717235013')
+              )::integer AS other_count
+            FROM supabase_migrations.schema_migrations
+          ),
+          counts AS (
+            SELECT
+              (SELECT pg_catalog.count(*)::integer FROM public.skin_gallery_visitors) AS visitors_total,
+              (SELECT pg_catalog.count(*)::integer FROM public.skin_gallery_visitors WHERE visitor_secret_hash IS NOT NULL) AS hashed_visitors_total,
+              (SELECT pg_catalog.count(*)::integer FROM public.skin_gallery_visitors WHERE visitor_secret_hash IS NULL) AS null_hash_visitors_total,
+              (SELECT pg_catalog.count(*)::integer FROM public.skin_gallery_wishes) AS wishes_total,
+              (
+                SELECT pg_catalog.count(*)::integer
+                FROM public.skin_gallery_wishes AS wishes
+                WHERE NOT EXISTS (
+                  SELECT 1 FROM public.skin_gallery_visitors AS visitors
+                  WHERE visitors.visitor_id = wishes.visitor_id
+                )
+              ) AS orphan_wishes_total
+          ),
+          rpcs AS (
+            SELECT p.*
+            FROM pg_catalog.pg_proc AS p
+            JOIN pg_catalog.pg_namespace AS n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public'
+              AND p.proname IN ('sync_skin_gallery_state', 'delete_skin_gallery_state')
+          ),
+          rpc_checks AS (
+            SELECT
+              (
+                pg_catalog.count(*) = 2
+                AND pg_catalog.count(*) FILTER (
+                  WHERE proname = 'sync_skin_gallery_state'
+                    AND proargtypes = '2950 2950 1009'::oidvector
+                    AND proargnames = ARRAY['p_visitor_id', 'p_visitor_token', 'p_skin_ids']::text[]
+                ) = 1
+                AND pg_catalog.count(*) FILTER (
+                  WHERE proname = 'delete_skin_gallery_state'
+                    AND proargtypes = '2950 2950'::oidvector
+                    AND proargnames = ARRAY['p_visitor_id', 'p_visitor_token']::text[]
+                ) = 1
+              ) AS rpc_inventory_ok,
+              pg_catalog.bool_and(
+                CASE proname
+                  WHEN 'sync_skin_gallery_state' THEN pg_catalog.md5(prosrc) = '68d1000342e9b07e575cc2b40bc0feb8'
+                  WHEN 'delete_skin_gallery_state' THEN pg_catalog.md5(prosrc) = 'dfe6ed7ad306152f5a2373e26a63231c'
+                  ELSE false
+                END
+              ) AS rpc_pre_body_ok,
+              pg_catalog.bool_and(
+                CASE proname
+                  WHEN 'sync_skin_gallery_state' THEN pg_catalog.md5(prosrc) = 'df9120b9514341b50ff0f0c407793f75'
+                  WHEN 'delete_skin_gallery_state' THEN pg_catalog.md5(prosrc) = '04e783854ad624e99a3847297426e152'
+                  ELSE false
+                END
+              ) AS rpc_strict_body_ok,
+              pg_catalog.bool_and(
+                prorettype = 3802
+                AND pg_catalog.pg_get_userbyid(proowner) = 'postgres'
+                AND provolatile = 'v'
+                AND prosecdef
+                AND proconfig = ARRAY['search_path=""']::text[]
+              ) AS rpc_metadata_ok,
+              pg_catalog.bool_and(
+                pg_catalog.has_function_privilege('anon', oid, 'EXECUTE')
+                AND NOT pg_catalog.has_function_privilege('authenticated', oid, 'EXECUTE')
+                AND NOT pg_catalog.has_function_privilege('service_role', oid, 'EXECUTE')
+                AND proacl IS NOT NULL
+                AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.aclexplode(proacl) AS acl
+                  LEFT JOIN pg_catalog.pg_roles AS role_entry ON role_entry.oid = acl.grantee
+                  WHERE acl.privilege_type = 'EXECUTE'
+                    AND acl.grantee <> proowner
+                    AND (acl.grantee = 0 OR role_entry.rolname IS DISTINCT FROM 'anon')
+                )
+              ) AS rpc_acl_ok
+            FROM rpcs
+          )
+          SELECT registry.*, counts.*, rpc_checks.*
+          FROM registry, counts, rpc_checks`;
+
+          const REGISTRY_SQL = `SELECT
+          pg_catalog.count(*)::integer AS registry_total,
+          pg_catalog.count(*) FILTER (WHERE version = '20260714141341')::integer AS base_one_count,
+          pg_catalog.count(*) FILTER (WHERE version = '20260715165129')::integer AS base_two_count,
+          pg_catalog.count(*) FILTER (WHERE version = '20260717235013')::integer AS target_count,
+          pg_catalog.count(*) FILTER (
+            WHERE version NOT IN ('20260714141341', '20260715165129', '20260717235013')
+          )::integer AS other_count
+          FROM supabase_migrations.schema_migrations`;
+
+          const FULL_KEYS = Object.freeze([
+            'registry_total', 'base_one_count', 'base_two_count', 'target_count', 'other_count',
+            'visitors_total', 'hashed_visitors_total', 'null_hash_visitors_total',
+            'wishes_total', 'orphan_wishes_total', 'rpc_inventory_ok', 'rpc_pre_body_ok',
+            'rpc_strict_body_ok', 'rpc_metadata_ok', 'rpc_acl_ok'
+          ]);
+          const REGISTRY_KEYS = Object.freeze(FULL_KEYS.slice(0, 5));
+
+          class GateError extends Error {
+            constructor(code) { super(code); this.code = code; }
+          }
+          const fail = (code) => { throw new GateError(code); };
+
+          let activeChild = null;
+          let terminateChild = null;
+          let outer = null;
+          let privateRoot = null;
+          let token = '';
+          let password = '';
+          let project = '';
+          let tokenBytes = Buffer.alloc(0);
+          let passwordBytes = Buffer.alloc(0);
+          let interrupted = false;
+          let pushStarted = false;
+          let pushSucceeded = false;
+          let pushCount = 0;
+
+          function strictText(buffer, code) {
+            if (!Buffer.isBuffer(buffer) || buffer.length > MAX_OUTPUT) fail(code);
+            const text = buffer.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(buffer)) fail(code);
+            if (/\u001b|[\u0000-\u0009\u000b-\u001f\u007f]/u.test(text)) fail(code);
+            return text;
+          }
+
+          function wipe(result) {
+            result?.stdout?.fill(0);
+            result?.stderr?.fill(0);
+            if (result) { result.stdout = Buffer.alloc(0); result.stderr = Buffer.alloc(0); result.error = null; }
+          }
+
+          function run(args, env, cwd, timeoutMs, input = null) {
+            return new Promise((resolve) => {
+              let stdout = Buffer.alloc(0);
+              let stderr = Buffer.alloc(0);
+              let overflow = false;
+              let timedOut = false;
+              let error = null;
+              let settled = false;
+              let stopping = false;
+              let commandTimer;
+              let killTimer;
+              let settleTimer;
+              const child = spawn('supabase', args, {
+                shell: false,
+                cwd,
+                env,
+                stdio: [input === null ? 'ignore' : 'pipe', 'pipe', 'pipe']
+              });
+              activeChild = child;
+
+              const signal = (name) => { try { child.kill(name); } catch {} };
+              const remove = () => {
+                child.stdout?.removeListener('data', onOut);
+                child.stderr?.removeListener('data', onErr);
+                child.removeListener('error', onError);
+                child.removeListener('close', onClose);
+              };
+              const settle = (code, childSignal, hard = false) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(commandTimer); clearTimeout(killTimer); clearTimeout(settleTimer);
+                remove();
+                if (hard) {
+                  for (const stream of [child.stdin, child.stdout, child.stderr]) {
+                    try { stream?.destroy(); } catch {}
+                  }
+                  try { child.unref(); } catch {}
+                }
+                if (activeChild === child && !hard) activeChild = null;
+                if (terminateChild === stop) terminateChild = null;
+                resolve({ code, signal: childSignal, stdout, stderr, overflow, timedOut, error });
+              };
+              function stop(timeout = false) {
+                if (timeout) timedOut = true;
+                if (stopping || settled) return;
+                stopping = true;
+                signal('SIGTERM');
+                killTimer = setTimeout(() => {
+                  signal('SIGKILL');
+                  settleTimer = setTimeout(() => settle(null, 'SIGKILL', true), 5_000);
+                }, 5_000);
+              }
+              const append = (current, chunk) => {
+                if (current.length + chunk.length > MAX_OUTPUT) {
+                  overflow = true; stop(); return current;
+                }
+                return Buffer.concat([current, chunk]);
+              };
+              const onOut = (chunk) => { stdout = append(stdout, chunk); };
+              const onErr = (chunk) => { stderr = append(stderr, chunk); };
+              const onError = (value) => { error = value; settle(null, null, true); };
+              const onClose = (code, childSignal) => settle(code, childSignal);
+              child.stdout.on('data', onOut);
+              child.stderr.on('data', onErr);
+              child.once('error', onError);
+              child.once('close', onClose);
+              terminateChild = stop;
+              commandTimer = setTimeout(() => stop(true), timeoutMs);
+              if (input !== null) {
+                child.stdin.once('error', () => stop());
+                child.stdin.end(input);
+              }
+            });
+          }
+
+          function validateResult(result, code) {
+            if (result.error?.code === 'ENOENT') fail('RUNNER_UNAVAILABLE');
+            if (result.error || result.signal || result.timedOut || result.overflow || interrupted) fail(code);
+            strictText(result.stdout, code); strictText(result.stderr, code);
+            if (result.code !== 0) fail(code);
+          }
+
+          function makeDirectory(directory) {
+            mkdirSync(directory, { mode: 0o700 });
+            const stat = lstatSync(directory);
+            if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o777) !== 0o700) {
+              fail('PRIVATE_STATE_INVALID');
+            }
+          }
+
+          function makeFile(file, bytes) {
+            const flags = constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY |
+              (constants.O_NOFOLLOW ?? 0);
+            const fd = openSync(file, flags, 0o600);
+            try { writeFileSync(fd, bytes); } finally { closeSync(fd); }
+          }
+
+          function initializePrivateState() {
+            const input = process.env.RUNNER_TEMP ?? '';
+            if (!path.isAbsolute(input) || input === path.parse(input).root) fail('PRIVATE_STATE_INVALID');
+            const stat = lstatSync(input);
+            if (!stat.isDirectory() || stat.isSymbolicLink()) fail('PRIVATE_STATE_INVALID');
+            const runnerTemp = realpathSync(input);
+            outer = path.join(runnerTemp, ANCHOR);
+            if (path.dirname(outer) !== runnerTemp || path.basename(outer) !== ANCHOR) fail('PRIVATE_STATE_INVALID');
+            try { lstatSync(outer); fail('PRIVATE_STATE_INVALID'); } catch (error) {
+              if (error instanceof GateError || error?.code !== 'ENOENT') throw error;
+            }
+            makeDirectory(outer);
+            privateRoot = path.join(outer, `private-${randomBytes(16).toString('hex')}`);
+            makeDirectory(privateRoot);
+            for (const name of ['home', 'xdg-config', 'xdg-data', 'xdg-cache', 'tmp', 'work']) {
+              makeDirectory(path.join(privateRoot, name));
+            }
+            makeDirectory(path.join(privateRoot, 'home', 'supabase'));
+            makeDirectory(path.join(privateRoot, 'work', 'supabase'));
+            makeDirectory(path.join(privateRoot, 'work', 'supabase', 'migrations'));
+          }
+
+          function copyMigrations() {
+            const workspace = realpathSync(process.env.GITHUB_WORKSPACE ?? '');
+            const target = path.join(privateRoot, 'work', 'supabase', 'migrations');
+            for (const name of MIGRATIONS) {
+              const source = path.join(workspace, 'supabase', 'migrations', name);
+              const stat = lstatSync(source);
+              if (!stat.isFile() || stat.isSymbolicLink() || stat.size > MAX_FILE) fail('PRIVATE_STATE_INVALID');
+              const bytes = readFileSync(source);
+              try { makeFile(path.join(target, name), bytes); } finally { bytes.fill(0); }
+            }
+            const config = Buffer.from(
+              'project_id = "strict-token-production-deployment"\n\n' +
+              '[db.migrations]\nenabled = true\n\n[db.seed]\nenabled = false\n',
+              'utf8'
+            );
+            try { makeFile(path.join(privateRoot, 'work', 'supabase', 'config.toml'), config); }
+            finally { config.fill(0); }
+          }
+
+          function baseEnvironment() {
+            if (!process.env.PATH) fail('PRIVATE_STATE_INVALID');
+            const home = path.join(privateRoot, 'home');
+            return {
+              PATH: process.env.PATH,
+              HOME: home,
+              SUPABASE_HOME: path.join(home, 'supabase'),
+              XDG_CONFIG_HOME: path.join(privateRoot, 'xdg-config'),
+              XDG_DATA_HOME: path.join(privateRoot, 'xdg-data'),
+              XDG_CACHE_HOME: path.join(privateRoot, 'xdg-cache'),
+              TMPDIR: path.join(privateRoot, 'tmp'),
+              TMP: path.join(privateRoot, 'tmp'),
+              TEMP: path.join(privateRoot, 'tmp'),
+              LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8', TZ: 'UTC', CI: 'true', NO_COLOR: '1'
+            };
+          }
+
+          function passwordedUri(content) {
+            const text = content.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(content)) return true;
+            for (const candidate of text.match(/postgres(?:ql)?:\/\/[^\s\u0000]+/giu) ?? []) {
+              try { if (new URL(candidate).password) return true; } catch { return true; }
+            }
+            return false;
+          }
+
+          function scanPrivateState() {
+            if (!privateRoot) return false;
+            let detected = false;
+            let total = 0;
+            const visit = (current) => {
+              if (detected) return;
+              const stat = lstatSync(current);
+              if (stat.isSymbolicLink()) { detected = true; return; }
+              if (stat.isDirectory()) {
+                if ((stat.mode & 0o777) !== 0o700) { detected = true; return; }
+                for (const name of readdirSync(current)) visit(path.join(current, name));
+                return;
+              }
+              if (!stat.isFile() || (stat.mode & 0o777) !== 0o600 || stat.size > MAX_FILE) {
+                detected = true; return;
+              }
+              total += stat.size;
+              if (total > MAX_PRIVATE) { detected = true; return; }
+              const content = readFileSync(current);
+              try {
+                if ((tokenBytes.length && content.indexOf(tokenBytes) !== -1) ||
+                    (passwordBytes.length && content.indexOf(passwordBytes) !== -1) ||
+                    passwordedUri(content)) detected = true;
+              } finally { content.fill(0); }
+            };
+            visit(privateRoot);
+            return detected;
+          }
+
+          function validateSql(sql, expectedHash, relations) {
+            if (!/^[\x0a\x20-\x7e]+$/u.test(sql) ||
+                createHash('sha256').update(sql, 'utf8').digest('hex') !== expectedHash) {
+              fail('SELECT_ONLY_POLICY_FAILED');
+            }
+            const normalized = sql.toLowerCase();
+            if (normalized.includes(';') || normalized.includes('${') || /--|\/\*|\*\//u.test(normalized)) {
+              fail('SELECT_ONLY_POLICY_FAILED');
+            }
+            const policy = normalized.replace(/'(?:''|[^'])*'/gu, "''");
+            if (/\b(insert|update|delete|merge|create|alter|drop|truncate|do|call|copy|vacuum|analyze|lock|set|reset|begin|commit|rollback|savepoint|release|grant|revoke|execute|prepare|deallocate|listen|notify|unlisten|temporary|temp)\b|\bselect\s+into\b|\bfor\s+(update|share)\b/iu.test(policy)) {
+              fail('SELECT_ONLY_POLICY_FAILED');
+            }
+            for (const match of normalized.matchAll(/\b(?:from|join)\s+([a-z_][a-z0-9_.]*)/gu)) {
+              if (!relations.has(match[1])) fail('SELECT_ONLY_POLICY_FAILED');
+            }
+          }
+
+          function parseRows(result, keys, code) {
+            validateResult(result, code);
+            const stdout = strictText(result.stdout, code);
+            if (strictText(result.stderr, code) !== 'Connecting to remote database...\n') fail(code);
+            for (const key of keys) {
+              if (stdout.split(`"${key}"`).length - 1 !== 1) fail(code);
+            }
+            let parsed;
+            try { parsed = JSON.parse(stdout); } catch { fail(code); }
+            if (!Array.isArray(parsed) || parsed.length !== 1 || !parsed[0] ||
+                typeof parsed[0] !== 'object' || Array.isArray(parsed[0])) fail(code);
+            const row = parsed[0];
+            const actual = Object.keys(row).sort();
+            const expected = [...keys].sort();
+            if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) fail(code);
+            return row;
+          }
+
+          function validateFull(row, phase) {
+            const numbers = FULL_KEYS.slice(0, 10);
+            const booleans = FULL_KEYS.slice(10);
+            if (numbers.some((key) => !Number.isSafeInteger(row[key]) || row[key] < 0) ||
+                booleans.some((key) => typeof row[key] !== 'boolean')) fail(`${phase.toUpperCase()}CHECK_FAILED`);
+            const post = phase === 'post';
+            if (row.registry_total !== (post ? 3 : 2) || row.base_one_count !== 1 ||
+                row.base_two_count !== 1 || row.target_count !== (post ? 1 : 0) ||
+                row.other_count !== 0 || row.visitors_total !== 229 ||
+                row.hashed_visitors_total !== 229 || row.null_hash_visitors_total !== 0 ||
+                row.wishes_total !== 24 || row.orphan_wishes_total !== 0 ||
+                row.visitors_total !== row.hashed_visitors_total || !row.rpc_inventory_ok ||
+                row.rpc_pre_body_ok !== !post || row.rpc_strict_body_ok !== post ||
+                !row.rpc_metadata_ok || !row.rpc_acl_ok) fail(`${phase.toUpperCase()}CHECK_FAILED`);
+          }
+
+          function validateRegistry(row) {
+            if (REGISTRY_KEYS.some((key) => !Number.isSafeInteger(row[key]) || row[key] < 0) ||
+                row.registry_total !== 2 || row.base_one_count !== 1 || row.base_two_count !== 1 ||
+                row.target_count !== 0 || row.other_count !== 0) fail('REGISTRY_RECHECK_FAILED');
+          }
+
+          function validateDryRun(result) {
+            validateResult(result, 'DRY_RUN_FAILED');
+            const expectedOut = 'Finished supabase db push.\n';
+            const expectedErr = [
+              'DRY RUN: migrations will *not* be pushed to the database.',
+              'Connecting to remote database...',
+              'Would push these migrations:', ` ??${TARGET}`, ''
+            ].join('\n');
+            if (strictText(result.stdout, 'DRY_RUN_RESULT_INVALID') !== expectedOut ||
+                strictText(result.stderr, 'DRY_RUN_RESULT_INVALID') !== expectedErr) {
+              fail('DRY_RUN_RESULT_INVALID');
+            }
+          }
+
+          function validatePush(result) {
+            validateResult(result, 'PUSH_STATE_UNKNOWN');
+            const stdout = strictText(result.stdout, 'PUSH_STATE_UNKNOWN');
+            const stderr = strictText(result.stderr, 'PUSH_STATE_UNKNOWN');
+            if (stdout !== 'Finished supabase db push.\n' || stderr.split(TARGET).length - 1 !== 2) {
+              fail('PUSH_STATE_UNKNOWN');
+            }
+            const allowed = new Set([
+              'Connecting to remote database...',
+              'Do you want to push these migrations to the remote database?',
+              ` ??${TARGET}`, '', ' [Y/n] y', `Applying migration ${TARGET}...`
+            ]);
+            if (stderr.split('\n').some((line) => !allowed.has(line))) fail('PUSH_STATE_UNKNOWN');
+          }
+
+          function clearEnvironment(environment) {
+            if (environment) for (const key of Object.keys(environment)) environment[key] = '';
+          }
+
+          function cleanup() {
+            if (!outer) return;
+            const runnerTemp = realpathSync(process.env.RUNNER_TEMP ?? '');
+            if (outer !== path.join(runnerTemp, ANCHOR)) throw new Error();
+            rmSync(outer, { recursive: true, force: true });
+            try { lstatSync(outer); throw new Error(); } catch (error) {
+              if (error?.code !== 'ENOENT') throw error;
+            }
+            outer = null; privateRoot = null;
+          }
+
+          const stopActive = () => {
+            interrupted = true;
+            if (terminateChild) terminateChild();
+            else try { activeChild?.kill('SIGTERM'); } catch {}
+          };
+          process.once('SIGINT', stopActive);
+          process.once('SIGTERM', stopActive);
+
+          let classification = null;
+          let persistence = false;
+          let linkEnv = null;
+          let queryEnv = null;
+          let dryEnv = null;
+          let pushEnv = null;
+          try {
+            process.umask(0o077);
+            if (!process.env.SUPABASE_ACCESS_TOKEN || !process.env.SUPABASE_DB_PASSWORD ||
+                !process.env.SUPABASE_PROJECT_ID) fail('CONFIGURATION_MISSING');
+            token = process.env.SUPABASE_ACCESS_TOKEN;
+            password = process.env.SUPABASE_DB_PASSWORD;
+            project = process.env.SUPABASE_PROJECT_ID;
+            tokenBytes = Buffer.from(token, 'utf8');
+            passwordBytes = Buffer.from(password, 'utf8');
+            delete process.env.SUPABASE_ACCESS_TOKEN;
+            delete process.env.SUPABASE_DB_PASSWORD;
+            delete process.env.SUPABASE_PROJECT_ID;
+
+            const fullRelations = new Set([
+              'supabase_migrations.schema_migrations', 'public.skin_gallery_visitors',
+              'public.skin_gallery_wishes', 'pg_catalog.pg_proc', 'pg_catalog.pg_namespace',
+              'pg_catalog.aclexplode', 'pg_catalog.pg_roles', 'rpcs', 'registry'
+            ]);
+            validateSql(FULL_SQL, FULL_SQL_SHA256, fullRelations);
+            validateSql(REGISTRY_SQL, REGISTRY_SQL_SHA256,
+              new Set(['supabase_migrations.schema_migrations']));
+
+            initializePrivateState();
+            copyMigrations();
+            const cwd = path.join(privateRoot, 'work');
+            const base = baseEnvironment();
+
+            const version = await run(['--version'], base, cwd, 30_000);
+            try {
+              validateResult(version, 'CLI_VERSION_MISMATCH');
+              if (strictText(version.stdout, 'CLI_VERSION_MISMATCH') !== `${EXPECTED_CLI}\n`) {
+                fail('CLI_VERSION_MISMATCH');
+              }
+            } finally { wipe(version); }
+
+            linkEnv = { ...base, SUPABASE_ACCESS_TOKEN: token };
+            if (Object.hasOwn(linkEnv, 'SUPABASE_DB_PASSWORD')) fail('CONFIGURATION_MISSING');
+            const link = await run(['link', '--project-ref', project], linkEnv, cwd, 120_000);
+            clearEnvironment(linkEnv); linkEnv = null;
+            try { validateResult(link, 'CREDENTIAL_VALIDATION_FAILED'); } finally { wipe(link); }
+            if (scanPrivateState()) fail('SECRET_PERSISTENCE_DETECTED');
+
+            queryEnv = { ...base, SUPABASE_ACCESS_TOKEN: token, SUPABASE_DB_PASSWORD: password };
+            const fullInput = Buffer.from(FULL_SQL, 'utf8');
+            const precheck = await run(
+              ['--agent', 'no', 'db', 'query', '--linked', '-o', 'json'],
+              queryEnv, cwd, 120_000, fullInput
+            );
+            fullInput.fill(0);
+            try { validateFull(parseRows(precheck, FULL_KEYS, 'PRECHECK_FAILED'), 'pre'); }
+            finally { wipe(precheck); }
+
+            dryEnv = { ...base, SUPABASE_DB_PASSWORD: password };
+            const dryRun = await run(['db', 'push', '--linked', '--dry-run'], dryEnv, cwd, 120_000);
+            clearEnvironment(dryEnv); dryEnv = null;
+            try { validateDryRun(dryRun); } finally { wipe(dryRun); }
+
+            const registryInput = Buffer.from(REGISTRY_SQL, 'utf8');
+            const registry = await run(
+              ['--agent', 'no', 'db', 'query', '--linked', '-o', 'json'],
+              queryEnv, cwd, 120_000, registryInput
+            );
+            registryInput.fill(0);
+            try { validateRegistry(parseRows(registry, REGISTRY_KEYS, 'REGISTRY_RECHECK_FAILED')); }
+            finally { wipe(registry); }
+            if (scanPrivateState()) fail('SECRET_PERSISTENCE_DETECTED');
+
+            if (pushCount !== 0 || pushStarted) fail('PUSH_ONCE_GUARD_FAILED');
+            pushCount = 1; pushStarted = true;
+            pushEnv = { ...base, SUPABASE_DB_PASSWORD: password, SUPABASE_YES: 'true' };
+            const push = await run(['db', 'push', '--linked'], pushEnv, cwd, 180_000);
+            clearEnvironment(pushEnv); pushEnv = null;
+            try { validatePush(push); pushSucceeded = true; } finally { wipe(push); }
+            if (pushCount !== 1) fail('PUSH_ONCE_GUARD_FAILED');
+
+            const postInput = Buffer.from(FULL_SQL, 'utf8');
+            const postcheck = await run(
+              ['--agent', 'no', 'db', 'query', '--linked', '-o', 'json'],
+              queryEnv, cwd, 120_000, postInput
+            );
+            postInput.fill(0);
+            try { validateFull(parseRows(postcheck, FULL_KEYS, 'POSTCHECK_FAILED'), 'post'); }
+            finally { wipe(postcheck); }
+          } catch (error) {
+            classification = pushStarted && !pushSucceeded
+              ? 'PUSH_STATE_UNKNOWN'
+              : (error instanceof GateError ? error.code :
+                (pushSucceeded ? 'POSTCHECK_FAILED' : 'DEPLOYMENT_PREFLIGHT_FAILED'));
+          } finally {
+            try { persistence = scanPrivateState(); } catch { persistence = true; }
+            try { activeChild?.kill('SIGKILL'); } catch {}
+            try { activeChild?.stdin?.destroy(); activeChild?.stdout?.destroy(); activeChild?.stderr?.destroy(); }
+            catch {}
+            activeChild = null; terminateChild = null;
+            for (const environment of [linkEnv, queryEnv, dryEnv, pushEnv]) clearEnvironment(environment);
+            token = ''; password = ''; project = '';
+            tokenBytes.fill(0); passwordBytes.fill(0);
+            tokenBytes = Buffer.alloc(0); passwordBytes = Buffer.alloc(0);
+            // JavaScript strings are immutable; clearing references cannot guarantee in-place zeroing.
+            if (interrupted && !classification) {
+              classification = pushStarted && !pushSucceeded ? 'PUSH_STATE_UNKNOWN' : 'DEPLOYMENT_INTERRUPTED';
+            }
+            try { cleanup(); } catch { if (!classification && !persistence) classification = 'CLEANUP_FAILED'; }
+            if (persistence) classification = 'SECRET_PERSISTENCE_DETECTED';
+          }
+
+          if (classification) { console.error(classification); process.exitCode = 1; }
+          DEPLOYMENT_NODE
+
+      - name: Remove all private linked state
+        id: cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          fail_cleanup() { printf '%s\n' 'CLEANUP_GUARD_FAILED'; exit 1; }
+          readonly basename='strict-token-production-deployment'
+          readonly input="${RUNNER_TEMP-}"
+          [[ -n "$input" && "$input" == /* && "$input" != / && -d "$input" && ! -L "$input" ]] || fail_cleanup
+          runner="$(realpath -e -- "$input")" || fail_cleanup
+          [[ -n "$runner" && "$runner" == /* && "$runner" != / && -d "$runner" && ! -L "$runner" ]] || fail_cleanup
+          readonly target="${runner}/${basename}"
+          [[ "$(dirname -- "$target")" == "$runner" && "$(basename -- "$target")" == "$basename" ]] || fail_cleanup
+          [[ ! -L "$target" ]] || fail_cleanup
+          if [[ -e "$target" ]]; then
+            resolved="$(realpath -e -- "$target")" || fail_cleanup
+            [[ "$resolved" == "$target" && "$(dirname -- "$resolved")" == "$runner" ]] || fail_cleanup
+            [[ "$(basename -- "$resolved")" == "$basename" && -d "$resolved" && ! -L "$resolved" ]] || fail_cleanup
+            rm -rf -- "$resolved" || fail_cleanup
+          fi
+          [[ ! -e "$target" && ! -L "$target" ]] || fail_cleanup
+
+      - name: Confirm the deployment result
+        if: always()
+        shell: bash
+        env:
+          DEPLOYMENT_OUTCOME: ${{ steps.deployment.outcome }}
+          CLEANUP_OUTCOME: ${{ steps.cleanup.outcome }}
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOYMENT_OUTCOME" == success && "$CLEANUP_OUTCOME" == success ]]
+          printf '%s\n' 'STRICT_TOKEN_PRODUCTION_DEPLOYED | POSTCHECK_PASSED'
