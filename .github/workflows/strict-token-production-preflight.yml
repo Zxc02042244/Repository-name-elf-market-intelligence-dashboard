@@ -1,0 +1,727 @@
+name: Strict-token Production Preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type STRICT_TOKEN_PRODUCTION_PREFLIGHT_20260717235013
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: strict-token-production-migration
+  cancel-in-progress: false
+
+jobs:
+  static-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out the reviewed migration source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: c0e16a4306dff0762bf583dfb4f755e038ae087e
+          persist-credentials: false
+
+      - name: Verify dispatch and reviewed migration source
+        shell: bash
+        env:
+          ACTUAL_CONFIRMATION: ${{ inputs.confirmation }}
+          ACTUAL_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          readonly expected_confirmation='STRICT_TOKEN_PRODUCTION_PREFLIGHT_20260717235013'
+          readonly expected_ref='refs/heads/main'
+          readonly expected_commit='c0e16a4306dff0762bf583dfb4f755e038ae087e'
+          readonly expected_blob='245a21725ae84401ebb822298f7328f01360f719'
+          readonly migration='supabase/migrations/20260717235013_enforce_strict_gallery_visitor_tokens.sql'
+
+          [[ "$ACTUAL_CONFIRMATION" == "$expected_confirmation" ]]
+          [[ "$ACTUAL_REF" == "$expected_ref" ]]
+          [[ "$(git rev-parse HEAD)" == "$expected_commit" ]]
+          [[ -f "$migration" && ! -L "$migration" ]]
+          [[ "$(git hash-object -- "$migration")" == "$expected_blob" ]]
+
+          mapfile -t migrations < <(
+            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' \
+              | LC_ALL=C sort
+          )
+          readonly expected_migrations=(
+            '20260714141341_skin_gallery_security_hardening.sql'
+            '20260715165129_harden_public_rpc_privileges.sql'
+            '20260717235013_enforce_strict_gallery_visitor_tokens.sql'
+          )
+          [[ "${#migrations[@]}" -eq "${#expected_migrations[@]}" ]]
+          for index in "${!expected_migrations[@]}"; do
+            [[ "${migrations[$index]}" == "${expected_migrations[$index]}" ]]
+          done
+
+  production-preflight:
+    needs: static-gate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: Production
+    steps:
+      - name: Check out the reviewed migration source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: c0e16a4306dff0762bf583dfb4f755e038ae087e
+          persist-credentials: false
+
+      - name: Reverify the reviewed source without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly expected_commit='c0e16a4306dff0762bf583dfb4f755e038ae087e'
+          readonly expected_blob='245a21725ae84401ebb822298f7328f01360f719'
+          readonly migration='supabase/migrations/20260717235013_enforce_strict_gallery_visitor_tokens.sql'
+          [[ "$(git rev-parse HEAD)" == "$expected_commit" ]]
+          [[ -f "$migration" && ! -L "$migration" ]]
+          [[ "$(git hash-object -- "$migration")" == "$expected_blob" ]]
+
+      - name: Install the pinned Supabase CLI
+        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          version: 2.109.1
+
+      - name: Validate credentials and inspect the single migration dry-run
+        id: preflight
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          REVIEWED_SOURCE_COMMIT: c0e16a4306dff0762bf583dfb4f755e038ae087e
+        run: |
+          set +x
+          node --input-type=module <<'PREFLIGHT_NODE'
+          import { spawn } from 'node:child_process';
+          import { createHash, randomBytes } from 'node:crypto';
+          import {
+            closeSync,
+            constants,
+            lstatSync,
+            mkdirSync,
+            openSync,
+            readFileSync,
+            readdirSync,
+            realpathSync,
+            rmSync,
+            writeFileSync
+          } from 'node:fs';
+          import path from 'node:path';
+
+          const MAX_OUTPUT_BYTES = 64 * 1024;
+          const MAX_FILE_BYTES = 1024 * 1024;
+          const MAX_PRIVATE_BYTES = 8 * 1024 * 1024;
+          const TERMINATE_GRACE_MS = 5_000;
+          const HARD_SETTLE_MS = 5_000;
+          const EXPECTED_CLI_VERSION = '2.109.1';
+          const EXPECTED_SOURCE_COMMIT = 'c0e16a4306dff0762bf583dfb4f755e038ae087e';
+          const EXPECTED_MIGRATION_BLOB = '245a21725ae84401ebb822298f7328f01360f719';
+          const EXPECTED_MIGRATION = '20260717235013_enforce_strict_gallery_visitor_tokens.sql';
+          const EXPECTED_MIGRATIONS = Object.freeze([
+            '20260714141341_skin_gallery_security_hardening.sql',
+            '20260715165129_harden_public_rpc_privileges.sql',
+            EXPECTED_MIGRATION
+          ]);
+          const OUTER_DIRECTORY_NAME = 'strict-token-production-preflight';
+
+          class ClassifiedError extends Error {
+            constructor(code) {
+              super(code);
+              this.code = code;
+            }
+          }
+
+          let activeChild = null;
+          let outerDirectory = null;
+          let privateParent = null;
+          let accessToken = '';
+          let databasePassword = '';
+          let projectId = '';
+          let accessTokenBytes = Buffer.alloc(0);
+          let databasePasswordBytes = Buffer.alloc(0);
+          let linkEnvironment = null;
+          let dryRunEnvironment = null;
+          let interrupted = false;
+          let terminateActiveChild = null;
+
+          function fail(code) {
+            throw new ClassifiedError(code);
+          }
+
+          function strictText(buffer, classification) {
+            if (!Buffer.isBuffer(buffer) || buffer.length > MAX_OUTPUT_BYTES) fail(classification);
+            const text = buffer.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(buffer)) fail(classification);
+            if (/\u001b|[\u0000-\u0009\u000b-\u001f\u007f]/u.test(text)) fail(classification);
+            return text;
+          }
+
+          function wipeResult(result) {
+            if (Buffer.isBuffer(result?.stdout)) result.stdout.fill(0);
+            if (Buffer.isBuffer(result?.stderr)) result.stderr.fill(0);
+            if (result) {
+              result.stdout = Buffer.alloc(0);
+              result.stderr = Buffer.alloc(0);
+              result.spawnError = null;
+            }
+          }
+
+          function capture(args, environment, cwd, timeoutMs) {
+            return new Promise((resolve) => {
+              let stdout = Buffer.alloc(0);
+              let stderr = Buffer.alloc(0);
+              let overflow = false;
+              let timedOut = false;
+              let spawnError = null;
+              let settled = false;
+              let terminationStarted = false;
+              let commandTimer = null;
+              let terminateTimer = null;
+              let hardSettleTimer = null;
+              const child = spawn('supabase', args, {
+                shell: false,
+                cwd,
+                env: environment,
+                stdio: ['ignore', 'pipe', 'pipe']
+              });
+              activeChild = child;
+
+              const sendSignal = (signal) => {
+                try {
+                  child.kill(signal);
+                } catch {
+                  // Signal failures must not prevent the bounded hard-settle path.
+                }
+              };
+              const removeCaptureListeners = () => {
+                child.stdout?.removeListener('data', onStdout);
+                child.stderr?.removeListener('data', onStderr);
+                child.removeListener('error', onError);
+                child.removeListener('close', onClose);
+              };
+              const detachAfterHardDeadline = () => {
+                removeCaptureListeners();
+                for (const stream of [child.stdout, child.stderr]) {
+                  if (!stream) continue;
+                  stream.removeAllListeners('error');
+                  stream.once('error', () => {});
+                  try {
+                    stream.destroy();
+                  } catch {
+                    // Stream teardown remains best effort after the hard deadline.
+                  }
+                }
+                child.once('error', () => {});
+                try {
+                  child.unref();
+                } catch {
+                  // A failed unref cannot keep the Promise pending.
+                }
+              };
+              const settle = (code, signal, hardDeadline = false) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(commandTimer);
+                clearTimeout(terminateTimer);
+                clearTimeout(hardSettleTimer);
+                if (hardDeadline) detachAfterHardDeadline();
+                else removeCaptureListeners();
+                if (activeChild === child && !hardDeadline) activeChild = null;
+                if (terminateActiveChild === beginBoundedTermination) terminateActiveChild = null;
+                resolve({ code, signal, stdout, stderr, overflow, timedOut, spawnError });
+              };
+              function beginBoundedTermination(markTimedOut = false) {
+                if (markTimedOut) timedOut = true;
+                if (terminationStarted || settled) return;
+                terminationStarted = true;
+                sendSignal('SIGTERM');
+                terminateTimer = setTimeout(() => {
+                  sendSignal('SIGKILL');
+                  hardSettleTimer = setTimeout(() => {
+                    settle(null, 'SIGKILL', true);
+                  }, HARD_SETTLE_MS);
+                }, TERMINATE_GRACE_MS);
+              }
+              const append = (current, chunk) => {
+                if (current.length + chunk.length > MAX_OUTPUT_BYTES) {
+                  overflow = true;
+                  beginBoundedTermination(false);
+                  return current;
+                }
+                return Buffer.concat([current, chunk]);
+              };
+              const onStdout = (chunk) => { stdout = append(stdout, chunk); };
+              const onStderr = (chunk) => { stderr = append(stderr, chunk); };
+              const onError = (error) => {
+                spawnError = error;
+                if (activeChild === child) activeChild = null;
+                settle(null, null, true);
+              };
+              const onClose = (code, signal) => {
+                if (activeChild === child) activeChild = null;
+                settle(code, signal);
+              };
+              child.stdout.on('data', onStdout);
+              child.stderr.on('data', onStderr);
+              child.once('error', onError);
+              child.once('close', onClose);
+              terminateActiveChild = beginBoundedTermination;
+              commandTimer = setTimeout(() => beginBoundedTermination(true), timeoutMs);
+            });
+          }
+
+          function ensureDirectory(directory) {
+            mkdirSync(directory, { recursive: false, mode: 0o700 });
+            const status = lstatSync(directory);
+            if (!status.isDirectory() || status.isSymbolicLink()) fail('CONFIGURATION_MISSING');
+            if ((status.mode & 0o777) !== 0o700) fail('CONFIGURATION_MISSING');
+          }
+
+          function createPrivateFile(file, bytes) {
+            const flags = constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY |
+              (constants.O_NOFOLLOW ?? 0);
+            const descriptor = openSync(file, flags, 0o600);
+            try {
+              writeFileSync(descriptor, bytes);
+            } finally {
+              closeSync(descriptor);
+            }
+            const status = lstatSync(file);
+            if (!status.isFile() || status.isSymbolicLink()) fail('CONFIGURATION_MISSING');
+            if ((status.mode & 0o777) !== 0o600) fail('CONFIGURATION_MISSING');
+          }
+
+          function gitBlobId(bytes) {
+            const header = Buffer.from(`blob ${bytes.length}\0`, 'utf8');
+            return createHash('sha1').update(header).update(bytes).digest('hex');
+          }
+
+          function initializePrivateLayout() {
+            const runnerTemp = realpathSync(process.env.RUNNER_TEMP ?? '');
+            const candidateOuter = path.join(runnerTemp, OUTER_DIRECTORY_NAME);
+            const outerRelative = path.relative(runnerTemp, candidateOuter);
+            if (!outerRelative || outerRelative.startsWith('..') || path.isAbsolute(outerRelative)) {
+              fail('CONFIGURATION_MISSING');
+            }
+            try {
+              lstatSync(candidateOuter);
+              fail('CONFIGURATION_MISSING');
+            } catch (error) {
+              if (error instanceof ClassifiedError) throw error;
+              if (error?.code !== 'ENOENT') fail('CONFIGURATION_MISSING');
+            }
+            ensureDirectory(candidateOuter);
+            outerDirectory = candidateOuter;
+
+            const randomName = `private-${randomBytes(16).toString('hex')}`;
+            const candidateParent = path.join(candidateOuter, randomName);
+            ensureDirectory(candidateParent);
+            privateParent = realpathSync(candidateParent);
+            const parentRelative = path.relative(realpathSync(candidateOuter), privateParent);
+            if (!parentRelative || parentRelative.startsWith('..') || path.isAbsolute(parentRelative)) {
+              fail('CONFIGURATION_MISSING');
+            }
+
+            for (const name of ['home', 'xdg-config', 'xdg-data', 'xdg-cache', 'tmp', 'cli-work']) {
+              ensureDirectory(path.join(privateParent, name));
+            }
+            ensureDirectory(path.join(privateParent, 'home', 'supabase'));
+            ensureDirectory(path.join(privateParent, 'cli-work', 'supabase'));
+            ensureDirectory(path.join(privateParent, 'cli-work', 'supabase', 'migrations'));
+          }
+
+          function copyReviewedSource() {
+            const workspace = realpathSync(process.env.GITHUB_WORKSPACE ?? '');
+            const sourceCommit = process.env.REVIEWED_SOURCE_COMMIT;
+            if (sourceCommit !== EXPECTED_SOURCE_COMMIT) fail('CONFIGURATION_MISSING');
+            const sourceDirectory = path.join(workspace, 'supabase', 'migrations');
+            const sourceStatus = lstatSync(sourceDirectory);
+            if (!sourceStatus.isDirectory() || sourceStatus.isSymbolicLink()) fail('CONFIGURATION_MISSING');
+            const actual = readdirSync(sourceDirectory, { withFileTypes: true })
+              .filter((entry) => entry.isFile() && entry.name.endsWith('.sql'))
+              .map((entry) => entry.name)
+              .sort();
+            if (actual.length !== EXPECTED_MIGRATIONS.length ||
+                actual.some((name, index) => name !== EXPECTED_MIGRATIONS[index])) {
+              fail('CONFIGURATION_MISSING');
+            }
+
+            const targetDirectory = path.join(privateParent, 'cli-work', 'supabase', 'migrations');
+            for (const name of EXPECTED_MIGRATIONS) {
+              const source = path.join(sourceDirectory, name);
+              const status = lstatSync(source);
+              if (!status.isFile() || status.isSymbolicLink() || status.size > MAX_FILE_BYTES) {
+                fail('CONFIGURATION_MISSING');
+              }
+              const bytes = readFileSync(source);
+              if (name === EXPECTED_MIGRATION && gitBlobId(bytes) !== EXPECTED_MIGRATION_BLOB) {
+                bytes.fill(0);
+                fail('CONFIGURATION_MISSING');
+              }
+              createPrivateFile(path.join(targetDirectory, name), bytes);
+              bytes.fill(0);
+            }
+
+            const config = Buffer.from(
+              'project_id = "strict-token-production-preflight"\n\n' +
+              '[db.migrations]\n' +
+              'enabled = true\n\n' +
+              '[db.seed]\n' +
+              'enabled = false\n',
+              'utf8'
+            );
+            createPrivateFile(path.join(privateParent, 'cli-work', 'supabase', 'config.toml'), config);
+            config.fill(0);
+          }
+
+          function childBaseEnvironment() {
+            const required = ['PATH'];
+            if (required.some((name) => typeof process.env[name] !== 'string' || process.env[name].length === 0)) {
+              fail('CONFIGURATION_MISSING');
+            }
+            const home = path.join(privateParent, 'home');
+            return {
+              PATH: process.env.PATH,
+              HOME: home,
+              SUPABASE_HOME: path.join(home, 'supabase'),
+              XDG_CONFIG_HOME: path.join(privateParent, 'xdg-config'),
+              XDG_DATA_HOME: path.join(privateParent, 'xdg-data'),
+              XDG_CACHE_HOME: path.join(privateParent, 'xdg-cache'),
+              TMPDIR: path.join(privateParent, 'tmp'),
+              TMP: path.join(privateParent, 'tmp'),
+              TEMP: path.join(privateParent, 'tmp'),
+              LANG: 'C.UTF-8',
+              LC_ALL: 'C.UTF-8',
+              TZ: 'UTC',
+              CI: 'true',
+              NO_COLOR: '1'
+            };
+          }
+
+          function verifyPrivatePermissions(directory) {
+            let total = 0;
+            const visit = (current) => {
+              const status = lstatSync(current);
+              if (status.isSymbolicLink()) fail('CONFIGURATION_MISSING');
+              if (status.isDirectory()) {
+                if ((status.mode & 0o777) !== 0o700) fail('CONFIGURATION_MISSING');
+                for (const entry of readdirSync(current)) visit(path.join(current, entry));
+                return;
+              }
+              if (!status.isFile() || (status.mode & 0o777) !== 0o600 || status.size > MAX_FILE_BYTES) {
+                fail('CONFIGURATION_MISSING');
+              }
+              total += status.size;
+              if (total > MAX_PRIVATE_BYTES) fail('CONFIGURATION_MISSING');
+            };
+            visit(directory);
+          }
+
+          function containsPasswordedPostgresUri(buffer) {
+            const text = buffer.toString('utf8');
+            if (!Buffer.from(text, 'utf8').equals(buffer)) return true;
+            const matches = text.match(/postgres(?:ql)?:\/\/[^\s\u0000]+/giu) ?? [];
+            for (const candidate of matches) {
+              try {
+                const parsed = new URL(candidate);
+                if (parsed.password.length > 0) return true;
+              } catch {
+                return true;
+              }
+            }
+            return false;
+          }
+
+          function scanForSecretPersistence() {
+            if (!privateParent) return false;
+            let detected = false;
+            let total = 0;
+            const visit = (current) => {
+              if (detected) return;
+              const status = lstatSync(current);
+              if (status.isSymbolicLink()) {
+                detected = true;
+                return;
+              }
+              if (status.isDirectory()) {
+                for (const entry of readdirSync(current)) visit(path.join(current, entry));
+                return;
+              }
+              if (!status.isFile() || status.size > MAX_FILE_BYTES) {
+                detected = true;
+                return;
+              }
+              total += status.size;
+              if (total > MAX_PRIVATE_BYTES) {
+                detected = true;
+                return;
+              }
+              const content = readFileSync(current);
+              try {
+                if ((accessTokenBytes.length > 0 && content.indexOf(accessTokenBytes) !== -1) ||
+                    (databasePasswordBytes.length > 0 && content.indexOf(databasePasswordBytes) !== -1) ||
+                    containsPasswordedPostgresUri(content)) {
+                  detected = true;
+                }
+              } finally {
+                content.fill(0);
+              }
+            };
+            visit(privateParent);
+            return detected;
+          }
+
+          function validateProcessResult(result, classification) {
+            if (result.spawnError?.code === 'ENOENT') fail('RUNNER_UNAVAILABLE');
+            if (result.spawnError || result.signal || result.timedOut || result.overflow || interrupted) {
+              fail(classification);
+            }
+            strictText(result.stdout, classification);
+            strictText(result.stderr, classification);
+            if (result.code !== 0) fail(classification);
+          }
+
+          function validateDryRun(result) {
+            validateProcessResult(result, 'CREDENTIAL_VALIDATION_FAILED');
+            const stdout = strictText(result.stdout, 'DRY_RUN_RESULT_INVALID');
+            const stderr = strictText(result.stderr, 'DRY_RUN_RESULT_INVALID');
+            const expectedStdout = ['Finished supabase db', 'push.\n'].join(' ');
+            const expectedStderr = [
+              'DRY RUN: migrations will *not* be pushed to the database.',
+              'Connecting to remote database...',
+              'Would push these migrations:',
+              ` • ${EXPECTED_MIGRATION}`,
+              ''
+            ].join('\n');
+            if (stdout !== expectedStdout || stderr !== expectedStderr) fail('DRY_RUN_RESULT_INVALID');
+            const migrationCount = stderr.split(EXPECTED_MIGRATION).length - 1;
+            if (migrationCount !== 1) fail('DRY_RUN_RESULT_INVALID');
+          }
+
+          function clearEnvironment(environment) {
+            if (!environment) return;
+            for (const key of Object.keys(environment)) environment[key] = '';
+          }
+
+          function cleanupPrivateState() {
+            if (outerDirectory) {
+              const runnerTemp = realpathSync(process.env.RUNNER_TEMP ?? '');
+              const expectedOuter = path.join(runnerTemp, OUTER_DIRECTORY_NAME);
+              if (outerDirectory !== expectedOuter) throw new Error();
+              rmSync(outerDirectory, { recursive: true, force: true });
+              try {
+                lstatSync(outerDirectory);
+                throw new Error();
+              } catch (error) {
+                if (error?.code !== 'ENOENT') throw error;
+              }
+            }
+            privateParent = null;
+            outerDirectory = null;
+          }
+
+          const stopChild = () => {
+            interrupted = true;
+            if (terminateActiveChild) terminateActiveChild(false);
+            else if (activeChild) {
+              try {
+                activeChild.kill('SIGTERM');
+              } catch {
+                // The surrounding finally block still performs cleanup.
+              }
+            }
+          };
+          process.once('SIGINT', stopChild);
+          process.once('SIGTERM', stopChild);
+
+          let terminalClassification = null;
+          let persistenceDetected = false;
+          try {
+            process.umask(0o077);
+            const requiredNames = ['SUPABASE_ACCESS_TOKEN', 'SUPABASE_DB_PASSWORD', 'SUPABASE_PROJECT_ID'];
+            if (requiredNames.some((name) => typeof process.env[name] !== 'string' || process.env[name].length === 0)) {
+              fail('CONFIGURATION_MISSING');
+            }
+            accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+            databasePassword = process.env.SUPABASE_DB_PASSWORD;
+            projectId = process.env.SUPABASE_PROJECT_ID;
+            accessTokenBytes = Buffer.from(accessToken, 'utf8');
+            databasePasswordBytes = Buffer.from(databasePassword, 'utf8');
+            delete process.env.SUPABASE_ACCESS_TOKEN;
+            delete process.env.SUPABASE_DB_PASSWORD;
+            delete process.env.SUPABASE_PROJECT_ID;
+
+            initializePrivateLayout();
+            copyReviewedSource();
+            const workDirectory = path.join(privateParent, 'cli-work');
+            const baseEnvironment = childBaseEnvironment();
+
+            const version = await capture(['--version'], baseEnvironment, workDirectory, 30_000);
+            try {
+              validateProcessResult(version, 'CLI_VERSION_MISMATCH');
+              const versionText = strictText(version.stdout, 'CLI_VERSION_MISMATCH');
+              if (versionText !== `${EXPECTED_CLI_VERSION}\n`) fail('CLI_VERSION_MISMATCH');
+            } finally {
+              wipeResult(version);
+            }
+
+            linkEnvironment = {
+              ...baseEnvironment,
+              SUPABASE_ACCESS_TOKEN: accessToken
+            };
+            if (Object.hasOwn(linkEnvironment, 'SUPABASE_DB_PASSWORD')) fail('CONFIGURATION_MISSING');
+            const link = await capture(
+              ['link', '--project-ref', projectId],
+              linkEnvironment,
+              workDirectory,
+              120_000
+            );
+            clearEnvironment(linkEnvironment);
+            linkEnvironment = null;
+            try {
+              validateProcessResult(link, 'CREDENTIAL_VALIDATION_FAILED');
+            } finally {
+              wipeResult(link);
+            }
+            verifyPrivatePermissions(privateParent);
+            if (scanForSecretPersistence()) fail('SECRET_PERSISTENCE_DETECTED');
+
+            dryRunEnvironment = {
+              ...baseEnvironment,
+              SUPABASE_DB_PASSWORD: databasePassword
+            };
+            if (Object.hasOwn(dryRunEnvironment, 'SUPABASE_ACCESS_TOKEN') ||
+                Object.hasOwn(dryRunEnvironment, 'SUPABASE_PROJECT_ID')) {
+              fail('CONFIGURATION_MISSING');
+            }
+            const dryRun = await capture(
+              ['db', 'push', '--linked', '--dry-run'],
+              dryRunEnvironment,
+              workDirectory,
+              120_000
+            );
+            clearEnvironment(dryRunEnvironment);
+            dryRunEnvironment = null;
+            databasePassword = '';
+            try {
+              validateDryRun(dryRun);
+            } finally {
+              wipeResult(dryRun);
+            }
+            verifyPrivatePermissions(privateParent);
+            if (scanForSecretPersistence()) fail('SECRET_PERSISTENCE_DETECTED');
+          } catch (error) {
+            terminalClassification = error instanceof ClassifiedError
+              ? error.code
+              : 'CREDENTIAL_VALIDATION_FAILED';
+          } finally {
+            try {
+              persistenceDetected = scanForSecretPersistence();
+            } catch {
+              persistenceDetected = true;
+            }
+            if (activeChild) {
+              try {
+                activeChild.kill('SIGKILL');
+              } catch {
+                // The hard-settle path already bounded the child wait.
+              }
+              try {
+                activeChild.stdout?.destroy();
+                activeChild.stderr?.destroy();
+                activeChild.unref();
+              } catch {
+                // Child teardown remains best effort before private-state cleanup.
+              }
+            }
+            activeChild = null;
+            terminateActiveChild = null;
+            clearEnvironment(linkEnvironment);
+            clearEnvironment(dryRunEnvironment);
+            linkEnvironment = null;
+            dryRunEnvironment = null;
+            accessToken = '';
+            databasePassword = '';
+            projectId = '';
+            accessTokenBytes.fill(0);
+            databasePasswordBytes.fill(0);
+            accessTokenBytes = Buffer.alloc(0);
+            databasePasswordBytes = Buffer.alloc(0);
+            // JavaScript strings are immutable; clearing references cannot guarantee in-place zeroing.
+            if (interrupted && !terminalClassification) {
+              terminalClassification = 'CREDENTIAL_VALIDATION_FAILED';
+            }
+            try {
+              cleanupPrivateState();
+            } catch {
+              if (!persistenceDetected) terminalClassification = 'CLEANUP_FAILED';
+            }
+            if (persistenceDetected) terminalClassification = 'SECRET_PERSISTENCE_DETECTED';
+          }
+
+          if (terminalClassification) {
+            console.error(terminalClassification);
+            process.exitCode = 1;
+          }
+          PREFLIGHT_NODE
+
+      - name: Remove all private linked state
+        id: cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          cleanup_guard_failed() {
+            printf '%s\n' 'CLEANUP_GUARD_FAILED'
+            exit 1
+          }
+
+          readonly anchor_basename='strict-token-production-preflight'
+          readonly runner_temp_input="${RUNNER_TEMP-}"
+          [[ -n "$runner_temp_input" ]] || cleanup_guard_failed
+          [[ "$runner_temp_input" == /* ]] || cleanup_guard_failed
+          case "$runner_temp_input" in
+            /|.|..) cleanup_guard_failed ;;
+          esac
+          [[ -d "$runner_temp_input" && ! -L "$runner_temp_input" ]] || cleanup_guard_failed
+
+          runner_temp_real="$(realpath -e -- "$runner_temp_input")" || cleanup_guard_failed
+          [[ -n "$runner_temp_real" && "$runner_temp_real" == /* && "$runner_temp_real" != / ]] || cleanup_guard_failed
+          [[ -d "$runner_temp_real" && ! -L "$runner_temp_real" ]] || cleanup_guard_failed
+
+          readonly cleanup_target="${runner_temp_real}/${anchor_basename}"
+          [[ "$(dirname -- "$cleanup_target")" == "$runner_temp_real" ]] || cleanup_guard_failed
+          [[ "$(basename -- "$cleanup_target")" == "$anchor_basename" ]] || cleanup_guard_failed
+          [[ ! -L "$cleanup_target" ]] || cleanup_guard_failed
+
+          if [[ -e "$cleanup_target" ]]; then
+            cleanup_target_real="$(realpath -e -- "$cleanup_target")" || cleanup_guard_failed
+            [[ "$cleanup_target_real" == "$cleanup_target" ]] || cleanup_guard_failed
+            [[ "$(dirname -- "$cleanup_target_real")" == "$runner_temp_real" ]] || cleanup_guard_failed
+            [[ "$(basename -- "$cleanup_target_real")" == "$anchor_basename" ]] || cleanup_guard_failed
+            [[ -d "$cleanup_target_real" && ! -L "$cleanup_target_real" ]] || cleanup_guard_failed
+            rm -rf -- "$cleanup_target_real" || cleanup_guard_failed
+          fi
+
+          [[ ! -e "$cleanup_target" && ! -L "$cleanup_target" ]] || cleanup_guard_failed
+
+      - name: Confirm the preflight result
+        if: always()
+        shell: bash
+        env:
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+          CLEANUP_OUTCOME: ${{ steps.cleanup.outcome }}
+        run: |
+          set -euo pipefail
+          if [[ "$PREFLIGHT_OUTCOME" == 'success' && "$CLEANUP_OUTCOME" == 'success' ]]; then
+            printf '%s\n' 'CREDENTIAL_VALID | SINGLE_MIGRATION_READY'
+          else
+            exit 1
+          fi
