@@ -117,8 +117,8 @@ jobs:
             TARGET
           ]);
           const ANCHOR = 'strict-token-production-deployment';
-          const FULL_SQL_SHA256 = '6d429ea68a07b12a052b26e137472480c20b982f5649b3a17f298a3dcaf7d0a3';
-          const REGISTRY_SQL_SHA256 = 'b15eb192d6b84eec39f873acb58abe2910381396647c361b885940cfffed27b2';
+          const FULL_SQL_SHA256 = 'dccb51324cf20205238e56d10c1370868abce229a98b853519bc99497509c398';
+          const REGISTRY_SQL_SHA256 = '6883a9efb08dd6f977bb0e368e5ffd72f99ba8b87ba168ad7e319702280c71cd';
 
           const FULL_SQL = `WITH
           registry AS (
